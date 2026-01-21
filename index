@@ -7,6 +7,24 @@
     <title>zerw1337 website</title>
 </head>
 <body>
-    
+    <div class="header">
+        <div class="banner">zerw1337's website</div>
+        <div class="menu">
+            <a href="#">blog</a>
+            <a href="#">about</a>
+            <a href="#">projects</a>
+            <a href="#">tags</a>
+            <a href="#">S</a>
+            <a href="#">L</a>
+            <a href="#">T</a>
+        </div>
+    </div>
+    <div class="main-content">
+
+    </div>
+    <div class="footer">
+
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>

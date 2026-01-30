@@ -3,6 +3,8 @@
     --logo-color: rgb(4, 198, 233);
     --header-height: 12vh;
     --menu-item-color: rgb(211, 211, 211);
+    --menu-icon-color-after: rgb(138, 138, 138);
+    --main-text-color: rgb(236, 236, 236);
 
 }
 body{
@@ -20,7 +22,6 @@ body{
     margin: 0 auto;
 }
 .header{
-    height: 100%;
     height: 10vh;
 }
 nav{
@@ -45,27 +46,27 @@ nav{
     font-style: normal;
     font-size: 2em;
     text-decoration: none;
-    padding: 0.2em 0.5em;
     transition: background-color 0.1s ease, color 0.1s ease;
 }
-#logo-text:hover {
+#logo-text:hover{
     background-color: var(--logo-color);
     color: var(--bg-main);
 }
-.menu {
+.menu{
     width: 50%;
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    gap: 1.5em;
 }
-#menu-list {
+.menu-list{
     display: flex;
-    list-style-type: none;
+    list-style: none;
     padding: 0;
     margin: 0;
-    justify-content: space-around;
-    gap: 1em;
+    gap: 0.5em;
 }
-.menu-item a{
+.menu-list a{
     background-color: transparent;
     font-family: "Arimo", sans-serif;
     font-optical-sizing: auto;
@@ -78,16 +79,31 @@ nav{
     color: var(--menu-item-color);
     text-decoration: none;
 }
-.menu-item a:hover{
+.menu-list a:hover{
     background-color: var(--logo-color);
     color: var(--bg-main);
 }
-.menu-item a i {
-    background-color: transparent;
-    padding: 0.2em 0.5em;
-    transition: background-color 0.1s ease, color 0.1s ease;
-    color: var(--menu-item-color);
+.menu-icons{
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 0.5em;
 }
-.menu-item a:hover i {
-    color: var(--bg-main);
+.menu-icons a{
+    color: var(--menu-item-color);
+    padding: 0.4em;
+    transition: background-color 0.1s ease, color 0.1s ease;
+}
+.menu-icons a:hover{
+    color: var(--menu-icon-color-after);
+}
+.main-content{
+    height: 85vh;
+    padding-top: 5em;
+    color: var(--main-text-color);
+    font-family: "Roboto Flex", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: lighter;
+    font-style: normal;
 }

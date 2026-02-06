@@ -5,6 +5,8 @@
     --menu-item-color: rgb(211, 211, 211);
     --menu-icon-color-after: rgb(138, 138, 138);
     --main-text-color: rgb(236, 236, 236);
+    --main-h-size: 1.7em;
+    --main-text-size: 1em;
 
 }
 @font-face {
@@ -138,8 +140,8 @@ nav{
 
 }
 .main-h{
-    font-size: 1.7em;
+    font-size: var(--main-h-size);
 }
 .main-text{
-    
+ font-size: var(--main-text-size);
 }

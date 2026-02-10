@@ -1,19 +1,28 @@
-import asyncio
-from src.query import test
+from fastapi import FastAPI, APIRouter
+from contextlib import asynccontextmanager
+import uvicorn
+
+from src.models.database import get_session, db, Base
+from src.models.models import *
 
 
-# app = FastAPI()
-#
-# app.mount("/static", StaticFiles(directory="static"), name="static")
-# templates = Jinja2Templates(directory="Templates")
-#
-# @app.get("/", response_class=HTMLResponse, summary="index.html")
-# async def home(request: Request):
-#     return templates.TemplateResponse("index.html", {"request": request})
-#
-# if __name__ == "__main__":
-#     uvicorn.run("main:app", reload=True)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with db.async_engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+    yield
 
-res = asyncio.run(test())
-print(res)
+
+app = FastAPI(lifespan=lifespan)
+
+@app.get('/')
+async def root():
+    return {'message': 'Hello World'}
+
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", reload=True)
+
+
 

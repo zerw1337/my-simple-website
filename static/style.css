@@ -7,6 +7,7 @@
     --main-text-color: rgb(236, 236, 236);
     --main-h-size: 1.7em;
     --main-text-size: 1em;
+    --horizontal-line-color: rgb(88, 88, 88);
 
 }
 @font-face {
@@ -101,12 +102,24 @@ nav{
     gap: 0.5em;
 }
 .menu-icons a{
-    color: var(--menu-item-color);
-    padding: 0.4em;
-    transition: background-color 0.1s ease, color 0.1s ease;
+    
 }
-.menu-icons a:hover{
-    color: var(--menu-icon-color-after);
+ul li a {
+    color: var(--menu-item-color); /* начальный цвет иконки */
+    transition: color 0.1s ease;
+}
+
+ul li a:hover {
+    color: var(--menu-icon-color-after); /* цвет при наведении */
+}
+
+ul li a svg {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    stroke: currentColor; 
+    fill: currentColor;   
+    transition: color 0.1s ease;
 }
 .main-content{
     height: 85vh;
@@ -118,6 +131,7 @@ nav{
     font-style: normal;
 }
 .hello-message p{
+    margin: 0;
     font-size: 2em;
 }
 .main-content-pic{
@@ -125,6 +139,7 @@ nav{
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    margin-top: 4vh;
     height: 35vh;
 }
 .main-content-pic img{
@@ -144,5 +159,8 @@ nav{
 }
 .main-text{
  font-size: var(--main-text-size);
+}
+hr {
+    border-color: var(--horizontal-line-color);
 }
 

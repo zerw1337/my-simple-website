@@ -1,10 +1,14 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey, text, func, DateTime
+from sqlalchemy import String, Text, ForeignKey, text, func, DateTime, UniqueConstraint
 import datetime
 from src.models.database import Base
 
 class Users(Base):
     __tablename__ = 'users'
+    __table_args__ = (
+        UniqueConstraint('username'),
+        UniqueConstraint('email'),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)

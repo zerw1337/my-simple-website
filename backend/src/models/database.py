@@ -9,7 +9,7 @@ from src.config import settings, Settings
 class Database:
     def __init__(self, settings: Settings):
         self.async_engine = create_async_engine(settings.DATABASE_URL_asyncpg,
-                                           echo=True,
+                                           echo=False,
                                            pool_size=10,
                                            max_overflow=5)
 

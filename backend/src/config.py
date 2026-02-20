@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-import pathlib
+from pathlib import Path
+
 
 class Settings(BaseSettings):
     DB_HOST: str

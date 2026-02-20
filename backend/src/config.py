@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+import pathlib
 
 class Settings(BaseSettings):
     DB_HOST: str
@@ -6,6 +7,13 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASS: str
     DB_NAME: str
+
+    JWT_SECRET_KEY: Path
+    JWT_PUBLIC_KEY: Path
+    JWT_ALGORITHM: str
+    JWT_ACCESS_TOKEN_EXPIRES_MINUTES: int = 15
+    JWT_REFRESH_TOKEN_EXPIRES_DAYS: int = 7
+
 
     @property
     def DATABASE_URL_asyncpg(self) -> str:

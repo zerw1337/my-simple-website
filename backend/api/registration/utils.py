@@ -8,16 +8,22 @@ from api.registration.schemas import CreateUser
 from src.models.models import Users
 
 
-def hash_password(password: str) -> str:
+def encode_password(password: str) -> str:
     salt = bcrypt.gensalt()
     pwd_bytes = password.encode()
     return bcrypt.hashpw(pwd_bytes, salt).decode("utf8")
+
+def check_password(hashed_password: str, password: str) -> bool:
+    if bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
+        return True
+    else:
+        return False
 
 async def create_new_user(user: CreateUser, session: AsyncSession):
     new_user = Users(
         username=user.username,
         email=user.email,
-        password= hash_password(user.password))
+        password= encode_password(user.password))
     session.add(new_user)
     try:
         await session.commit()

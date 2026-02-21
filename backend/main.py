@@ -5,6 +5,7 @@ import uvicorn
 from src.models.database import db
 from src.models.models import *
 from api.registration.views import register_router
+from api.auth.views import auth_router
 
 
 @asynccontextmanager
@@ -18,6 +19,7 @@ app = FastAPI(lifespan=lifespan)
 
 
 app.include_router(register_router)
+app.include_router(auth_router)
 
 @app.get('/')
 async def root():

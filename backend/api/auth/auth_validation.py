@@ -7,7 +7,7 @@ from .jwt_payload_operations import get_token_payload
 from .schemas import UserOut
 
 
-async def get_current_user(session: AsyncSession, token: str) -> UserOut:
+async def get_current_user(token: str, session: AsyncSession) -> UserOut:
     payload: dict = get_token_payload(encoded_jwt=token)
     user_id = int(payload.get("sub"))
     query = (

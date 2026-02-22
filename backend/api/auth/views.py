@@ -21,3 +21,7 @@ async def login(username: str = Form(...), password: str = Form(...), session: A
 @auth_router.get("/me/", response_model=UserOut)
 async def validate_user(token: str = Depends(oauth2_scheme) ,session: AsyncSession = Depends(get_session)):
     return await get_current_user(token=token, session=session)
+
+@auth_router.get("/refresh/", response_model=UserOut)
+async def get_new_access_token_by_refresh(token: str = Depends(oauth2_scheme)):
+    pass

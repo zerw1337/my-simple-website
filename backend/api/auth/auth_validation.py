@@ -1,21 +1,11 @@
-from fastapi import Depends, HTTPException
-from jose import JWTError, ExpiredSignatureError
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from .jwt import decode_jwt
 from src.models.models import Users
+from .jwt_payload_operations import get_token_payload
 from .schemas import UserOut
 
-
-def get_token_payload(encoded_jwt: str) -> dict:
-    try:
-        payload = decode_jwt(encoded_jwt)
-        return payload
-    except ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Expired token")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
 
 async def get_current_user(session: AsyncSession, token: str) -> UserOut:
     payload: dict = get_token_payload(encoded_jwt=token)

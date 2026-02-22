@@ -11,9 +11,16 @@ def encode_jwt(payload: dict) -> str:
         algorithm=settings.JWT_ALGORITHM,
     )
 
+def decode_jwt(token: str) -> dict:
+    return jwt.decode(
+        token,
+        settings.JWT_PUBLIC_KEY.read_text(),
+        algorithms=[settings.JWT_ALGORITHM]
+    )
+
 def create_access_token(id: str, username: str):
     payload = {
-        "sub": id,
+        "sub": str(id),
         "username": username,
         token_fields.TOKEN_TYPE_FIELD: token_fields.ACCESS_TOKEN_FIELD,
         "iat": datetime.utcnow(),
@@ -23,7 +30,7 @@ def create_access_token(id: str, username: str):
 
 def create_refresh_token(id: str, username: str):
     payload = {
-        "sub": id,
+        "sub": str(id),
         "username": username,
         token_fields.TOKEN_TYPE_FIELD: token_fields.REFRESH_TOKEN_FIELD,
         "iat": datetime.utcnow(),

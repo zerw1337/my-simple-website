@@ -13,6 +13,14 @@ class Token(BaseModel):
     refresh_token: str
     token_type: str = "Bearer"
 
+class RefreshToken(BaseModel):
+    refresh_token: str
+    token_type: str = "Bearer"
+
+class AccessToken(BaseModel):
+    access_token: str
+    token_type: str = "Bearer"
+
 class UserOut(BaseModel):
     id: int
     username: str

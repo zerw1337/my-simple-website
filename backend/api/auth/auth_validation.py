@@ -20,5 +20,5 @@ async def get_current_user(token: str, session: AsyncSession) -> UserOut:
     if not result:
         raise HTTPException(status_code=404, detail="User not found")
     if result.user_version != payload_user_version:
-        raise HTTPException(status_code=403, detail="Token expired [user_version]")
+        raise HTTPException(status_code=403, detail="Token expired")
     return UserOut.model_validate(result)

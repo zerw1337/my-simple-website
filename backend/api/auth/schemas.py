@@ -28,6 +28,7 @@ class UserOut(BaseModel):
     created_at: datetime
     is_active: bool
     is_banned: bool
+    user_version: int
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -16,9 +16,25 @@ class Users(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now())
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
     is_banned: Mapped[bool] = mapped_column(default=False, nullable=False)
+    user_version: Mapped[int] = mapped_column(default=1, nullable=False)
 
+    refresh_tokens: Mapped["RefreshTokens"] = relationship(back_populates="user")
     profile: Mapped["Profiles"] = relationship(back_populates="user", uselist=False)
     posts: Mapped["Posts"] = relationship(back_populates="user")
+
+
+
+class RefreshTokens(Base):
+    __tablename__ = 'refresh_tokens'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    refresh_token_id: Mapped[str] = mapped_column(unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now())
+
+    user: Mapped["Users"] = relationship(Users, back_populates="refresh_tokens")
+
+
 
 class Profiles(Base):
     __tablename__ = 'profiles'
@@ -30,7 +46,6 @@ class Profiles(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
 
     user: Mapped["Users"] = relationship(back_populates="profile")
-
 
 class Categories(Base):
     __tablename__ = 'categories'

@@ -8,6 +8,7 @@ from api.registration.views import register_router
 from api.auth.views import auth_router
 from api.auth.schemas import UserOut
 from api.auth.dependencies import get_auth
+from api.users.views import profile_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,6 +20,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(register_router)
 app.include_router(auth_router)
+app.include_router(profile_router)
 
 @app.get('/')
 async def root(user: UserOut = Depends(get_auth)):

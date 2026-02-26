@@ -3,7 +3,6 @@ from sqlalchemy import select
 from fastapi import HTTPException
 
 from src.models.models import Profiles
-from .schemas import UserId
 
 async def get_current_profile(user_id: int, session: AsyncSession) -> Profiles:
     query = (

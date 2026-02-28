@@ -16,6 +16,8 @@ class Users(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now())
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
     is_banned: Mapped[bool] = mapped_column(default=False, nullable=False)
+    is_superuser: Mapped[bool] = mapped_column(default=False, nullable=True)
+    is_verified: Mapped[bool] = mapped_column(default=False, nullable=True)
     user_version: Mapped[int] = mapped_column(default=1, nullable=False)
 
     refresh_tokens: Mapped["RefreshTokens"] = relationship(back_populates="user")
@@ -51,6 +53,7 @@ class Categories(Base):
     __tablename__ = 'categories'
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(32), nullable=False)
+    emoji: Mapped[str] = mapped_column(String(8), nullable=True)
     description: Mapped[str] = mapped_column(String(256), nullable=True)
 
 class Posts(Base):

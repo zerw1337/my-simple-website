@@ -1,6 +1,5 @@
-import asyncpg
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy import MetaData
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from typing import AsyncIterator
 from src.config import settings, Settings
@@ -23,6 +22,10 @@ async def get_session() -> AsyncIterator[AsyncSession]:
     async with db.async_session_factory() as session:
         yield session
 
+async def db_dispose():
+    await db.async_engine.dispose()
+
 class Base(DeclarativeBase):
-    pass
+
+    metadata = MetaData(naming_convention=settings.naming_conventions)
 

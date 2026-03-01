@@ -60,7 +60,27 @@ async def create_new_profile(profile: CreateProfile, user: UserOut, session: Asy
         raise HTTPException(status_code=403, detail="Profile for that user id already exists")
 
 
-async def upload_verify_code_to_database(code: int, session: AsyncSession, user: CreateUser):
+async def check_if_current_users_verify_code_exists(code_type: VerifyCodesEnum, user: CreateUser, session: AsyncSession):
+    query = (
+        select(Users)
+        .where(Users.username == user.username)
+    )
+    res = await session.execute(query)
+    current_user = res.scalar_one_or_none()
+    if not current_user:
+        raise HTTPException(status_code=403, detail=f"User {user.username} does not exist")
+    query = (
+        select(VerifyCodes)
+        .where(and_(VerifyCodes.user_id == current_user.id, VerifyCodes.type == code_type))
+    )
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
+    if result:
+        await session.delete(result)
+    return True
+
+
+async def upload_verify_code_to_database(code: int, code_type: VerifyCodesEnum, session: AsyncSession, user: CreateUser | UserOut):
     query = (
         select(Users)
         .where(Users.username == user.username)
@@ -72,8 +92,9 @@ async def upload_verify_code_to_database(code: int, session: AsyncSession, user:
     new_code = VerifyCodes(
         user_id=result.id,
         code=code,
-        type=VerifyCodesEnum.registration
+        type=code_type
     )
+    await check_if_current_users_verify_code_exists(code_type=code_type, user=user, session=session)
     session.add(new_code)
     try:
         await session.commit()
@@ -92,7 +113,7 @@ async def verify_new_user_via_code(code: int, session: AsyncSession, user: UserO
     res = await session.execute(query)
     verify_code = res.scalar_one_or_none()
     if not verify_code:
-        raise HTTPException(status_code=403, detail="Your verify code is wrong!")
+        raise HTTPException(status_code=403, detail="Verification code is wrong!")
     query = (
         select(Users)
         .where(Users.id == user.id)
@@ -105,6 +126,28 @@ async def verify_new_user_via_code(code: int, session: AsyncSession, user: UserO
     await session.delete(verify_code)
     await session.commit()
     return True
+
+async def verify_email_change_via_code(code: int, session: AsyncSession, user: UserOut):
+    query = (
+        select(VerifyCodes)
+        .where(and_(VerifyCodes.code == code, VerifyCodes.type == VerifyCodesEnum.manage_account, VerifyCodes.user_id == user.id))
+    )
+    res = await session.execute(query)
+    verify_code = res.scalar_one_or_none()
+    if not verify_code:
+        raise HTTPException(status_code=403, detail="Verification code is wrong!")
+    query = (
+        select(Users)
+        .where(Users.id == user.id)
+    )
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
+    if not result:
+        raise HTTPException(status_code=404, detail="User not found")
+    result.email = result.pending_email
+    result.pending_email = None
+    await session.delete(verify_code)
+    await session.commit()
 
 
 

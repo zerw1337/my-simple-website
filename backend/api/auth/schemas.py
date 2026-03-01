@@ -31,6 +31,7 @@ class UserOut(BaseModel):
     is_superuser: bool
     is_verified: bool
     user_version: int
+    pending_email: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

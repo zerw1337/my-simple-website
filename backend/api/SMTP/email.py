@@ -6,7 +6,7 @@ from api.auth.schemas import UserOut
 from api.registration.schemas import CreateUser
 from src.config import settings
 
-async def send_email(user: CreateUser, subject: str, html: str):
+async def send_email(user: CreateUser | UserOut, subject: str, html: str):
     msg = EmailMessage()
     msg['From'] = settings.SMTP_USERNAME
     msg['Subject'] = subject

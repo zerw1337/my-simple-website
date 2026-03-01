@@ -1,7 +1,10 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey, text, func, DateTime, UniqueConstraint
+from sqlalchemy import String, Text, ForeignKey, text, func, DateTime, UniqueConstraint, Enum as SAEnum
 import datetime
+from enum import Enum
+
 from src.models.database import Base
+
 
 class Users(Base):
     __tablename__ = 'users'
@@ -20,9 +23,9 @@ class Users(Base):
     is_verified: Mapped[bool] = mapped_column(default=False, nullable=True)
     user_version: Mapped[int] = mapped_column(default=1, nullable=False)
 
-    refresh_tokens: Mapped["RefreshTokens"] = relationship(back_populates="user")
-    profile: Mapped["Profiles"] = relationship(back_populates="user", uselist=False)
-    posts: Mapped["Posts"] = relationship(back_populates="user")
+    refresh_tokens: Mapped["RefreshTokens"] = relationship("RefreshTokens", back_populates="user", cascade="all, delete-orphan")
+    profile: Mapped["Profiles"] = relationship("Profiles" ,back_populates="user", uselist=False, cascade="all, delete-orphan")
+    posts: Mapped["Posts"] = relationship("Posts", back_populates="user", cascade="all, delete-orphan")
 
 
 
@@ -34,8 +37,19 @@ class RefreshTokens(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now())
 
-    user: Mapped["Users"] = relationship(Users, back_populates="refresh_tokens")
+    user: Mapped["Users"] = relationship("Users", back_populates="refresh_tokens")
 
+class VerifyCodesEnum(str, Enum):
+    registration = "registration"
+    manage_account = "manage_account"
+
+class VerifyCodes(Base):
+    __tablename__ = 'verify_codes'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    type: Mapped["VerifyCodesEnum"] = mapped_column(SAEnum(VerifyCodesEnum, name="verify_codes_enum"), nullable=False)
+    code: Mapped[int] = mapped_column(unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now())
 
 
 class Profiles(Base):
@@ -47,7 +61,7 @@ class Profiles(Base):
     bio: Mapped[str] = mapped_column(Text, nullable=True)
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
 
-    user: Mapped["Users"] = relationship(back_populates="profile")
+    user: Mapped["Users"] = relationship("Users", back_populates="profile")
 
 class Categories(Base):
     __tablename__ = 'categories'
@@ -66,4 +80,4 @@ class Posts(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(), onupdate=datetime.datetime.utcnow, nullable=False)
 
-    user: Mapped["Users"] = relationship(back_populates="posts")
+    user: Mapped["Users"] = relationship("Users", back_populates="posts")

@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRES_MINUTES: int = 15
     JWT_REFRESH_TOKEN_EXPIRES_DAYS: int = 7
 
+    SMTP_HOST: str
+    SMTP_PORT: int
+    SMTP_USERNAME: str
+    SMTP_PASSWORD: str
+
     naming_conventions: dict[str, str] = {
         "ix": "ix_%(column_0_label)s",
         "uq": "uq_%(table_name)s_%(column_0_name)s",

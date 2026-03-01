@@ -1,6 +1,8 @@
 from aiosmtplib import SMTP
 from email.message import EmailMessage
 import ssl
+from aiosmtplib.errors import SMTPException
+from fastapi import HTTPException
 
 from api.auth.schemas import UserOut
 from api.registration.schemas import CreateUser
@@ -20,8 +22,18 @@ async def send_email(user: CreateUser | UserOut, subject: str, html: str):
                 use_tls=True,
                 tls_context=ssl.create_default_context())
 
-    await smtp.connect()
-    await smtp.send_message(msg)
-    await smtp.quit()
+    try:
+        await smtp.connect()
+        await smtp.send_message(msg)
 
-    return {"status": "200 message sent"}
+    except SMTPException:
+        return {"status": "email_failed"}
+
+    finally:
+        try:
+            await smtp.quit()
+        except Exception:
+            pass
+
+
+    return True

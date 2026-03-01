@@ -6,10 +6,9 @@ from api.auth.schemas import UserOut
 from api.auth.dependencies import get_auth
 from src.models.database import get_session
 from src.models.models import VerifyCodesEnum
-from .crud import change_current_user_password, change_current_user_pending_email, change_current_user_email
+from .crud import change_current_user_password, change_current_user_pending_email
 from api.SMTP.email import send_email
 from api.SMTP.utils import generate_verify_code, generate_html_verify_message_for_manage_account
-from ..registration.schemas import CreateUser
 from ..registration.utils import upload_verify_code_to_database, verify_email_change_via_code
 
 users_router = APIRouter(prefix="/user", tags=["Users"])

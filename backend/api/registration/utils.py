@@ -146,6 +146,7 @@ async def verify_email_change_via_code(code: int, session: AsyncSession, user: U
         raise HTTPException(status_code=404, detail="User not found")
     result.email = result.pending_email
     result.pending_email = None
+    result.user_version += 1
     await session.delete(verify_code)
     await session.commit()
 

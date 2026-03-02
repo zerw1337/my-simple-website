@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from pydantic import EmailStr
 
 from api.auth.schemas import UserOut
@@ -25,6 +25,7 @@ async def change_current_user_password(new_password: str, in_user: UserOut,sessi
     return {"success": True}
 
 async def change_current_user_pending_email(new_email: EmailStr, in_user: UserOut, session: AsyncSession):
+    await check_if_email_is_already_taken(email=new_email, session=session)
     query = (
         select(Users)
         .where(Users.id == in_user.id)
@@ -38,3 +39,15 @@ async def change_current_user_pending_email(new_email: EmailStr, in_user: UserOu
         await session.commit()
         return {"success": True}
     raise HTTPException(status_code=403, detail="New email is the same as old one")
+
+
+async def check_if_email_is_already_taken(email: EmailStr | str, session: AsyncSession) -> bool:
+    query = (
+        select(Users)
+        .where(or_(Users.email == email, Users.pending_email == email))
+    )
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
+    if result:
+        raise HTTPException(status_code=403, detail="Email already taken")
+    return True

@@ -10,6 +10,7 @@ from src.models.models import Users, Profiles, VerifyCodes, VerifyCodesEnum
 from api.auth.schemas import UserOut
 
 
+
 def encode_password(password: str) -> str:
     salt = bcrypt.gensalt()
     pwd_bytes = password.encode()
@@ -32,6 +33,8 @@ async def check_existing_profiles(user: UserOut, session: AsyncSession):
         raise HTTPException(status_code=403, detail=f"Profile for user with id: {user.id} already exists")
 
 async def create_new_user(user: CreateUser, session: AsyncSession):
+    from api.users.crud import check_if_email_is_already_taken
+    await check_if_email_is_already_taken(email=user.email, session=session)
     new_user = Users(
         username=user.username,
         email=user.email,

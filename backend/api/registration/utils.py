@@ -63,7 +63,7 @@ async def create_new_profile(profile: CreateProfile, user: UserOut, session: Asy
         raise HTTPException(status_code=403, detail="Profile for that user id already exists")
 
 
-async def check_if_current_users_verify_code_exists(code_type: VerifyCodesEnum, user: CreateUser, session: AsyncSession):
+async def check_if_current_users_verify_code_exists(code_type: VerifyCodesEnum, user: CreateUser | UserOut, session: AsyncSession):
     query = (
         select(Users)
         .where(Users.username == user.username)

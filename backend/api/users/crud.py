@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, and_
 from pydantic import EmailStr
 
 from api.auth.schemas import UserOut
@@ -50,4 +50,15 @@ async def check_if_email_is_already_taken(email: EmailStr | str, session: AsyncS
     result = res.scalar_one_or_none()
     if result:
         raise HTTPException(status_code=403, detail="Email already taken")
+    return True
+
+async def check_if_current_user_has_pending_email(user: UserOut, session: AsyncSession):
+    query = (
+        select(Users)
+        .where(and_(Users.id == user.id, Users.pending_email != None))
+    )
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
+    if not result:
+        raise HTTPException(status_code=403, detail="There is no pending email to change")
     return True

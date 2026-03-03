@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import EmailStr
 
@@ -19,12 +19,12 @@ async def change_password(new_password: str, user: UserOut = Depends(get_auth), 
     return await change_current_user_password(new_password=new_password, in_user=user, session=session)
 
 @users_router.patch("/settings/change_email/")
-async def change_email(new_email: EmailStr, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
+async def change_email(background_tasks: BackgroundTasks, new_email: EmailStr, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
     await change_current_user_pending_email(new_email=new_email, in_user=user, session=session)
     code = generate_verify_code()
     html = generate_html_verify_message_for_manage_account(code=code, username=user.username)
     await upload_verify_code_to_database(code=code, code_type=VerifyCodesEnum.manage_account, user=user, session=session)
-    await send_email(user=user, subject="Confirm recent email change", html=html)
+    background_tasks.add_task(send_email, user=user, subject="Confirm recent email change", html=html)
     return {"status": "Request pending, email with confirmation code sent to your old email"}
 
 @users_router.post("/settings/change_email/confirm/")

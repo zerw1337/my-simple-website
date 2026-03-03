@@ -1,0 +1,23 @@
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict
+
+from api.auth.schemas import UserOut
+from api.categories.schemas import Category
+
+
+class CreatePost(BaseModel):
+    title: str
+    content: str
+    category_id: int
+
+class PostOut(BaseModel):
+    id: int
+    title: str
+    content: str
+    category: Category
+    user: UserOut
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+

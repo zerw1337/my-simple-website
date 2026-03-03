@@ -71,6 +71,8 @@ class Categories(Base):
     emoji: Mapped[str] = mapped_column(String(8), nullable=True)
     description: Mapped[str] = mapped_column(String(256), nullable=True)
 
+    posts: Mapped["Posts"] = relationship("Posts", back_populates="category")
+
 class Posts(Base):
     __tablename__ = 'posts'
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -82,3 +84,4 @@ class Posts(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(), onupdate=datetime.datetime.utcnow, nullable=False)
 
     user: Mapped["Users"] = relationship("Users", back_populates="posts")
+    category: Mapped["Categories"] = relationship("Categories", back_populates="posts")

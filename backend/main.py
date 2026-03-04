@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends
 from contextlib import asynccontextmanager
 import uvicorn
+from starlette.middleware.cors import CORSMiddleware
 
 from api.categories.views import cat_router
 from src.models.database import db_dispose
@@ -32,6 +33,12 @@ app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(cat_router)
 
+app.add_middleware(CORSMiddleware,
+                    allow_origins=["http://127.0.0.1:5500"],
+                    allow_credentials=True,
+                    allow_methods=["*"],
+                    allow_headers=["*"]
+                   )
 
 @app.get('/')
 async def root(user: UserOut = Depends(get_auth)):

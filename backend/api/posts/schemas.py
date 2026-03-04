@@ -10,6 +10,11 @@ class CreatePost(BaseModel):
     content: str
     category_id: int
 
+class UpdatePost(BaseModel):
+    title: str | None = None
+    category_id: int | None = None
+    content: str | None = None
+
 class PostOut(BaseModel):
     id: int
     title: str

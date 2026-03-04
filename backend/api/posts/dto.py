@@ -10,3 +10,6 @@ def get_all_posts_dto(posts: Sequence[Posts]) -> list[PostOut]:
         res = PostOut.model_validate(post)
         result.append(res)
     return result
+
+def get_post_by_id_dto(post: Posts) -> PostOut:
+    return PostOut.model_validate(post)

@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from typing import Sequence
 
 from api.auth.schemas import UserOut
-from api.posts.schemas import CreatePost
+from api.posts.schemas import CreatePost, PostOut, UpdatePost
 from src.models.models import Posts, Categories, Users
 
 
@@ -38,3 +38,38 @@ async def get_all_posts(session: AsyncSession) -> Sequence[Posts]:
     res = await session.execute(query)
     results = res.scalars().all()
     return results
+
+async def get_current_post_by_id(post_id: int, session: AsyncSession) -> Posts:
+    query = (
+        select(Posts)
+        .where(Posts.id == post_id)
+        .options(selectinload(Posts.user))
+        .options(selectinload(Posts.category))
+    )
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
+    if not result:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return result
+
+async def edit_current_post(post_id: int, edited_post: UpdatePost, session: AsyncSession):
+    post = await get_current_post_by_id(post_id, session)
+    for name, val in edited_post.dict(exclude_unset=True).items():
+        setattr(post, name, val)
+    session.add(post)
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(status_code=403, detail="Something went wrong")
+    return {"status": "Post edited"}
+
+async def delete_post_by_id(post_id: int, session: AsyncSession):
+    post = await get_current_post_by_id(post_id, session)
+    await session.delete(post)
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(status_code=403, detail="Something went wrong")
+    return {"status": "Post deleted"}

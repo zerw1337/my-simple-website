@@ -87,6 +87,7 @@ class Posts(Base):
     user: Mapped["Users"] = relationship("Users", back_populates="posts")
     category: Mapped["Categories"] = relationship("Categories", back_populates="posts")
     comments: Mapped["Comments"] = relationship("Comments", back_populates="post")
+    reactions: Mapped["Reactions"] = relationship("Reactions", back_populates="post")
 
 class Comments(Base):
     __tablename__ = 'comments'
@@ -124,3 +125,4 @@ class Reactions(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
     post_id: Mapped[int] = mapped_column(ForeignKey('posts.id'), nullable=False)
 
+    post: Mapped["Posts"] = relationship("Posts", back_populates="reactions")

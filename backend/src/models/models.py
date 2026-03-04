@@ -27,6 +27,7 @@ class Users(Base):
     refresh_tokens: Mapped["RefreshTokens"] = relationship("RefreshTokens", back_populates="user", cascade="all, delete-orphan")
     profile: Mapped["Profiles"] = relationship("Profiles" ,back_populates="user", uselist=False, cascade="all, delete-orphan")
     posts: Mapped["Posts"] = relationship("Posts", back_populates="user", cascade="all, delete-orphan")
+    comments: Mapped["Comments"] = relationship("Comments", back_populates="user", cascade="all, delete-orphan")
 
 
 
@@ -85,3 +86,41 @@ class Posts(Base):
 
     user: Mapped["Users"] = relationship("Users", back_populates="posts")
     category: Mapped["Categories"] = relationship("Categories", back_populates="posts")
+    comments: Mapped["Comments"] = relationship("Comments", back_populates="post")
+
+class Comments(Base):
+    __tablename__ = 'comments'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    content: Mapped[str] = mapped_column(String(255), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    post_id: Mapped[int] = mapped_column(ForeignKey('posts.id'), nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now(), nullable=False)
+
+    post: Mapped["Posts"] = relationship("Posts", back_populates="comments")
+    user: Mapped["Users"] = relationship("Users", back_populates="comments")
+
+class ReactionsEnum(str, Enum):
+    CLOWN = "clown"
+    LIKE = "like"
+    DISLIKE = "dislike"
+    SMILE = "smile"
+    LAUGH = "laugh"
+    ANGRY = "angry"
+    SAD = "sad"
+    FIRE = "fire"
+
+class Reactions(Base):
+    __tablename__ = 'reactions'
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "post_id",
+            name="uq_user_post_reaction"
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    reaction: Mapped["ReactionsEnum"] = mapped_column(SAEnum(ReactionsEnum, name="reactions_enum_val"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    post_id: Mapped[int] = mapped_column(ForeignKey('posts.id'), nullable=False)
+

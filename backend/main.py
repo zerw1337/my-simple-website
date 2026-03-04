@@ -7,6 +7,7 @@ from src.models.database import db_dispose
 from api.auth.schemas import UserOut
 from api.auth.dependencies import get_auth
 
+from api.reactions.views import reaction_router
 from api.users.views import users_router
 from api.auth.views import auth_router
 from api.registration.views import register_router
@@ -22,6 +23,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+app.include_router(reaction_router)
 app.include_router(comments_router)
 app.include_router(posts_router)
 app.include_router(profiles_router)

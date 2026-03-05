@@ -12,11 +12,11 @@
 }
 @font-face {
     font-family: Arimo;
-    src: url(../fonts/Arimo-Italic-VariableFont_wght) format("ttf");
+    src: url(../fonts/Arimo-Italic-VariableFont_wght.ttf) format("truetype");
 }
 @font-face {
-    font-family: Roboto;
-    src: url(../fonts/Roboto-VariableFont_wdth_wght) format("ttf");
+    font-family: Inter;
+    src: url(../fonts/Inter_18pt-MediumItalic.ttf) format("truetype");
 }
 body{
     padding: 0;
@@ -101,9 +101,6 @@ nav{
     margin: 0;
     gap: 0.5em;
 }
-.menu-icons a{
-    
-}
 ul li a {
     color: var(--menu-item-color); /* начальный цвет иконки */
     transition: color 0.1s ease;
@@ -125,7 +122,7 @@ ul li a svg {
     height: 85vh;
     padding-top: 4em;
     color: var(--main-text-color);
-    font-family: "Roboto", sans-serif;
+    font-family: Inter, sans-serif;
     font-optical-sizing: auto;
     font-weight: lighter;
     font-style: normal;
@@ -150,9 +147,6 @@ ul li a svg {
 .main-content-pic-message p{
     text-align: justify;
     margin: 0;
-}
-.main-content-main{
-
 }
 .main-h{
     font-size: var(--main-h-size);

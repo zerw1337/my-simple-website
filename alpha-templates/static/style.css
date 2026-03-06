@@ -5,10 +5,6 @@
     --menu-item-color: rgb(211, 211, 211);
     --menu-icon-color-after: rgb(138, 138, 138);
     --main-text-color: rgb(236, 236, 236);
-    --main-h-size: 1.7em;
-    --main-text-size: 1em;
-    --horizontal-line-color: rgb(88, 88, 88);
-
 }
 @font-face {
     font-family: Arimo;
@@ -55,7 +51,7 @@ nav{
     font-optical-sizing: auto;
     font-weight: normal;
     font-style: normal;
-    font-size: 2em;
+    font-size: 1.7em;
     text-decoration: none;
     transition: background-color 0.1s ease, color 0.1s ease;
 }

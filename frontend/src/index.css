@@ -7,6 +7,17 @@
     --body-padding: 18rem;
     --main-text-size: 21px;
 }
+@keyframes gradientMove {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
 
 body {
     background-color: var(--bg-main);
@@ -17,6 +28,29 @@ body {
 header, main, footer{
     padding-left: var(--body-padding);
     padding-right: var(--body-padding);
+}
+
+footer{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--menu-icon-color-after);
+    font-size: 0.5rem;
+}
+footer p{
+    font-size: 1rem;
+    word-spacing: 0.2rem;
+}
+
+footer a{
+    text-decoration: none;
+    font-weight: bold;
+    background: linear-gradient(45deg, #ff5a00, #7f00ff, #00ffe7);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradientMove 3s linear infinite;
+    letter-spacing: 0.05em;
 }
 
 .logo {

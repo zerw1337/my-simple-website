@@ -29,7 +29,9 @@ header, main, footer{
     padding-left: var(--body-padding);
     padding-right: var(--body-padding);
 }
-
+main{
+    flex: 1;
+}
 footer{
     display: flex;
     align-items: center;
@@ -101,4 +103,14 @@ nav a:hover {
 p{
     font-size: var(--main-text-size);
     line-height: 1.6;
+}
+.under-five-posts {
+    display: flex;
+    justify-content: center;
+    word-spacing: 0.1rem;
+}
+.under-five-posts a{
+    text-decoration: none;
+    color: var(--menu-icon-color-after);
+    word-spacing: 0.1rem;
 }

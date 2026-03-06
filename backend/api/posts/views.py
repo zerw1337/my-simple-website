@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.auth.dependencies import get_auth_admin
 from api.auth.schemas import UserOut
-from api.posts.crud import create_new_post, get_all_posts, get_current_post_by_id, edit_current_post, delete_post_by_id
+from api.posts.crud import create_new_post, get_all_posts, get_current_post_by_id, edit_current_post, delete_post_by_id, \
+    get_all_posts_first_five
 from api.posts.dto import get_all_posts_dto, get_post_by_id_dto
 from api.posts.schemas import CreatePost, PostOut, UpdatePost
 from src.models.database import get_session
@@ -17,6 +18,11 @@ async def create_post(new_post : CreatePost, user: UserOut = Depends(get_auth_ad
 @posts_router.get("/")
 async def get_posts(session: AsyncSession = Depends(get_session)):
     posts_orm = await get_all_posts(session=session)
+    return get_all_posts_dto(posts=posts_orm)
+
+@posts_router.get("/first_five/")
+async def get_first_five_posts(session: AsyncSession = Depends(get_session)):
+    posts_orm = await get_all_posts_first_five(session=session)
     return get_all_posts_dto(posts=posts_orm)
 
 @posts_router.get("/{id}/")

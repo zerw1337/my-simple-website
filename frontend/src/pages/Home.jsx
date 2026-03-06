@@ -1,5 +1,5 @@
 import HomeStatic from "../components/HomeStatic.jsx"
-import Posts from "../components/PostIconMain.jsx"
+import MainPostsList from "../api/MainPosts.jsx";
 
 function Home() {
     return (
@@ -8,12 +8,14 @@ function Home() {
             <div>
                 <h1>Посты</h1>
                 <hr/>
-                <Posts
-                    title="Мой первый пост"
-                    author="Глеб Иванов"
-                    date="6 марта 2026"
-                    content="Это пример содержимого поста. Тут можно писать текст, вставлять ссылки и форматирование."
-                />
+                <MainPostsList />
+                <div className="under-five-posts">
+                    <p>
+                        Больше постов вы найдете <a href="/posts">здесь</a>
+                    </p>
+                </div>
+
+
             </div>
         </main>
     );

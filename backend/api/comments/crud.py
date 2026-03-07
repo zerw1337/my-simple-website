@@ -19,8 +19,6 @@ async def get_all_comments_by_post_id(post_id: int, session: AsyncSession) -> Se
     )
     res = await session.execute(query)
     comments = res.scalars().all()
-    if not comments:
-        raise HTTPException(status_code=404, detail=f"No comments found for this post [id:{post_id}]")
     return comments
 
 async def get_all_comments_by_user_id(user_id: int, session: AsyncSession) -> Sequence[Comments]:

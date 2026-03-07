@@ -18,10 +18,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 @auth_router.post("/login/", response_model=Token, summary="Выполнить вход в учетную запись, возвращает access+refresh токены")
 async def login(username: str = Form(...), password: str = Form(...), session: AsyncSession = Depends(get_session)):
     user = await verify_login(login=username, password=password, session=session)
-    access_token = create_access_token(id=str(user.id), username=user.username, user_version=user.user_version)
-    refresh_token = create_refresh_token(id=user.id, username=user.username, user_version=user.user_version)
+    access_token = create_access_token(id=str(user.id), username=user.username, user_version=user.user_version, user=user)
+    refresh_token = create_refresh_token(id=user.id, username=user.username, user_version=user.user_version, user=user)
     await submit_refresh_token(token=refresh_token, session=session)
-    token = Token(access_token=access_token, refresh_token=refresh_token)
+    token = Token(access_token=access_token, refresh_token=refresh_token, user=user.username)
     return token
 
 @auth_router.get("/refresh/", response_model=AccessToken, summary="Получить access token, срок жизни 15 минут")

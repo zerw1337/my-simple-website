@@ -32,6 +32,7 @@
     color: var(--main-text-color);
     outline: none;
     transition: border 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
 }
 
 .login-form input:focus {
@@ -59,8 +60,6 @@
 }
 
 .login-form button:hover {
-    background: linear-gradient(45deg, #ff5a00, #7f00ff, #00ffe7);
-    background-size: 300% 100%;
+    background-color: #03b0d0;
     color: var(--bg-main);
-    animation: gradientMove 3s linear infinite;
 }

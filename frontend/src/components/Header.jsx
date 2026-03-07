@@ -46,7 +46,6 @@ function Header() {
 
                         <button
                             onClick={logoutUser}
-                            className="header-logout"
                             style={{
                                 fontFamily: "'Poppins', sans-serif",
                                 fontWeight: 600,
@@ -54,10 +53,19 @@ function Header() {
                                 background: "none",
                                 border: "none",
                                 cursor: "pointer",
-                                marginLeft: "1rem",
                                 padding: "0.2rem 0.4rem",
+                                marginLeft: "1rem",
+                                fontSize: "inherit",
                                 borderRadius: "4px",
                                 transition: "all 0.3s ease",
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.backgroundColor = "var(--logo-color)";
+                                e.currentTarget.style.color = "var(--bg-main)";
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.backgroundColor = "transparent";
+                                e.currentTarget.style.color = "var(--menu-item-color)";
                             }}
                         >
                             Выйти

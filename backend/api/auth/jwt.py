@@ -2,6 +2,8 @@ from jose import jwt
 from datetime import datetime, timedelta
 import uuid
 
+from sqlalchemy.testing.pickleable import User
+
 from src.config import settings
 from .schemas import token_fields
 
@@ -19,7 +21,7 @@ def decode_jwt(token: str) -> dict:
         algorithms=[settings.JWT_ALGORITHM]
     )
 
-def create_access_token(id: str, username: str, user_version: int):
+def create_access_token(id: str, username: str, user_version: int, user):
     payload = {
         "sub": str(id),
         "username": username,
@@ -27,10 +29,11 @@ def create_access_token(id: str, username: str, user_version: int):
         "iat": datetime.utcnow(),
         "exp": datetime.utcnow() + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRES_MINUTES),
         "user_version": str(user_version),
+        "is_superuser": user.is_superuser,
     }
     return encode_jwt(payload=payload)
 
-def create_refresh_token(id: str, username: str, user_version: int):
+def create_refresh_token(id: str, username: str, user_version: int, user):
     payload = {
         "sub": str(id),
         "username": username,
@@ -39,5 +42,6 @@ def create_refresh_token(id: str, username: str, user_version: int):
         "exp": datetime.utcnow() + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRES_DAYS),
         "tid": str(uuid.uuid4().hex),
         "user_version": str(user_version),
+        "is_superuser": user.is_superuser,
     }
     return encode_jwt(payload=payload)

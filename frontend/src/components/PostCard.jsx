@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { getPostById } from "../api/Posts";
 import "./styles/PostCardFull.css"
+import PostReactions from "./PostReactions";
+import PostComments from "./PostComments";
 
 function PostCardFullWrapper() {
     const { id } = useParams();
@@ -15,11 +17,10 @@ function PostCardFullWrapper() {
                 const formattedPost = {
                     id: data.id,
                     title: data.title,
-                    user: data.user || null,
-                    created_at: data.created_at,
+                    author: data.user?.username || "Аноним",
+                    date: data.created_at,
                     content: data.content,
-                    category: data.category || null,
-                    image: data.image || null,
+                    category: data.category || null
                 };
                 setPost(formattedPost);
                 setLoading(false);
@@ -52,26 +53,29 @@ function PostCardFull({ post }) {
             fontFamily: "'Arial', sans-serif",
             lineHeight: "1.6"
         }}>
-            {/* Заголовок и дата */}
+
             <div className="full-post-header" style={{ marginBottom: "1rem" }}>
                 <h2 style={{ margin: 0, fontSize: "2rem" }}>{post.title}</h2>
                 <span style={{ fontSize: "0.9rem", color: "#a0a0a0" }}>
-                    {post.created_at ? new Date(post.created_at).toLocaleString() : "Неизвестно"}
+                    {post.date ? new Date(post.date).toLocaleString() : "Неизвестно"}
                 </span>
             </div>
 
-            {/* Автор и категория */}
+
             <div className="full-post-meta" style={{ marginBottom: "1rem", display: "flex", gap: "1rem", fontSize: "0.95rem" }}>
-                <span>Автор: <b>{post.user?.username || "Аноним"}</b></span>
+                <span>Автор: <b>{post.author}</b></span>
                 {post.category && (
                     <span>Категория: <b>{post.category.emoji} {post.category.name}</b></span>
                 )}
             </div>
 
-            {/* Контент */}
+
             <div className="full-post-content">
                 <p>{post.content}</p>
             </div>
+
+            <PostReactions postId={post.id} />
+            <PostComments postId={post.id} />
         </div>
     );
 }

@@ -39,7 +39,7 @@ async def get_all_posts(session: AsyncSession) -> Sequence[Posts]:
     results = res.scalars().all()
     return results
 
-async def get_all_posts_first_five(session: AsyncSession) -> Sequence[Posts]:
+async def get_five_latest_posts(session: AsyncSession) -> Sequence[Posts]:
     query = (
         select(Posts)
         .options(selectinload(Posts.category))

@@ -13,14 +13,7 @@ function App() {
             <Header />
             <Routes>
                 <Route path="/" element={<Home />} />
-                <Route
-                    path="/posts/:id"
-                    element={
-                        <ProtectedRoute>
-                            <Post />
-                        </ProtectedRoute>
-                    }
-                />
+                <Route path="/posts/:id" element={<Post />} />
                 <Route path="/login" element={<Login />} />
             </Routes>
             <Footer />

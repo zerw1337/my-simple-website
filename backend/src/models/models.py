@@ -27,7 +27,7 @@ class Users(Base):
     refresh_tokens: Mapped["RefreshTokens"] = relationship("RefreshTokens", back_populates="user", cascade="all, delete-orphan")
     profile: Mapped["Profiles"] = relationship("Profiles" ,back_populates="user", uselist=False, cascade="all, delete-orphan")
     posts: Mapped["Posts"] = relationship("Posts", back_populates="user", cascade="all, delete-orphan")
-    comments: Mapped["Comments"] = relationship("Comments", back_populates="user", cascade="all, delete-orphan")
+    comments: Mapped[list["Comments"]] = relationship("Comments", back_populates="user", cascade="all, delete-orphan")
 
 
 
@@ -86,7 +86,7 @@ class Posts(Base):
 
     user: Mapped["Users"] = relationship("Users", back_populates="posts")
     category: Mapped["Categories"] = relationship("Categories", back_populates="posts")
-    comments: Mapped["Comments"] = relationship("Comments", back_populates="post")
+    comments: Mapped[list["Comments"]] = relationship("Comments", back_populates="post")
     reactions: Mapped["Reactions"] = relationship("Reactions", back_populates="post")
 
 class Comments(Base):

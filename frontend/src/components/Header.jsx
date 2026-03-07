@@ -1,7 +1,11 @@
 import { FaUser, FaSignInAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import React, { useContext } from "react";
+import { AuthContext } from "../context/AuthContext.jsx";
 
 function Header() {
+    const { user, logoutUser } = useContext(AuthContext);
+
     return (
         <header
             style={{
@@ -21,12 +25,60 @@ function Header() {
                 <Link to="/about">О себе</Link>
                 <Link to="/contact">Контакты</Link>
 
-                <Link to="/login" style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                    <FaSignInAlt /> Login
-                </Link>
-                <Link to="/register" style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                    <FaUser /> Register
-                </Link>
+                {user ? (
+                    <>
+
+                        <span
+                            className="header-user"
+                            style={{
+                                fontFamily: "'Poppins', sans-serif",
+                                fontWeight: 600,
+                                color: "var(--menu-item-color)",
+                                cursor: "default",
+                                marginLeft: "1rem",
+                                padding: "0.2rem 0.4rem",
+                                borderRadius: "4px",
+                                transition: "all 0.3s ease",
+                            }}
+                        >
+                            <a href="/profile">{user.username}</a>
+                        </span>
+
+                        <button
+                            onClick={logoutUser}
+                            className="header-logout"
+                            style={{
+                                fontFamily: "'Poppins', sans-serif",
+                                fontWeight: 600,
+                                color: "var(--menu-item-color)",
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                marginLeft: "1rem",
+                                padding: "0.2rem 0.4rem",
+                                borderRadius: "4px",
+                                transition: "all 0.3s ease",
+                            }}
+                        >
+                            Выйти
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        <Link
+                            to="/login"
+                            style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}
+                        >
+                            <FaSignInAlt /> Login
+                        </Link>
+                        <Link
+                            to="/register"
+                            style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}
+                        >
+                            <FaUser /> Register
+                        </Link>
+                    </>
+                )}
             </nav>
         </header>
     );

@@ -1,0 +1,66 @@
+.login-form-wrapper {
+    max-width: 400px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background-color: var(--bg-main);
+    color: var(--main-text-color);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    font-family: 'Poppins', sans-serif;
+}
+
+.login-form h2 {
+    margin-bottom: 1rem;
+    text-align: center;
+    font-size: 2rem;
+}
+
+.login-form label {
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.login-form input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: var(--main-text-size);
+    border: 1px solid #444;
+    border-radius: 6px;
+    background-color: #2a2a2a;
+    color: var(--main-text-color);
+    outline: none;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-form input:focus {
+    border-color: var(--logo-color);
+    box-shadow: 0 0 5px var(--logo-color);
+}
+
+.login-error {
+    color: #ff5555;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.login-form button {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--logo-color);
+    color: var(--bg-main);
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.login-form button:hover {
+    background: linear-gradient(45deg, #ff5a00, #7f00ff, #00ffe7);
+    background-size: 300% 100%;
+    color: var(--bg-main);
+    animation: gradientMove 3s linear infinite;
+}

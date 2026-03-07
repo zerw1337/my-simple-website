@@ -86,6 +86,17 @@ nav a {
 nav a:hover {
     color: var(--logo-color);
 }
+.header-user {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: var(--menu-item-color);
+    text-decoration: none;
+    margin-left: 1rem;
+}
+
+.header-user {
+    color: var(--logo-color);
+}
 
 .logo a {
     font-family: 'Poppins', sans-serif;

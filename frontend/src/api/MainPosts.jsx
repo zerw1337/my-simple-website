@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import PostIconMain from "../components/PostIconMain.jsx";
+import moment from 'moment';
 
 function MainPostsList() {
     const [posts, setPosts] = useState([]);
@@ -28,7 +29,7 @@ function MainPostsList() {
                     id={post.id}
                     title={post.title}
                     author={post.user.username}
-                    date={post.created_at}
+                    date={moment(post.created_at).format("YYYY-MM-DD")}
                     content={post.content}
                 />
             ))}

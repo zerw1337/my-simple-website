@@ -28,7 +28,7 @@ function PostComments({ postId }) {
     };
 
     const handleSubmit = async () => {
-        if (!text.trim() || loading) return;
+        if (!text.trim() || text.trim().length < 3 || text.trim().length > 255 || loading) return;
         setLoading(true);
         try {
             await createComment(postId, text.trim());
@@ -79,9 +79,12 @@ function PostComments({ postId }) {
                         onFocus={e => e.target.style.borderColor = "var(--logo-color)"}
                         onBlur={e => e.target.style.borderColor = "#444"}
                     />
+                    <span style={{ fontSize: "0.8rem", color: text.length > 255 ? "#ff5555" : "#a0a0a0", alignSelf: "flex-end" }}>
+                        {text.length}/255
+                    </span>
                     <button
                         onClick={handleSubmit}
-                        disabled={loading || !text.trim()}
+                        disabled={loading || text.trim().length < 3 || text.trim().length > 255}
                         style={{
                             alignSelf: "flex-end",
                             padding: "0.4rem 1.2rem",
@@ -97,6 +100,7 @@ function PostComments({ postId }) {
                         }}
                         onMouseEnter={e => { if (!loading && text.trim()) e.currentTarget.style.background = "#03b0d0"; }}
                         onMouseLeave={e => e.currentTarget.style.background = "var(--logo-color)"}
+
                     >
                         Отправить
                     </button>
@@ -136,6 +140,7 @@ function PostComments({ postId }) {
                                             }}
                                             onMouseEnter={e => e.currentTarget.style.color = "#ff5555"}
                                             onMouseLeave={e => e.currentTarget.style.color = "#666"}
+
                                         >
                                             удалить
                                         </button>

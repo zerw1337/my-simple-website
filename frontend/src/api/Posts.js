@@ -52,3 +52,14 @@ export async function deleteComment(commentId) {
     });
     return await res.json();
 }
+export async function getNextPost(currentPostId) {
+    const res = await fetch(`${API_URL}/posts/next_post/?current_post_id=${currentPostId}`);
+    if (!res.ok) return null;
+    return await res.json();
+}
+
+export async function getPreviousPost(currentPostId) {
+    const res = await fetch(`${API_URL}/posts/previous_post/?current_post_id=${currentPostId}`);
+    if (!res.ok) return null;
+    return await res.json();
+}

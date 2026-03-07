@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { getPostById } from "../api/Posts";
+import { getPostById, getNextPost, getPreviousPost } from "../api/Posts";
 import "./styles/PostCardFull.css"
 import PostReactions from "./PostReactions";
 import PostComments from "./PostComments";
@@ -10,6 +10,8 @@ function PostCardFullWrapper() {
     const [post, setPost] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [prevId, setPrevId] = useState(null);
+    const [nextId, setNextId] = useState(null);
 
     useEffect(() => {
         getPostById(id)
@@ -30,17 +32,50 @@ function PostCardFullWrapper() {
                 setError("Не удалось загрузить пост");
                 setLoading(false);
             });
+
+        getNextPost(id).then(data => setNextId(data ? data.id : null));
+        getPreviousPost(id).then(data => setPrevId(data ? data.id : null));
     }, [id]);
 
-    if (loading) return <p>Загрузка поста...</p>;
+    if (loading) return (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "300px" }}>
+            <div style={{
+                width: "48px",
+                height: "48px",
+                border: "4px solid #333",
+                borderTop: "4px solid var(--logo-color)",
+                borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+            }} />
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+    );
     if (error) return <p>{error}</p>;
     if (!post) return <p>Пост не найден</p>;
 
-    return <PostCardFull post={post} />;
+    return <PostCardFull post={post} prevId={prevId} nextId={nextId} />;
 }
 
 
-function PostCardFull({ post }) {
+function PostCardFull({ post, prevId, nextId }) {
+    const navStyle = {
+        display: "flex",
+        justifyContent: "space-between",
+        marginBottom: "1rem",
+        paddingBottom: "1rem",
+        borderBottom: "1px solid #333",
+    };
+
+    const linkStyle = {
+        color: "var(--logo-color)",
+        textDecoration: "none",
+        fontFamily: "'Poppins', sans-serif",
+        fontWeight: 600,
+        padding: "0.2rem 0.4rem",
+        borderRadius: "4px",
+        transition: "all 0.3s ease",
+    };
+
     return (
         <div className="full-post-card" style={{
             maxWidth: "800px",
@@ -53,6 +88,20 @@ function PostCardFull({ post }) {
             fontFamily: "'Arial', sans-serif",
             lineHeight: "1.6"
         }}>
+            <div style={navStyle}>
+                {prevId ? (
+                    <a href={`/posts/${prevId}`} style={linkStyle}
+                       onMouseEnter={e => { e.currentTarget.style.backgroundColor = "var(--logo-color)"; e.currentTarget.style.color = "var(--bg-main)"; }}
+                       onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "var(--logo-color)"; }}
+                    >← Предыдущий</a>
+                ) : <span />}
+                {nextId ? (
+                    <a href={`/posts/${nextId}`} style={linkStyle}
+                       onMouseEnter={e => { e.currentTarget.style.backgroundColor = "var(--logo-color)"; e.currentTarget.style.color = "var(--bg-main)"; }}
+                       onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "var(--logo-color)"; }}
+                    >Следующий →</a>
+                ) : <span />}
+            </div>
 
             <div className="full-post-header" style={{ marginBottom: "1rem" }}>
                 <h2 style={{ margin: 0, fontSize: "2rem" }}>{post.title}</h2>
@@ -61,14 +110,12 @@ function PostCardFull({ post }) {
                 </span>
             </div>
 
-
             <div className="full-post-meta" style={{ marginBottom: "1rem", display: "flex", gap: "1rem", fontSize: "0.95rem" }}>
                 <span>Автор: <b>{post.author}</b></span>
                 {post.category && (
                     <span>Категория: <b>{post.category.emoji} {post.category.name}</b></span>
                 )}
             </div>
-
 
             <div className="full-post-content">
                 <p>{post.content}</p>
@@ -79,6 +126,5 @@ function PostCardFull({ post }) {
         </div>
     );
 }
-
 
 export default PostCardFullWrapper;

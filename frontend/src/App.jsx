@@ -6,6 +6,7 @@ import Footer from "./components/Footer.jsx";
 import Post from "./pages/Post.jsx";
 import Login from "./pages/Login.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
     return (
@@ -17,6 +18,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
             </Routes>
             <Footer />
+            <ScrollToTop />
         </Router>
     );
 }

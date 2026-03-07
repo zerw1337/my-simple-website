@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from api.auth.schemas import UserOut
 
 
@@ -18,5 +18,5 @@ class Comment(BaseModel):
 
 
 class CreateComment(BaseModel):
-    content: str
+    content: str = Field(... ,max_length=255, min_length=3)
     post_id: int

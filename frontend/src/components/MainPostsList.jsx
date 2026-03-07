@@ -1,14 +1,34 @@
 import { useState, useEffect } from "react";
-import PostIconMain from "../components/PostIconMain.jsx";
-import moment from 'moment';
+import { getLatestPosts } from "../api/Posts.js";
+import "./styles/PostIconMain_styles.css";
+import moment from "moment";
+import {Link} from "react-router-dom";
+
+function PostIconMain({ id, title, category, author, date, content }) {
+    return (
+        <Link to={`/posts/${id}`} className="post-link">
+            <article className="post">
+                <h2 className="post-title">{title}</h2>
+                <span className="post-category">{category}</span>
+                <div className="post-meta">
+                    <span className="post-author">{author}</span>
+                    <span className="post-date">{date}</span>
+                </div>
+
+                <p className="post-content">
+                    {content}
+                </p>
+            </article>
+        </Link>
+    );
+}
 
 function MainPostsList() {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch("http://127.0.0.1:8000/posts/first_five/")
-            .then(res => res.json())
+        getLatestPosts()
             .then(data => {
                 setPosts(data);
                 setLoading(false);
@@ -28,6 +48,7 @@ function MainPostsList() {
                     key={post.id}
                     id={post.id}
                     title={post.title}
+                    category={post.category.name}
                     author={post.user.username}
                     date={moment(post.created_at).format("YYYY-MM-DD")}
                     content={post.content}

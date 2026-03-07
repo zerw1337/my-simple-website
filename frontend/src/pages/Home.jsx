@@ -1,10 +1,10 @@
-import HomeStatic from "../components/HomeStatic.jsx"
-import MainPostsList from "../api/MainPosts.jsx";
+import HomeMainStatic from "../components/HomeMainStatic.jsx"
+import MainPostsList from "../components/MainPostsList.jsx";
 
 function Home() {
     return (
         <main>
-            <HomeStatic />
+            <HomeMainStatic />
             <div>
                 <h1>Посты</h1>
                 <hr/>

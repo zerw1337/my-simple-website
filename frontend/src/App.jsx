@@ -3,6 +3,7 @@ import './App.css';
 import Header from "./components/Header.jsx";
 import Home from "./pages/Home.jsx";
 import Footer from "./components/Footer.jsx";
+import Post from "./pages/Post.jsx";
 
 function App() {
     return (
@@ -10,7 +11,7 @@ function App() {
             <Header />
             <Routes>
                 <Route path="/" element={<Home />} />
-
+                <Route path="/posts/:id" element={<Post />} />
             </Routes>
             <Footer />
         </Router>

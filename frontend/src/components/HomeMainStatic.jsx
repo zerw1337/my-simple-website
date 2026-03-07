@@ -1,6 +1,6 @@
 import mainImg from "../assets/images/main-img.png";
 
-function HomeStatic() {
+function HomeMainStatic() {
     return (
         <div>
             <h1 style={{paddingTop: "3em"}}>
@@ -20,4 +20,4 @@ function HomeStatic() {
     )
 }
 
-export default HomeStatic;
+export default HomeMainStatic;

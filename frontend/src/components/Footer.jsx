@@ -1,5 +1,5 @@
 import { FaGithub, FaTelegramPlane, FaSteam, FaEnvelope } from 'react-icons/fa';
-import './Footer.css';
+import './styles/Footer.css';
 
 function Footer(){
     return (

@@ -118,3 +118,18 @@ p{
 .under-five-posts a:hover{
     color: var(--main-text-color);
 }
+.post-category {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+
+    padding: 3px 10px;
+    margin-bottom: 8px;
+
+    color: var(--logo-color);
+    background-color: rgba(4, 198, 233, 0.12);
+
+    border-radius: 999px;
+    text-transform: uppercase;
+}

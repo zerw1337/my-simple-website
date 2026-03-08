@@ -30,6 +30,6 @@ async def get_new_access_token_by_refresh(token: str = Depends(oauth2_scheme), s
     validate_token_type(payload=decoded, expected_type=token_fields.REFRESH_TOKEN_FIELD)
     await validate_refresh_token_by_db(token=decoded, session=session)
     user = await get_current_user(token=token, session=session)
-    token = AccessToken(access_token=create_access_token(id=str(user.id), username=user.username, user_version=user.user_version))
+    token = AccessToken(access_token=create_access_token(id=str(user.id), username=user.username, user_version=user.user_version, user=user))
     return token
 

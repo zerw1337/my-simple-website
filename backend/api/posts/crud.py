@@ -87,6 +87,18 @@ async def get_current_post_by_id(post_id: int, session: AsyncSession) -> Posts:
         raise HTTPException(status_code=404, detail="Post not found")
     return result
 
+async def get_posts_by_user_id(user_id: int, session: AsyncSession) -> Sequence[Posts]:
+    query = (
+        select(Posts)
+        .where(Posts.user_id == user_id)
+        .options(selectinload(Posts.category))
+        .options(selectinload(Posts.user))
+        .order_by(Posts.id.desc())
+    )
+    res = await session.execute(query)
+    results = res.scalars().all()
+    return results
+
 async def edit_current_post(post_id: int, edited_post: UpdatePost, session: AsyncSession):
     post = await get_current_post_by_id(post_id, session)
     for name, val in edited_post.dict(exclude_unset=True).items():

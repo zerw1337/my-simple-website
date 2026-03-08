@@ -36,7 +36,7 @@ function LoginForm() {
     };
 
     return (
-
+        <main>
         <div className="login-form-wrapper" style={{ marginTop: "9em", marginBottom: "10em" }}>
             <form className="login-form" onSubmit={handleSubmit}>
                 <h2>Вход</h2>
@@ -64,7 +64,7 @@ function LoginForm() {
                 <button type="submit">Войти</button>
             </form>
         </div>
-
+        </main>
     );
 }
 

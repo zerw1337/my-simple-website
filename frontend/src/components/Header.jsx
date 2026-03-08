@@ -5,6 +5,14 @@ import { AuthContext } from "../context/AuthContext.jsx";
 
 function Header() {
     const { user, logoutUser } = useContext(AuthContext);
+    const getMyId = () => {
+        const token = localStorage.getItem("access_token");
+        if (!token) return null;
+        try {
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            return payload.sub;
+        } catch { return null; }
+    };
 
     return (
         <header
@@ -41,7 +49,7 @@ function Header() {
                                 transition: "all 0.3s ease",
                             }}
                         >
-                            <a href="/profile">{user.username}</a>
+                            <a href={`/profile/${getMyId()}`}>{user.username}</a>
                         </span>
 
                         <button

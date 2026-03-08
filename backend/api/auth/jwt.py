@@ -30,6 +30,7 @@ def create_access_token(id: str, username: str, user_version: int, user):
         "exp": datetime.utcnow() + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRES_MINUTES),
         "user_version": str(user_version),
         "is_superuser": user.is_superuser,
+        "is_verified": user.is_verified,
     }
     return encode_jwt(payload=payload)
 
@@ -43,5 +44,6 @@ def create_refresh_token(id: str, username: str, user_version: int, user):
         "tid": str(uuid.uuid4().hex),
         "user_version": str(user_version),
         "is_superuser": user.is_superuser,
+        "is_verified": user.is_verified,
     }
     return encode_jwt(payload=payload)

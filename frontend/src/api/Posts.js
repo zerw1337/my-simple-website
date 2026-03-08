@@ -63,3 +63,22 @@ export async function getPreviousPost(currentPostId) {
     if (!res.ok) return null;
     return await res.json();
 }
+
+export async function getProfile(userId) {
+    const res = await fetch(`${API_URL}/profile/${userId}`);
+    if (!res.ok) return null;
+    return await res.json();
+}
+
+export async function getCommentsByUserId(userId) {
+    const res = await fetch(`${API_URL}/comments/${userId}/`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+}
+
+export async function getPostsByUserId(userId) {
+    const res = await fetch(`${API_URL}/posts/by_user/${userId}`);
+    if (!res.ok) return [];
+    return await res.json();
+}

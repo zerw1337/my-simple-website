@@ -25,7 +25,7 @@ async def get_all_comments_by_user_id(user_id: int, session: AsyncSession) -> Se
     query = (
         select(Comments)
         .where(Comments.user_id == user_id)
-        .options(selectinload(Comments.post))
+        .options(selectinload(Comments.user))
         .order_by(Comments.created_at.desc())
     )
     res = await session.execute(query)

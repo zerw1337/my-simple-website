@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.auth.dependencies import get_auth_admin
 from api.auth.schemas import UserOut
 from api.posts.crud import create_new_post, get_all_posts, get_current_post_by_id, edit_current_post, delete_post_by_id, \
-    get_five_latest_posts, get_next_post_after_this, get_previous_post_from_this
+    get_five_latest_posts, get_next_post_after_this, get_previous_post_from_this, get_posts_by_user_id
 from api.posts.dto import get_all_posts_dto, get_post_by_id_dto
 from api.posts.schemas import CreatePost, PostOut, UpdatePost
 from src.models.database import get_session
@@ -43,6 +43,11 @@ async def get_previous_post(current_post_id: int, session: AsyncSession = Depend
 async def get_post_by_id(id: int, session: AsyncSession = Depends(get_session)) -> PostOut:
     post_orm = await get_current_post_by_id(post_id=id, session=session)
     return get_post_by_id_dto(post=post_orm)
+
+@posts_router.get("/by_user/{user_id}")
+async def get_posts_by_current_user(user_id: int, session: AsyncSession = Depends(get_session)) -> list[PostOut]:
+    posts_orm = await get_posts_by_user_id(user_id=user_id, session=session)
+    return get_all_posts_dto(posts=posts_orm)
 
 @posts_router.patch("/update/")
 async def edit_post(post_id: int, edited_post: UpdatePost, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session)):

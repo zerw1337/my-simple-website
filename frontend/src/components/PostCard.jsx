@@ -4,6 +4,7 @@ import { getPostById, getNextPost, getPreviousPost } from "../api/Posts";
 import "./styles/PostCardFull.css"
 import PostReactions from "./PostReactions";
 import PostComments from "./PostComments";
+import mainPostsList from "./MainPostsList.jsx";
 
 function PostCardFullWrapper() {
     const { id } = useParams();
@@ -77,6 +78,7 @@ function PostCardFull({ post, prevId, nextId }) {
     };
 
     return (
+        <main style={{paddingTop: "3em"}}>
         <div className="full-post-card" style={{
             maxWidth: "800px",
             margin: "2rem auto",
@@ -124,6 +126,7 @@ function PostCardFull({ post, prevId, nextId }) {
             <PostReactions postId={post.id} />
             <PostComments postId={post.id} />
         </div>
+        </main>
     );
 }
 

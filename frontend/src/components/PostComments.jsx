@@ -119,8 +119,15 @@ function PostComments({ postId }) {
                             padding: "0.75rem 1rem",
                         }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
-                                <span style={{ fontWeight: 600, color: "var(--logo-color)", fontSize: "0.9rem" }}>
-                                    {comment.user?.username || comment.username || "Аноним"}
+                                <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
+                                    {comment.user_id
+                                        ? <a href={"/profile/" + comment.user_id}
+                                             style={{ color: "var(--logo-color)", textDecoration: "none" }}
+                                             onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+                                             onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}>
+                                            {comment.user?.username || comment.username || "Аноним"}
+                                        </a>
+                                        : (comment.user?.username || comment.username || "Аноним")}
                                 </span>
                                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                                     <span style={{ fontSize: "0.8rem", color: "#a0a0a0" }}>

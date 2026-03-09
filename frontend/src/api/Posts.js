@@ -82,3 +82,74 @@ export async function getPostsByUserId(userId) {
     if (!res.ok) return [];
     return await res.json();
 }
+export async function getCategories() {
+    const res = await fetch(`${API_URL}/categories/`);
+    if (!res.ok) return [];
+    return await res.json();
+}
+
+export async function getAllPosts() {
+    const res = await fetch(`${API_URL}/posts/`);
+    if (!res.ok) return [];
+    return await res.json();
+}
+export async function createPost(title, content, category_id) {
+    const token = localStorage.getItem("access_token");
+    const res = await fetchWithAuth(`${API_URL}/posts/create/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, content, category_id }),
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
+    return await res.json();
+}
+
+export async function createCategory(name, emoji, description) {
+    const token = localStorage.getItem("access_token");
+    const res = await fetchWithAuth(`${API_URL}/categories/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name, emoji, description }),
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
+    return await res.json();
+}
+
+export async function deleteCategory(id) {
+    const token = localStorage.getItem("access_token");
+    const res = await fetchWithAuth(`${API_URL}/categories/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
+    return await res.json();
+}
+
+export async function deletePost(id) {
+    const token = localStorage.getItem("access_token");
+    const res = await fetchWithAuth(`${API_URL}/posts/delete/?post_id=${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
+    return await res.json();
+}
+export async function updatePost(id, title, content, category_id) {
+    const token = localStorage.getItem("access_token");
+    const res = await fetchWithAuth(`${API_URL}/posts/update/?post_id=${id}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, content, category_id }),
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
+    return await res.json();
+}

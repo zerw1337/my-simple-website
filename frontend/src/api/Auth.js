@@ -1,4 +1,5 @@
 import { API_URL } from "./const.js";
+import { fetchWithAuth } from "./refreshToken";
 
 
 export async function login(username, password) {
@@ -87,4 +88,44 @@ export async function createProfile(firstName, lastName, birthday, bio) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "Ошибка создания профиля");
     return data;
+}
+export async function getMe() {
+    const token = localStorage.getItem("access_token");
+    const res = await fetchWithAuth(`${API_URL}/user/me/`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+}
+
+export async function changePassword(newPassword) {
+    const res = await fetchWithAuth(`${API_URL}/user/settings/change_password/?new_password=${encodeURIComponent(newPassword)}`, {
+        method: "PATCH",
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
+    return await res.json();
+}
+
+export async function changeEmail(newEmail) {
+    const res = await fetchWithAuth(`${API_URL}/user/settings/change_email/?new_email=${encodeURIComponent(newEmail)}`, {
+        method: "PATCH",
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
+    return await res.json();
+}
+
+export async function confirmEmailChange(code) {
+    const res = await fetchWithAuth(`${API_URL}/user/settings/change_email/confirm/?code=${code}`, {
+        method: "POST",
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
+    return await res.json();
+}
+
+export async function resendEmailChangeCode() {
+    const res = await fetchWithAuth(`${API_URL}/user/settings/change_email/resend_code/`, {
+        method: "POST",
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
+    return await res.json();
 }

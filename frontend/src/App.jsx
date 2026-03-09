@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useContext } from "react";
 import './App.css';
 import Header from "./components/Header.jsx";
 import Home from "./pages/Home.jsx";
@@ -9,6 +10,20 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import ScrollToTop from "./components/ScrollToTop";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import { AuthContext } from "./context/AuthContext";
+import NotFound from "./pages/NotFound";
+import Blog from "./pages/Blog";
+import Admin from "./pages/Admin";
+import About from "./pages/About";
+import Contacts from "./pages/Contacts";
+
+function GuestRoute({ children }) {
+    const { user, loading } = useContext(AuthContext);
+    if (loading) return null;
+    if (user) return <Navigate to="/" replace />;
+    return children;
+}
 
 function App() {
     return (
@@ -18,9 +33,16 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/posts/:id" element={<Post />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
+                    <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+                    <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
                     <Route path="/profile/:id" element={<Profile />} />
+                    <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<Contacts />} />
+                    <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+
+                    <Route path="*" element={<NotFound />} />
                 </Routes>
                 <Footer />
                 <ScrollToTop />

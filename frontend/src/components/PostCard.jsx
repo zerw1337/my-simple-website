@@ -21,6 +21,7 @@ function PostCardFullWrapper() {
                     id: data.id,
                     title: data.title,
                     author: data.user?.username || "Аноним",
+                    author_id: data.user?.id || null,
                     date: data.created_at,
                     content: data.content,
                     category: data.category || null
@@ -113,7 +114,15 @@ function PostCardFull({ post, prevId, nextId }) {
             </div>
 
             <div className="full-post-meta" style={{ marginBottom: "1rem", display: "flex", gap: "1rem", fontSize: "0.95rem" }}>
-                <span>Автор: <b>{post.author}</b></span>
+                <span>Автор: <b>
+                    {post.author_id
+                        ? <a href={"/profile/" + post.author_id} style={{ color: "var(--logo-color)", textDecoration: "none" }}
+                             onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+                             onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}>
+                            {post.author}
+                        </a>
+                        : post.author}
+                </b></span>
                 {post.category && (
                     <span>Категория: <b>{post.category.emoji} {post.category.name}</b></span>
                 )}

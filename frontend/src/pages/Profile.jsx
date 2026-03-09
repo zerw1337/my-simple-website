@@ -12,6 +12,8 @@ function Profile() {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [myUserId, setMyUserId] = useState(null);
+    const [showAllPosts, setShowAllPosts] = useState(false);
+    const [showAllComments, setShowAllComments] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem("access_token");
@@ -49,6 +51,19 @@ function Profile() {
         getPostsByUserId(id).then(setPosts);
     }, [id]);
 
+    const expandBtnStyle = {
+        marginTop: "1rem",
+        width: "100%",
+        padding: "0.5rem",
+        background: "transparent",
+        border: "1px solid #444",
+        borderRadius: "8px",
+        color: "#a0a0a0",
+        fontFamily: "'Poppins', sans-serif",
+        cursor: "pointer",
+        transition: "all 0.2s",
+    };
+
     if (loading) return (
         <main>
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "300px" }}>
@@ -71,9 +86,11 @@ function Profile() {
     );
 
     const isOwnProfile = myUserId === parseInt(id);
+    const visiblePosts = showAllPosts ? posts : posts.slice(0, 5);
+    const visibleComments = showAllComments ? comments : comments.slice(0, 5);
 
     return (
-        <main style={{padding:'3rem'}}>
+        <main>
             <div style={{ maxWidth: "800px", margin: "2rem auto" }}>
 
                 <div style={{
@@ -144,7 +161,7 @@ function Profile() {
                         <h3 style={{ marginBottom: "1rem" }}>Посты ({posts.length})</h3>
                         <hr style={{ borderColor: "#333", marginBottom: "1.5rem" }} />
                         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                            {posts.map(post => (
+                            {visiblePosts.map(post => (
                                 <a
                                     key={post.id}
                                     href={"/posts/" + post.id}
@@ -183,6 +200,22 @@ function Profile() {
                                 </a>
                             ))}
                         </div>
+                        {posts.length > 5 && (
+                            <button
+                                onClick={() => setShowAllPosts(!showAllPosts)}
+                                style={expandBtnStyle}
+                                onMouseEnter={e => {
+                                    e.currentTarget.style.borderColor = "var(--logo-color)";
+                                    e.currentTarget.style.color = "var(--logo-color)";
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.borderColor = "#444";
+                                    e.currentTarget.style.color = "#a0a0a0";
+                                }}
+                            >
+                                {showAllPosts ? "Скрыть" : "Показать ещё " + (posts.length - 5)}
+                            </button>
+                        )}
                     </div>
                 )}
 
@@ -193,36 +226,54 @@ function Profile() {
                     {comments.length === 0 ? (
                         <p style={{ color: "#a0a0a0" }}>Комментариев пока нет.</p>
                     ) : (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                            {comments.map(comment => (
-                                <div
-                                    key={comment.id}
-                                    style={{
-                                        background: "#2a2a2a",
-                                        border: "1px solid #333",
-                                        borderRadius: "8px",
-                                        padding: "0.75rem 1rem",
+                        <>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                                {visibleComments.map(comment => (
+                                    <div
+                                        key={comment.id}
+                                        style={{
+                                            background: "#2a2a2a",
+                                            border: "1px solid #333",
+                                            borderRadius: "8px",
+                                            padding: "0.75rem 1rem",
+                                        }}
+                                    >
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+                                            <a
+                                                href={"/posts/" + comment.post_id}
+                                                style={{ color: "var(--logo-color)", fontWeight: 600, fontSize: "0.9rem", textDecoration: "none" }}
+                                                onMouseEnter={e => { e.currentTarget.style.textDecoration = "underline"; }}
+                                                onMouseLeave={e => { e.currentTarget.style.textDecoration = "none"; }}
+                                            >
+                                                Перейти к посту →
+                                            </a>
+                                            <span style={{ fontSize: "0.8rem", color: "#a0a0a0" }}>
+                                                {new Date(comment.created_at).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <p style={{ margin: 0, fontSize: "0.95rem", lineHeight: "1.5" }}>
+                                            {comment.content}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                            {comments.length > 5 && (
+                                <button
+                                    onClick={() => setShowAllComments(!showAllComments)}
+                                    style={expandBtnStyle}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.borderColor = "var(--logo-color)";
+                                        e.currentTarget.style.color = "var(--logo-color)";
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.borderColor = "#444";
+                                        e.currentTarget.style.color = "#a0a0a0";
                                     }}
                                 >
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
-                                        <a
-                                            href={"/posts/" + comment.post_id}
-                                            style={{ color: "var(--logo-color)", fontWeight: 600, fontSize: "0.9rem", textDecoration: "none" }}
-                                            onMouseEnter={e => { e.currentTarget.style.textDecoration = "underline"; }}
-                                            onMouseLeave={e => { e.currentTarget.style.textDecoration = "none"; }}
-                                        >
-                                            Перейти к посту →
-                                        </a>
-                                        <span style={{ fontSize: "0.8rem", color: "#a0a0a0" }}>
-                                            {new Date(comment.created_at).toLocaleString()}
-                                        </span>
-                                    </div>
-                                    <p style={{ margin: 0, fontSize: "0.95rem", lineHeight: "1.5" }}>
-                                        {comment.content}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
+                                    {showAllComments ? "Скрыть" : "Показать ещё " + (comments.length - 5)}
+                                </button>
+                            )}
+                        </>
                     )}
                 </div>
 

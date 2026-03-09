@@ -15,6 +15,9 @@ from ..registration.utils import upload_verify_code_to_database, verify_email_ch
 
 users_router = APIRouter(prefix="/user", tags=["Users"])
 
+@users_router.get("/me/")
+async def get_me(user: UserOut = Depends(get_auth)):
+    return user
 
 @users_router.patch("/settings/change_password/")
 async def change_password(new_password: str, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):

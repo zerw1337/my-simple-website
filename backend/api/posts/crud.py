@@ -33,7 +33,7 @@ async def get_all_posts(session: AsyncSession) -> Sequence[Posts]:
         select(Posts)
         .options(selectinload(Posts.category))
         .options(selectinload(Posts.user))
-        .order_by(Posts.id)
+        .order_by(Posts.id.desc())
     )
     res = await session.execute(query)
     results = res.scalars().all()

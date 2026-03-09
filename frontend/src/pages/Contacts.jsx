@@ -49,7 +49,7 @@ const contacts = [
 
 function Contacts() {
     return (
-        <main>
+        <main style={{ paddingTop:"3rem"}}>
             <div style={{ maxWidth: "600px", margin: "2rem auto" }}>
 
                 <div style={{

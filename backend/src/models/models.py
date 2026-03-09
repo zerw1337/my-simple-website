@@ -28,6 +28,7 @@ class Users(Base):
     profile: Mapped["Profiles"] = relationship("Profiles" ,back_populates="user", uselist=False, cascade="all, delete-orphan")
     posts: Mapped["Posts"] = relationship("Posts", back_populates="user", cascade="all, delete-orphan")
     comments: Mapped[list["Comments"]] = relationship("Comments", back_populates="user", cascade="all, delete-orphan")
+    verify_codes: Mapped["VerifyCodes"] = relationship("VerifyCodes", back_populates="user", cascade="all, delete-orphan")
 
 
 
@@ -52,6 +53,8 @@ class VerifyCodes(Base):
     code: Mapped[int] = mapped_column(unique=True, nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now())
+
+    user: Mapped["Users"] = relationship("Users", back_populates="verify_codes")
 
 
 class Profiles(Base):
@@ -86,8 +89,8 @@ class Posts(Base):
 
     user: Mapped["Users"] = relationship("Users", back_populates="posts")
     category: Mapped["Categories"] = relationship("Categories", back_populates="posts")
-    comments: Mapped[list["Comments"]] = relationship("Comments", back_populates="post")
-    reactions: Mapped["Reactions"] = relationship("Reactions", back_populates="post")
+    comments: Mapped[list["Comments"]] = relationship("Comments", back_populates="post", cascade="all, delete-orphan")
+    reactions: Mapped["Reactions"] = relationship("Reactions", back_populates="post", cascade="all, delete-orphan")
 
 class Comments(Base):
     __tablename__ = 'comments'

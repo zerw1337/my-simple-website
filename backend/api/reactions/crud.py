@@ -7,10 +7,12 @@ from src.models.models import ReactionsEnum, Reactions
 
 
 async def post_reaction_for_current_user(user_id: int, post_id: int, reaction: ReactionsEnum, session: AsyncSession):
-    query = select(Reactions).where(Reactions.user_id == user_id, Reactions.post_id == post_id)
+    query = (
+        select(Reactions)
+        .where(Reactions.user_id == user_id, Reactions.post_id == post_id)
+    )
     res = await session.execute(query)
     existing = res.scalar_one_or_none()
-
     try:
         if existing is None:
             session.add(Reactions(reaction=reaction, user_id=user_id, post_id=post_id))
@@ -22,7 +24,6 @@ async def post_reaction_for_current_user(user_id: int, post_id: int, reaction: R
     except Exception:
         await session.rollback()
         raise HTTPException(status_code=403, detail="Something went wrong")
-
     return {"success": True}
 
 

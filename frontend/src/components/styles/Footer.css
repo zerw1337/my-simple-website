@@ -1,0 +1,15 @@
+.social-icons {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.social-icons a {
+    color: #ffffff;
+    transition: transform 0.2s, color 0.2s;
+}
+
+.social-icons a:hover {
+    color: #04c6e9;
+    transform: scale(1.2);
+}

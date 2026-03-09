@@ -1,0 +1,156 @@
+:root {
+    --bg-main: #1f1f1f;
+    --logo-color: rgb(4, 198, 233);
+    --header-height: 12vh;
+    --menu-item-color: rgb(211, 211, 211);
+    --menu-icon-color-after: rgb(138, 138, 138);
+    --main-text-color: rgb(236, 236, 236);
+}
+@font-face {
+    font-family: Arimo;
+    src: url(../fonts/Arimo-Italic-VariableFont_wght.ttf) format("truetype");
+}
+@font-face {
+    font-family: Inter;
+    src: url(../fonts/Inter_18pt-MediumItalic.ttf) format("truetype");
+}
+body{
+    padding: 0;
+    margin: 0;
+    background-color: var(--bg-main);
+}
+.container{
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 60%;
+    max-width: 1600px;
+    background-color: var(--bg-main);
+    margin: 0 auto;
+}
+.header{
+    height: 10vh;
+}
+nav{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    flex-direction: row;
+    align-items: center;
+}
+.banner{
+    width: 50%;
+    display: flex;
+    justify-content: flex-start;
+}
+#logo-text {
+    background-color: transparent;
+    color: var(--logo-color);
+    font-family: "Arimo", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 1.7em;
+    text-decoration: none;
+    transition: background-color 0.1s ease, color 0.1s ease;
+}
+#logo-text:hover{
+    background-color: var(--logo-color);
+    color: var(--bg-main);
+}
+.menu{
+    width: 50%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1.5em;
+}
+.menu-list{
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 0.5em;
+}
+.menu-list a{
+    background-color: transparent;
+    font-family: "Arimo", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 1.1em;
+    text-decoration: none;
+    padding: 0.2em 0.5em;
+    transition: background-color 0.1s ease, color 0.1s ease;
+    color: var(--menu-item-color);
+    text-decoration: none;
+}
+.menu-list a:hover{
+    background-color: var(--logo-color);
+    color: var(--bg-main);
+}
+.menu-icons{
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 0.5em;
+}
+ul li a {
+    color: var(--menu-item-color); /* начальный цвет иконки */
+    transition: color 0.1s ease;
+}
+
+ul li a:hover {
+    color: var(--menu-icon-color-after); /* цвет при наведении */
+}
+
+ul li a svg {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    stroke: currentColor; 
+    fill: currentColor;   
+    transition: color 0.1s ease;
+}
+.main-content{
+    height: 85vh;
+    padding-top: 4em;
+    color: var(--main-text-color);
+    font-family: Inter, sans-serif;
+    font-optical-sizing: auto;
+    font-weight: lighter;
+    font-style: normal;
+}
+.hello-message p{
+    margin: 0;
+    font-size: 2em;
+}
+.main-content-pic{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 4vh;
+    height: 35vh;
+}
+.main-content-pic img{
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+.main-content-pic-message p{
+    text-align: justify;
+    margin: 0;
+}
+.main-h{
+    font-size: var(--main-h-size);
+}
+.main-text{
+ font-size: var(--main-text-size);
+}
+hr {
+    border-color: var(--horizontal-line-color);
+}
+

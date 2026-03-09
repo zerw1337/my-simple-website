@@ -11,6 +11,7 @@ from api.auth.schemas import UserOut
 
 
 
+
 def encode_password(password: str) -> str:
     salt = bcrypt.gensalt()
     pwd_bytes = password.encode()
@@ -42,10 +43,17 @@ async def create_new_user(user: CreateUser, session: AsyncSession):
     session.add(new_user)
     try:
         await session.commit()
+        query = (
+            select(Users)
+            .where(Users.username == user.username)
+        )
+        res = await session.execute(query)
+        user = res.scalar_one_or_none()
+        return UserOut.model_validate(user)
     except IntegrityError:
         await session.rollback()
         raise HTTPException(status_code=403, detail="Username or email already exists")
-    return {"success": True}
+
 
 async def create_new_profile(profile: CreateProfile, user: UserOut, session: AsyncSession):
     await check_existing_profiles(user=user, session=session)

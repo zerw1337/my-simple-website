@@ -33,11 +33,46 @@ async def get_all_posts(session: AsyncSession) -> Sequence[Posts]:
         select(Posts)
         .options(selectinload(Posts.category))
         .options(selectinload(Posts.user))
-        .order_by(Posts.id)
+        .order_by(Posts.id.desc())
     )
     res = await session.execute(query)
     results = res.scalars().all()
     return results
+
+async def get_five_latest_posts(session: AsyncSession) -> Sequence[Posts]:
+    query = (
+        select(Posts)
+        .options(selectinload(Posts.category))
+        .options(selectinload(Posts.user))
+        .order_by(Posts.id.desc())
+        .limit(5)
+    )
+    res = await session.execute(query)
+    results = res.scalars().all()
+    return results
+
+async def get_next_post_after_this(current_post_id: int, session: AsyncSession) -> Posts:
+    query = (
+        select(Posts)
+        .where(Posts.id == current_post_id+1)
+        .options(selectinload(Posts.category))
+        .options(selectinload(Posts.user))
+    )
+    res = await session.execute(query)
+    results = res.scalar_one_or_none()
+    return results
+
+async def get_previous_post_from_this(current_post_id: int, session: AsyncSession) -> Posts:
+    query = (
+        select(Posts)
+        .where(Posts.id == current_post_id-1)
+        .options(selectinload(Posts.category))
+        .options(selectinload(Posts.user))
+    )
+    res = await session.execute(query)
+    results = res.scalar_one_or_none()
+    return results
+
 
 async def get_current_post_by_id(post_id: int, session: AsyncSession) -> Posts:
     query = (
@@ -51,6 +86,18 @@ async def get_current_post_by_id(post_id: int, session: AsyncSession) -> Posts:
     if not result:
         raise HTTPException(status_code=404, detail="Post not found")
     return result
+
+async def get_posts_by_user_id(user_id: int, session: AsyncSession) -> Sequence[Posts]:
+    query = (
+        select(Posts)
+        .where(Posts.user_id == user_id)
+        .options(selectinload(Posts.category))
+        .options(selectinload(Posts.user))
+        .order_by(Posts.id.desc())
+    )
+    res = await session.execute(query)
+    results = res.scalars().all()
+    return results
 
 async def edit_current_post(post_id: int, edited_post: UpdatePost, session: AsyncSession):
     post = await get_current_post_by_id(post_id, session)

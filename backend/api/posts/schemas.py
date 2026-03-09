@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy.testing import exclude
 
 from api.auth.schemas import UserOut
 from api.categories.schemas import Category
@@ -25,4 +26,5 @@ class PostOut(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
 

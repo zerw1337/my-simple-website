@@ -12,22 +12,26 @@ from api.auth.dependencies import get_auth, get_auth_new_user
 from api.auth.schemas import UserOut
 from api.SMTP.utils import generate_verify_code, generate_html_verify_message_for_registration
 from api.SMTP.email import send_email
+from api.auth.schemas import Token
+from api.auth.jwt import create_access_token, create_refresh_token
 
 register_router = APIRouter(prefix="/register", tags=["Registration"])
 
-@register_router.post("/")
+@register_router.post("/", response_model=Token)
 async def register(background_tasks : BackgroundTasks, username: str = Form(), email: EmailStr = Form(), password: str = Form(), session: AsyncSession = Depends(get_session)):
     try:
         user = CreateUser(username=username, email=email, password=password)
     except ValidationError as e:
         detail = str(e)
         raise HTTPException(status_code=422, detail=detail)
-    await create_new_user(user, session)
+    new_user = await create_new_user(user, session)
     code = generate_verify_code()
     await upload_verify_code_to_database(code=code, code_type=VerifyCodesEnum.registration, user=user, session=session)
     html = generate_html_verify_message_for_registration(code=code, username=user.username)
     background_tasks.add_task(send_email, user=user, subject="Verification code", html=html)
-    return {"Status": "User registered, verification code sent."}
+    access_token = create_access_token(id=new_user.id, username=new_user.username, user_version=new_user.user_version, user=new_user)
+    refresh_token = create_refresh_token(id=new_user.id, username=new_user.username, user_version=new_user.user_version, user=new_user)
+    return Token(access_token=access_token, refresh_token=refresh_token, user=new_user.username)
 
 @register_router.post("/create_profile/")
 async def create_profile(new_profile: CreateProfile, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):

@@ -1,0 +1,68 @@
+.full-post-card {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background-color: #1f1f1f;
+    color: #ececec;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    font-family: 'Arial', sans-serif;
+    line-height: 1.6;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.full-post-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.full-post-header {
+    margin-bottom: 1rem;
+}
+
+.full-post-header h2 {
+    margin: 0;
+    font-size: 2rem;
+    color: #04c6e9;
+}
+
+.full-post-header span {
+    font-size: 0.9rem;
+    color: #a0a0a0;
+}
+
+
+.full-post-meta {
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 1rem;
+    font-size: 0.95rem;
+}
+
+.full-post-meta b {
+    color: #ececec;
+}
+
+
+.full-post-content p {
+    margin: 0;
+    white-space: pre-line;
+    color: #ececec;
+}
+
+
+@media (max-width: 600px) {
+    .full-post-card {
+        padding: 1rem;
+        margin: 1rem;
+    }
+
+    .full-post-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .full-post-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}

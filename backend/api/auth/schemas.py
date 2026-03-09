@@ -1,6 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
-
+from sqlalchemy.testing.pickleable import User
 
 
 class TokenFields(BaseModel):
@@ -11,6 +11,7 @@ class TokenFields(BaseModel):
 class Token(BaseModel):
     access_token: str
     refresh_token: str
+    user: str
     token_type: str = "Bearer"
 
 class RefreshToken(BaseModel):

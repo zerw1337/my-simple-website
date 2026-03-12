@@ -137,7 +137,7 @@ function Blog() {
                                 onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--logo-color)"; }}
                                 onMouseLeave={e => { e.currentTarget.style.borderColor = "#333"; }}
                             >
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.4rem" }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.4rem", flexWrap: "wrap", gap: "0.25rem" }}>
                                     <span style={{ fontWeight: 700, fontSize: "1.05rem", color: "var(--main-text-color)" }}>
                                         {post.title}
                                     </span>
@@ -145,7 +145,7 @@ function Blog() {
                                         {new Date(post.created_at).toLocaleDateString()}
                                     </span>
                                 </div>
-                                <div style={{ display: "flex", gap: "1rem", fontSize: "0.85rem", color: "#a0a0a0", marginBottom: "0.5rem" }}>
+                                <div style={{ display: "flex", gap: "0.75rem", fontSize: "0.85rem", color: "#a0a0a0", marginBottom: "0.5rem", flexWrap: "wrap" }}>
                                     <a
                                         href={"/profile/" + post.user?.id}
                                         style={{ color: "var(--logo-color)", textDecoration: "none" }}

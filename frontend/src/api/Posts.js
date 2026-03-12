@@ -164,3 +164,23 @@ export async function getTopRatedPosts() {
     if (!res.ok) return [];
     return await res.json();
 }
+export async function getAllUsers() {
+    const res = await fetchWithAuth(`${API_URL}/user/get_all_users/`);
+    if (!res.ok) return [];
+    return await res.json();
+}
+
+export async function banUser(userId) {
+    const res = await fetchWithAuth(`${API_URL}/user/ban/?user_id=${userId}`, {
+        method: "POST",
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
+    return await res.json();
+}
+export async function unbanUser(userId) {
+    const res = await fetchWithAuth(`${API_URL}/user/unban/?user_id=${userId}`, {
+        method: "POST",
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
+    return await res.json();
+}

@@ -100,7 +100,7 @@ function Profile() {
                     boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
                     marginBottom: "2rem",
                 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.75rem" }}>
                         <div>
                             <h2 style={{ margin: 0, fontSize: "2rem", color: "var(--logo-color)" }}>
                                 {profile.username}

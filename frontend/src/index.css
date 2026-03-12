@@ -7,6 +7,25 @@
     --body-padding: 18rem;
     --main-text-size: 21px;
 }
+
+@media (max-width: 1400px) {
+    :root { --body-padding: 10rem; }
+}
+@media (max-width: 1100px) {
+    :root { --body-padding: 4rem; }
+}
+@media (max-width: 768px) {
+    :root {
+        --body-padding: 1.25rem;
+        --main-text-size: 17px;
+    }
+    h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.4rem; }
+    h3 { font-size: 1.2rem; }
+}
+@media (max-width: 480px) {
+    :root { --body-padding: 0.75rem; }
+}
 @keyframes gradientMove {
     0% {
         background-position: 0% 50%;

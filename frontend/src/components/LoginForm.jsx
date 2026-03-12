@@ -24,12 +24,12 @@ function LoginForm() {
 
         try {
             const data = await login(username, password);
-            loginUser({
+            const banned = loginUser({
                 username,
                 access_token: data.access_token,
                 refresh_token: data.refresh_token,
             });
-            navigate("/"); // переход на главную после логина
+            navigate(banned ? "/banned" : "/");
         } catch (err) {
             setError(err?.message || "Ошибка входа");
         }
@@ -37,33 +37,33 @@ function LoginForm() {
 
     return (
         <main>
-        <div className="login-form-wrapper" style={{ marginTop: "9em", marginBottom: "10em" }}>
-            <form className="login-form" onSubmit={handleSubmit}>
-                <h2>Вход</h2>
+            <div className="login-form-wrapper" style={{ marginTop: "9em", marginBottom: "10em" }}>
+                <form className="login-form" onSubmit={handleSubmit}>
+                    <h2>Вход</h2>
 
-                {error && <div className="login-error">{error}</div>}
+                    {error && <div className="login-error">{error}</div>}
 
-                <label htmlFor="username">Логин или email</label>
-                <input
-                    type="text"
-                    id="username"
-                    placeholder="Введите логин или email"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                />
+                    <label htmlFor="username">Логин или email</label>
+                    <input
+                        type="text"
+                        id="username"
+                        placeholder="Введите логин или email"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                    />
 
-                <label htmlFor="password">Пароль</label>
-                <input
-                    type="password"
-                    id="password"
-                    placeholder="Введите пароль"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
+                    <label htmlFor="password">Пароль</label>
+                    <input
+                        type="password"
+                        id="password"
+                        placeholder="Введите пароль"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
 
-                <button type="submit">Войти</button>
-            </form>
-        </div>
+                    <button type="submit">Войти</button>
+                </form>
+            </div>
         </main>
     );
 }

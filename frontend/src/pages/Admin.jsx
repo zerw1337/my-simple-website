@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getCategories, getAllPosts, createPost, createCategory, deleteCategory, deletePost, updatePost } from "../api/Posts";
+import { getCategories, getAllPosts, createPost, createCategory, deleteCategory, deletePost, updatePost, getAllUsers, banUser, unbanUser } from "../api/Posts";
 
 function Admin() {
     const navigate = useNavigate();
@@ -14,6 +14,7 @@ function Admin() {
     const [activeTab, setActiveTab] = useState("posts");
     const [categories, setCategories] = useState([]);
     const [posts, setPosts] = useState([]);
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const [postTitle, setPostTitle] = useState("");
@@ -44,9 +45,10 @@ function Admin() {
 
     const loadData = async () => {
         setLoading(true);
-        const [cats, ps] = await Promise.all([getCategories(), getAllPosts()]);
+        const [cats, ps, us] = await Promise.all([getCategories(), getAllPosts(), getAllUsers()]);
         setCategories(cats);
         setPosts(ps);
+        setUsers(us);
         if (cats.length > 0) setPostCategory(cats[0].id);
         setLoading(false);
     };
@@ -104,6 +106,26 @@ function Admin() {
         if (!confirm("Удалить категорию?")) return;
         try {
             await deleteCategory(id);
+            await loadData();
+        } catch (e) {
+            alert(e.message);
+        }
+    };
+
+    const handleUnbanUser = async (id) => {
+        if (!confirm("Разбанить пользователя?")) return;
+        try {
+            await unbanUser(id);
+            await loadData();
+        } catch (e) {
+            alert(e.message);
+        }
+    };
+
+    const handleBanUser = async (id) => {
+        if (!confirm("Забанить пользователя?")) return;
+        try {
+            await banUser(id);
             await loadData();
         } catch (e) {
             alert(e.message);
@@ -214,6 +236,9 @@ function Admin() {
                     </button>
                     <button style={tabStyle(activeTab === "categories")} onClick={() => setActiveTab("categories")}>
                         {"Категории (" + categories.length + ")"}
+                    </button>
+                    <button style={tabStyle(activeTab === "users")} onClick={() => setActiveTab("users")}>
+                        {"Пользователи (" + users.length + ")"}
                     </button>
                 </div>
 
@@ -393,6 +418,66 @@ function Admin() {
                                     >
                                         удалить
                                     </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === "users" && (
+                    <div>
+                        <h3 style={{ marginBottom: "1rem" }}>Все пользователи</h3>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                            {users.map(u => (
+                                <div key={u.id} style={{
+                                    background: "#1f1f1f",
+                                    border: "1px solid " + (u.is_banned ? "#ff5555" : "#333"),
+                                    borderRadius: "8px",
+                                    padding: "0.75rem 1rem",
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    gap: "1rem",
+                                    opacity: u.is_banned ? 0.6 : 1,
+                                }}>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.2rem" }}>
+                                            <a href={"/profile/" + u.id} style={{ fontWeight: 600, color: "var(--main-text-color)", textDecoration: "none" }}
+                                               onMouseEnter={e => e.currentTarget.style.color = "var(--logo-color)"}
+                                               onMouseLeave={e => e.currentTarget.style.color = "var(--main-text-color)"}
+                                            >
+                                                {u.username}
+                                            </a>
+                                            {u.is_superuser && <span style={{ fontSize: "0.7rem", background: "var(--logo-color)", color: "var(--bg-main)", padding: "0.1rem 0.4rem", borderRadius: "4px", fontWeight: 700 }}>ADMIN</span>}
+                                            {u.is_banned && <span style={{ fontSize: "0.7rem", background: "#ff5555", color: "#fff", padding: "0.1rem 0.4rem", borderRadius: "4px", fontWeight: 700 }}>БАН</span>}
+                                            {!u.is_verified && <span style={{ fontSize: "0.7rem", background: "#666", color: "#fff", padding: "0.1rem 0.4rem", borderRadius: "4px", fontWeight: 700 }}>НЕ ВЕРИФИЦИРОВАН</span>}
+                                        </div>
+                                        <span style={{ fontSize: "0.8rem", color: "#a0a0a0" }}>
+                                            {u.email + " · " + new Date(u.created_at).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                    <div style={{ display: "flex", gap: "0.75rem" }}>
+                                        {!u.is_banned && !u.is_superuser && (
+                                            <button
+                                                onClick={() => handleBanUser(u.id)}
+                                                style={{ ...actionBtnStyle, color: "#666" }}
+                                                onMouseEnter={e => e.currentTarget.style.color = "#ff5555"}
+                                                onMouseLeave={e => e.currentTarget.style.color = "#666"}
+                                            >
+                                                забанить
+                                            </button>
+                                        )}
+                                        {u.is_banned && (
+                                            <button
+                                                onClick={() => handleUnbanUser(u.id)}
+                                                style={{ ...actionBtnStyle, color: "#666" }}
+                                                onMouseEnter={e => e.currentTarget.style.color = "#55cc55"}
+                                                onMouseLeave={e => e.currentTarget.style.color = "#666"}
+                                            >
+                                                разбанить
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>

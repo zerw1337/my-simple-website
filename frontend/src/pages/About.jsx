@@ -72,7 +72,7 @@ function About() {
     ];
 
     return (
-        <main>
+        <main style={{paddingTop: "3rem"}}>
             <div style={{ maxWidth: "800px", margin: "2rem auto" }}>
 
                 {/* Шапка */}

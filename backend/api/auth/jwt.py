@@ -31,6 +31,7 @@ def create_access_token(id: str, username: str, user_version: int, user):
         "user_version": str(user_version),
         "is_superuser": user.is_superuser,
         "is_verified": user.is_verified,
+        "is_banned": user.is_banned,
     }
     return encode_jwt(payload=payload)
 
@@ -45,5 +46,6 @@ def create_refresh_token(id: str, username: str, user_version: int, user):
         "user_version": str(user_version),
         "is_superuser": user.is_superuser,
         "is_verified": user.is_verified,
+        "is_banned": user.is_banned,
     }
     return encode_jwt(payload=payload)

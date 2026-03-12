@@ -75,12 +75,25 @@ async def get_all_users_list(session: AsyncSession):
 async def ban_current_user(user_id: int, session: AsyncSession):
     query = (
         select(Users)
-        .where(and_(Users.id == user_id))
+        .where(Users.id == user_id)
     )
     res = await session.execute(query)
     result = res.scalar_one_or_none()
     if not result:
         raise HTTPException(status_code=404, detail="User not found")
     result.is_banned = True
+    await session.commit()
+    return {"success": True}
+
+async def unban_current_user(user_id: int, session: AsyncSession):
+    query = (
+        select(Users)
+        .where(and_(and_(Users.id == user_id, Users.is_banned == True)))
+    )
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
+    if not result:
+        raise HTTPException(status_code=404, detail="User not found")
+    result.is_banned = False
     await session.commit()
     return {"success": True}

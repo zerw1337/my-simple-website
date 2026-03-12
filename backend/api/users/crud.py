@@ -62,3 +62,25 @@ async def check_if_current_user_has_pending_email(user: UserOut, session: AsyncS
     if not result:
         raise HTTPException(status_code=403, detail="There is no pending email to change")
     return True
+
+async def get_all_users_list(session: AsyncSession):
+    query = (
+        select(Users)
+        .order_by(Users.id)
+    )
+    res = await session.execute(query)
+    result = res.scalars().all()
+    return result
+
+async def ban_current_user(user_id: int, session: AsyncSession):
+    query = (
+        select(Users)
+        .where(and_(Users.id == user_id))
+    )
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
+    if not result:
+        raise HTTPException(status_code=404, detail="User not found")
+    result.is_banned = True
+    await session.commit()
+    return {"success": True}

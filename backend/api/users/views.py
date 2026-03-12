@@ -3,13 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import EmailStr
 
 from api.auth.schemas import UserOut
-from api.auth.dependencies import get_auth
+from api.auth.dependencies import get_auth, get_auth_admin
 from src.models.database import get_session
 from src.models.models import VerifyCodesEnum
 from .crud import change_current_user_password, change_current_user_pending_email, \
-    check_if_current_user_has_pending_email
+    check_if_current_user_has_pending_email, get_all_users_list, ban_current_user
 from api.SMTP.email import send_email
 from api.SMTP.utils import generate_verify_code, generate_html_verify_message_for_manage_account
+from .dto import get_all_users_list_dto
 from ..registration.utils import upload_verify_code_to_database, verify_email_change_via_code, \
     check_if_current_users_verify_code_exists
 
@@ -18,6 +19,15 @@ users_router = APIRouter(prefix="/user", tags=["Users"])
 @users_router.get("/me/")
 async def get_me(user: UserOut = Depends(get_auth)):
     return user
+
+@users_router.get("/get_all_users")
+async def get_all_users(user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session)):
+    users_orm = await get_all_users_list(session=session)
+    return get_all_users_list_dto(users_orm)
+
+@users_router.post("/ban")
+async def ban_user(user_id: int, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session)):
+    return await ban_current_user(user_id=user_id, session=session)
 
 @users_router.patch("/settings/change_password/")
 async def change_password(new_password: str, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):

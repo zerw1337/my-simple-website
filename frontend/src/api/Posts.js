@@ -153,3 +153,14 @@ export async function updatePost(id, title, content, category_id) {
     if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
     return await res.json();
 }
+export async function getTopViewedPosts() {
+    const res = await fetch(`${API_URL}/posts/top_viewed/`);
+    if (!res.ok) return [];
+    return await res.json();
+}
+
+export async function getTopRatedPosts() {
+    const res = await fetch(`${API_URL}/posts/top_rated/`);
+    if (!res.ok) return [];
+    return await res.json();
+}

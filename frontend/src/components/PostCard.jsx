@@ -24,7 +24,9 @@ function PostCardFullWrapper() {
                     author_id: data.user?.id || null,
                     date: data.created_at,
                     content: data.content,
-                    category: data.category || null
+                    category: data.category || null,
+                    views: data.views ?? 0,
+                    rating: data.rating ?? 0,
                 };
                 setPost(formattedPost);
                 setLoading(false);
@@ -80,40 +82,40 @@ function PostCardFull({ post, prevId, nextId }) {
 
     return (
         <main style={{paddingTop: "3em"}}>
-        <div className="full-post-card" style={{
-            maxWidth: "800px",
-            margin: "2rem auto",
-            padding: "1.5rem",
-            background: "#1f1f1f",
-            color: "#ececec",
-            borderRadius: "12px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-            fontFamily: "'Arial', sans-serif",
-            lineHeight: "1.6"
-        }}>
-            <div style={navStyle}>
-                {prevId ? (
-                    <a href={`/posts/${prevId}`} style={linkStyle}
-                       onMouseEnter={e => { e.currentTarget.style.backgroundColor = "var(--logo-color)"; e.currentTarget.style.color = "var(--bg-main)"; }}
-                       onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "var(--logo-color)"; }}
-                    >← Предыдущий</a>
-                ) : <span />}
-                {nextId ? (
-                    <a href={`/posts/${nextId}`} style={linkStyle}
-                       onMouseEnter={e => { e.currentTarget.style.backgroundColor = "var(--logo-color)"; e.currentTarget.style.color = "var(--bg-main)"; }}
-                       onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "var(--logo-color)"; }}
-                    >Следующий →</a>
-                ) : <span />}
-            </div>
+            <div className="full-post-card" style={{
+                maxWidth: "800px",
+                margin: "2rem auto",
+                padding: "1.5rem",
+                background: "#1f1f1f",
+                color: "#ececec",
+                borderRadius: "12px",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                fontFamily: "'Arial', sans-serif",
+                lineHeight: "1.6"
+            }}>
+                <div style={navStyle}>
+                    {prevId ? (
+                        <a href={`/posts/${prevId}`} style={linkStyle}
+                           onMouseEnter={e => { e.currentTarget.style.backgroundColor = "var(--logo-color)"; e.currentTarget.style.color = "var(--bg-main)"; }}
+                           onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "var(--logo-color)"; }}
+                        >← Предыдущий</a>
+                    ) : <span />}
+                    {nextId ? (
+                        <a href={`/posts/${nextId}`} style={linkStyle}
+                           onMouseEnter={e => { e.currentTarget.style.backgroundColor = "var(--logo-color)"; e.currentTarget.style.color = "var(--bg-main)"; }}
+                           onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "var(--logo-color)"; }}
+                        >Следующий →</a>
+                    ) : <span />}
+                </div>
 
-            <div className="full-post-header" style={{ marginBottom: "1rem" }}>
-                <h2 style={{ margin: 0, fontSize: "2rem" }}>{post.title}</h2>
-                <span style={{ fontSize: "0.9rem", color: "#a0a0a0" }}>
+                <div className="full-post-header" style={{ marginBottom: "1rem" }}>
+                    <h2 style={{ margin: 0, fontSize: "2rem" }}>{post.title}</h2>
+                    <span style={{ fontSize: "0.9rem", color: "#a0a0a0" }}>
                     {post.date ? new Date(post.date).toLocaleString() : "Неизвестно"}
                 </span>
-            </div>
+                </div>
 
-            <div className="full-post-meta" style={{ marginBottom: "1rem", display: "flex", gap: "1rem", fontSize: "0.95rem" }}>
+                <div className="full-post-meta" style={{ marginBottom: "1rem", display: "flex", gap: "1rem", fontSize: "0.95rem" }}>
                 <span>Автор: <b>
                     {post.author_id
                         ? <a href={"/profile/" + post.author_id} style={{ color: "var(--logo-color)", textDecoration: "none" }}
@@ -123,18 +125,35 @@ function PostCardFull({ post, prevId, nextId }) {
                         </a>
                         : post.author}
                 </b></span>
-                {post.category && (
-                    <span>Категория: <b>{post.category.emoji} {post.category.name}</b></span>
-                )}
-            </div>
+                    {post.category && (
+                        <span>Категория: <b>{post.category.emoji} {post.category.name}</b></span>
+                    )}
+                    <span style={{ color: "#a0a0a0" }}>👁 {post.views}</span>
+                </div>
 
-            <div className="full-post-content">
-                <p>{post.content}</p>
-            </div>
+                <div style={{ marginBottom: "1.5rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
+                        <span style={{ fontSize: "0.8rem", color: "#a0a0a0", fontFamily: "'Poppins', sans-serif" }}>Рейтинг</span>
+                        <span style={{ fontSize: "0.8rem", color: "var(--logo-color)", fontFamily: "'Poppins', sans-serif", fontWeight: 600 }}>{post.rating} / 100</span>
+                    </div>
+                    <div style={{ background: "#2a2a2a", borderRadius: "999px", height: "6px", overflow: "hidden" }}>
+                        <div style={{
+                            height: "100%",
+                            width: post.rating + "%",
+                            background: "linear-gradient(90deg, var(--logo-color), #03b0d0)",
+                            borderRadius: "999px",
+                            transition: "width 0.5s ease",
+                        }} />
+                    </div>
+                </div>
 
-            <PostReactions postId={post.id} />
-            <PostComments postId={post.id} />
-        </div>
+                <div className="full-post-content">
+                    <p>{post.content}</p>
+                </div>
+
+                <PostReactions postId={post.id} />
+                <PostComments postId={post.id} />
+            </div>
         </main>
     );
 }

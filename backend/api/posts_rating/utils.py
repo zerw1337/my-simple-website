@@ -10,10 +10,12 @@ from src.models.models import Posts
 
 def calculate_rating_for_post(views: int, reactions: int, comments: int) -> int:
     views_score = math.log(views+1) * 10
-    reactions_score = reactions * 5
-    comments_score = comments * 8
+    reactions_score = math.sqrt(reactions) * 8
+    comments_score = math.sqrt(comments) * 12
     score = views_score + reactions_score + comments_score
-    return max(0, min(100, round(score)))
+
+    normalized = 100 * (score / (score + 50))
+    return max(0, min(100, round(normalized)))
 
 async def update_posts_rating_by_post_id(post_id: int, session: AsyncSession):
     query = (

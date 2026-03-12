@@ -114,6 +114,18 @@ async def get_all_posts_ordered_by_views(session: AsyncSession) -> Sequence[Post
     results = res.scalars().all()
     return results
 
+async def get_all_posts_ordered_by_rating(session: AsyncSession) -> Sequence[Posts]:
+    query = (
+        select(Posts)
+        .where(Posts.rating != 0)
+        .options(selectinload(Posts.category))
+        .options(selectinload(Posts.user))
+        .order_by(Posts.rating.desc())
+    )
+    res = await session.execute(query)
+    results = res.scalars().all()
+    return results
+
 
 async def edit_current_post(post_id: int, edited_post: UpdatePost, session: AsyncSession):
     post = await get_current_post_by_id(post_id, session)

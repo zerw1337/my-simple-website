@@ -1,21 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getCategories, getAllPosts } from "../api/Posts";
+import { getCategories, getAllPosts, getTopViewedPosts, getTopRatedPosts } from "../api/Posts";
 
 function Blog() {
     const navigate = useNavigate();
     const [categories, setCategories] = useState([]);
     const [posts, setPosts] = useState([]);
     const [activeCategory, setActiveCategory] = useState(null);
+    const [sort, setSort] = useState("default"); // "default" | "views" | "rating"
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        Promise.all([getCategories(), getAllPosts()]).then(([cats, ps]) => {
-            setCategories(cats);
-            setPosts(ps);
-            setLoading(false);
-        });
+        getCategories().then(setCategories);
     }, []);
+
+    useEffect(() => {
+        setLoading(true);
+        const fetcher = sort === "views" ? getTopViewedPosts : sort === "rating" ? getTopRatedPosts : getAllPosts;
+        fetcher().then(ps => { setPosts(ps); setLoading(false); });
+    }, [sort]);
 
     const filteredPosts = activeCategory
         ? posts.filter(p => p.category?.id === activeCategory)
@@ -40,7 +43,34 @@ function Blog() {
         <main style={{paddingTop: "3rem"}}>
             <div style={{ maxWidth: "800px", margin: "2rem auto" }}>
 
-                <h2 style={{ marginBottom: "1.5rem" }}>Блог</h2>
+                <h2 style={{ marginBottom: "1rem" }}>Блог</h2>
+
+                <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+                    {[
+                        { key: "default", label: "📅 Новые" },
+                        { key: "views",   label: "👁 По просмотрам" },
+                        { key: "rating",  label: "⭐ По рейтингу" },
+                    ].map(({ key, label }) => (
+                        <button
+                            key={key}
+                            onClick={() => { setSort(key); setActiveCategory(null); }}
+                            style={{
+                                padding: "0.35rem 1rem",
+                                borderRadius: "20px",
+                                border: "1px solid " + (sort === key ? "var(--logo-color)" : "#444"),
+                                background: sort === key ? "var(--logo-color)" : "transparent",
+                                color: sort === key ? "var(--bg-main)" : "#a0a0a0",
+                                fontFamily: "'Poppins', sans-serif",
+                                fontWeight: 600,
+                                fontSize: "0.85rem",
+                                cursor: "pointer",
+                                transition: "all 0.2s",
+                            }}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
 
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "2rem" }}>
                     <button
@@ -128,6 +158,10 @@ function Blog() {
                                     {post.category && (
                                         <span>{post.category.emoji + " " + post.category.name}</span>
                                     )}
+                                    <span style={{ marginLeft: "auto", display: "flex", gap: "0.75rem" }}>
+                                        <span>👁 {post.views ?? 0}</span>
+                                        <span>⭐ {post.rating ?? 0}</span>
+                                    </span>
                                 </div>
                                 <p style={{
                                     margin: 0,

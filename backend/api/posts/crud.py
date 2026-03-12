@@ -80,11 +80,14 @@ async def get_current_post_by_id(post_id: int, session: AsyncSession) -> Posts:
         .where(Posts.id == post_id)
         .options(selectinload(Posts.user))
         .options(selectinload(Posts.category))
+        .options(selectinload(Posts.comments))
+        .options(selectinload(Posts.reactions))
     )
     res = await session.execute(query)
     result = res.scalar_one_or_none()
     if not result:
         raise HTTPException(status_code=404, detail="Post not found")
+    await update_current_post_views_counter(post=result, session=session)
     return result
 
 async def get_posts_by_user_id(user_id: int, session: AsyncSession) -> Sequence[Posts]:
@@ -98,6 +101,19 @@ async def get_posts_by_user_id(user_id: int, session: AsyncSession) -> Sequence[
     res = await session.execute(query)
     results = res.scalars().all()
     return results
+
+async def get_all_posts_ordered_by_views(session: AsyncSession) -> Sequence[Posts]:
+    query = (
+        select(Posts)
+        .where(Posts.views != 0)
+        .options(selectinload(Posts.category))
+        .options(selectinload(Posts.user))
+        .order_by(Posts.views.desc())
+    )
+    res = await session.execute(query)
+    results = res.scalars().all()
+    return results
+
 
 async def edit_current_post(post_id: int, edited_post: UpdatePost, session: AsyncSession):
     post = await get_current_post_by_id(post_id, session)
@@ -120,3 +136,12 @@ async def delete_post_by_id(post_id: int, session: AsyncSession):
         await session.rollback()
         raise HTTPException(status_code=403, detail="Something went wrong")
     return {"status": "Post deleted"}
+
+async def update_current_post_views_counter(post: Posts, session: AsyncSession):
+    post.views += 1
+    session.add(post)
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        return {"status": "Post views counter is already up to date"}

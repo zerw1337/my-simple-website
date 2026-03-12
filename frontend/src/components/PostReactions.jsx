@@ -1,13 +1,21 @@
 import React, { useState, useEffect, useContext } from "react";
 import { getReactionsByPostId, getReactionTypes, postReaction } from "../api/Posts";
 import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 function PostReactions({ postId }) {
     const { user } = useContext(AuthContext);
+    const navigate = useNavigate();
     const [reactionTypes, setReactionTypes] = useState({});
     const [reactions, setReactions] = useState([]);
     const [userReaction, setUserReaction] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    const getIsVerified = () => {
+        const token = localStorage.getItem("access_token");
+        if (!token) return false;
+        try { return JSON.parse(atob(token.split(".")[1])).is_verified === true; } catch { return false; }
+    };
 
     useEffect(() => {
         getReactionTypes().then(data => {
@@ -51,7 +59,9 @@ function PostReactions({ postId }) {
     };
 
     const handleReaction = async (key) => {
-        if (!user || loading) return;
+        if (!user) return;
+        if (!getIsVerified()) { navigate("/register", { state: { step: 2 } }); return; }
+        if (loading) return;
         setLoading(true);
         try {
             await postReaction(postId, key.toLowerCase());

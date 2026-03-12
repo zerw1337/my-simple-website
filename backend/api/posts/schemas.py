@@ -24,6 +24,8 @@ class PostOut(BaseModel):
     user: UserOut
     created_at: datetime
     updated_at: datetime
+    views: int
+    rating: int
 
     model_config = ConfigDict(from_attributes=True)
 

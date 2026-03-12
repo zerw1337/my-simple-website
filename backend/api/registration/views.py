@@ -14,6 +14,7 @@ from api.SMTP.utils import generate_verify_code, generate_html_verify_message_fo
 from api.SMTP.email import send_email
 from api.auth.schemas import Token
 from api.auth.jwt import create_access_token, create_refresh_token
+from ..auth.token_database_operations import submit_refresh_token
 
 register_router = APIRouter(prefix="/register", tags=["Registration"])
 
@@ -31,6 +32,7 @@ async def register(background_tasks : BackgroundTasks, username: str = Form(), e
     background_tasks.add_task(send_email, user=user, subject="Verification code", html=html)
     access_token = create_access_token(id=new_user.id, username=new_user.username, user_version=new_user.user_version, user=new_user)
     refresh_token = create_refresh_token(id=new_user.id, username=new_user.username, user_version=new_user.user_version, user=new_user)
+    await submit_refresh_token(token=refresh_token, session=session)
     return Token(access_token=access_token, refresh_token=refresh_token, user=new_user.username)
 
 @register_router.post("/create_profile/")

@@ -129,3 +129,13 @@ export async function resendEmailChangeCode() {
     if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
     return await res.json();
 }
+export async function refreshTokens() {
+    const refreshToken = localStorage.getItem("refresh_token");
+    const res = await fetch(`${API_URL}/auth/refresh/`, {
+        headers: { Authorization: `Bearer ${refreshToken}` },
+    });
+    if (!res.ok) throw new Error("Refresh failed");
+    const data = await res.json();
+    localStorage.setItem("access_token", data.access_token);
+    return data;
+}

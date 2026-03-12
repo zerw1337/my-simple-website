@@ -1,14 +1,22 @@
 import React, { useState, useEffect, useContext } from "react";
 import { getCommentsByPostId, createComment, deleteComment } from "../api/Posts";
 import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 function PostComments({ postId }) {
     const { user } = useContext(AuthContext);
+    const navigate = useNavigate();
     const [comments, setComments] = useState([]);
     const [text, setText] = useState("");
     const [loading, setLoading] = useState(false);
     const [myUserId, setMyUserId] = useState(null);
     const [isSuperuser, setIsSuperuser] = useState(false);
+
+    const getIsVerified = () => {
+        const token = localStorage.getItem("access_token");
+        if (!token) return false;
+        try { return JSON.parse(atob(token.split(".")[1])).is_verified === true; } catch { return false; }
+    };
 
     useEffect(() => {
         fetchComments();
@@ -29,6 +37,7 @@ function PostComments({ postId }) {
 
     const handleSubmit = async () => {
         if (!text.trim() || text.trim().length < 3 || text.trim().length > 255 || loading) return;
+        if (!getIsVerified()) { navigate("/register", { state: { step: 2 } }); return; }
         setLoading(true);
         try {
             await createComment(postId, text.trim());

@@ -24,12 +24,12 @@ class Users(Base):
     user_version: Mapped[int] = mapped_column(default=1, nullable=False)
     pending_email: Mapped[str] = mapped_column(String(64), unique=True, nullable=True)
 
-    refresh_tokens: Mapped["RefreshTokens"] = relationship("RefreshTokens", back_populates="user", cascade="all, delete-orphan")
+    refresh_tokens: Mapped[list["RefreshTokens"]] = relationship("RefreshTokens", back_populates="user", cascade="all, delete-orphan")
     profile: Mapped["Profiles"] = relationship("Profiles" ,back_populates="user", uselist=False, cascade="all, delete-orphan")
     posts: Mapped["Posts"] = relationship("Posts", back_populates="user", cascade="all, delete-orphan")
     comments: Mapped[list["Comments"]] = relationship("Comments", back_populates="user", cascade="all, delete-orphan")
     reactions: Mapped[list["Reactions"]] = relationship("Reactions", back_populates="user", cascade="all, delete-orphan")
-    verify_codes: Mapped["VerifyCodes"] = relationship("VerifyCodes", back_populates="user", cascade="all, delete-orphan")
+    verify_codes: Mapped[list["VerifyCodes"]] = relationship("VerifyCodes", back_populates="user", cascade="all, delete-orphan")
 
 
 
@@ -38,7 +38,7 @@ class RefreshTokens(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     refresh_token_id: Mapped[str] = mapped_column(unique=True, nullable=False)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now())
 
     user: Mapped["Users"] = relationship("Users", back_populates="refresh_tokens")
@@ -52,7 +52,7 @@ class VerifyCodes(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     type: Mapped["VerifyCodesEnum"] = mapped_column(SAEnum(VerifyCodesEnum, name="verify_codes_enum"), nullable=False)
     code: Mapped[int] = mapped_column(unique=True, nullable=False)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now())
 
     user: Mapped["Users"] = relationship("Users", back_populates="verify_codes")
@@ -65,7 +65,7 @@ class Profiles(Base):
     last_name: Mapped[str] = mapped_column(String(32), nullable=False)
     birthday: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
     bio: Mapped[str] = mapped_column(Text, nullable=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
 
     user: Mapped["Users"] = relationship("Users", back_populates="profile")
 
@@ -83,8 +83,8 @@ class Posts(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(256), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
-    category_id: Mapped[int] = mapped_column(ForeignKey('categories.id'), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
+    category_id: Mapped[int] = mapped_column(ForeignKey('categories.id', ondelete="CASCADE"), nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(), onupdate=datetime.datetime.utcnow, nullable=False)
     views: Mapped[int] = mapped_column(default=0, nullable=False)
@@ -99,8 +99,8 @@ class Comments(Base):
     __tablename__ = 'comments'
     id: Mapped[int] = mapped_column(primary_key=True)
     content: Mapped[str] = mapped_column(String(255), nullable=False)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
-    post_id: Mapped[int] = mapped_column(ForeignKey('posts.id'), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
+    post_id: Mapped[int] = mapped_column(ForeignKey('posts.id', ondelete="CASCADE"), nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now(), nullable=False)
 
     post: Mapped["Posts"] = relationship("Posts", back_populates="comments")
@@ -128,8 +128,8 @@ class Reactions(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     reaction: Mapped["ReactionsEnum"] = mapped_column(SAEnum(ReactionsEnum, name="reactions_enum_val"), nullable=False)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
-    post_id: Mapped[int] = mapped_column(ForeignKey('posts.id'), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
+    post_id: Mapped[int] = mapped_column(ForeignKey('posts.id', ondelete="CASCADE"), nullable=False)
 
     post: Mapped["Posts"] = relationship("Posts", back_populates="reactions")
     user: Mapped["Users"] = relationship("Users", back_populates="reactions")

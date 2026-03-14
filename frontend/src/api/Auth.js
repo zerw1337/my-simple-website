@@ -44,7 +44,15 @@ export async function register(username, email, password) {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Ошибка регистрации");
+    if (!res.ok) {
+        const detail = data.detail;
+        if (Array.isArray(detail)) {
+
+            const msg = detail.map(e => e.msg).join(", ");
+            throw new Error(msg);
+        }
+        throw new Error(typeof detail === "string" ? detail : "Ошибка регистрации");
+    }
     return data;
 }
 

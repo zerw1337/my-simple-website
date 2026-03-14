@@ -121,10 +121,16 @@ function Header() {
                 }
                 .main-nav a:hover { color: var(--logo-color); }
 
+                @media (max-width: 1280px) {
+                    .logo { font-size: 1.4rem !important; }
+                    .main-nav { gap: 0.4rem; }
+                    .main-nav a, .main-nav button { font-size: 0.85rem; }
+                }
+
                 @media (max-width: 1100px) {
-                    .logo { font-size: 1.6rem !important; }
-                    .main-nav { gap: 0.5rem; }
-                    .main-nav a, .main-nav button { font-size: 0.9rem; }
+                    .logo { font-size: 1.3rem !important; }
+                    .main-nav { gap: 0.3rem; }
+                    .main-nav a, .main-nav button { font-size: 0.8rem; }
                 }
 
                 @media (max-width: 768px) {

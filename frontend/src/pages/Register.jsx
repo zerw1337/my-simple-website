@@ -11,8 +11,9 @@ function Register() {
     const location = useLocation();
     const [step, setStep] = useState(location.state?.step || 1);
 
-    // если уже верифицирован — на главную
+
     useEffect(() => {
+        if (location.state?.step) return;
         const token = localStorage.getItem("access_token");
         if (token) {
             try {
@@ -167,7 +168,23 @@ function Register() {
                     ))}
                 </div>
 
-                {error && <div style={{ color: "#ff5555", fontWeight: 600, marginBottom: "1rem", textAlign: "center", fontFamily: "'Poppins', sans-serif" }}>{error}</div>}
+                {error && (
+                    <div style={{
+                        display: "flex", alignItems: "flex-start", gap: "0.5rem",
+                        background: "rgba(255,85,85,0.1)",
+                        border: "1px solid rgba(255,85,85,0.4)",
+                        borderRadius: "8px",
+                        padding: "0.65rem 0.9rem",
+                        marginBottom: "1rem",
+                        fontFamily: "'Poppins', sans-serif",
+                        fontSize: "0.875rem",
+                        color: "#ff7070",
+                        lineHeight: 1.5,
+                    }}>
+                        <span style={{ fontSize: "1rem", flexShrink: 0 }}>⚠️</span>
+                        <span>{error}</span>
+                    </div>
+                )}
 
                 {step === 1 && (
                     <>

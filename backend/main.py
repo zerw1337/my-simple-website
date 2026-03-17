@@ -34,7 +34,11 @@ app.include_router(users_router)
 app.include_router(cat_router)
 
 app.add_middleware(CORSMiddleware,
-                    allow_origins=["http://localhost:5173"],
+                   allow_origins=[
+                       "http://localhost:5173",
+                       "http://127.0.0.1:5173",
+                       "http://frontend:5173",
+                   ],
                     allow_credentials=True,
                     allow_methods=["*"],
                     allow_headers=["*"],
@@ -47,7 +51,7 @@ async def root(user: UserOut = Depends(get_auth)):
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True)
+    uvicorn.run("main:app", reload=True, host="0.0.0.0")
 
 
 

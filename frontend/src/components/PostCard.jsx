@@ -83,8 +83,6 @@ function PostCardFull({ post, prevId, nextId }) {
     return (
         <main style={{paddingTop: "3em"}}>
             <div className="full-post-card" style={{
-                maxWidth: "800px",
-                margin: "2rem auto",
                 padding: "1.5rem",
                 background: "#1f1f1f",
                 color: "#ececec",

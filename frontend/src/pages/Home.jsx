@@ -11,7 +11,7 @@ function Home() {
                 <MainPostsList />
                 <div className="under-five-posts">
                     <p>
-                        Больше постов вы найдете <a href="/posts">здесь</a>
+                        Больше постов вы найдете <a href="/blog">здесь</a>
                     </p>
                 </div>
 

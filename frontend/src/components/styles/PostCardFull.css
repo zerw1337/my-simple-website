@@ -11,6 +11,13 @@
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
+@media (max-width: 1600px) {
+    .full-post-card {
+        max-width: 100%;
+        margin: 2rem 0;
+    }
+}
+
 .full-post-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
@@ -64,5 +71,12 @@
     .full-post-meta {
         flex-direction: column;
         gap: 0.5rem;
+    }
+}
+
+@media (min-width: 601px) and (max-width: 1600px) {
+    .full-post-card {
+        max-width: 100%;
+        margin: 2rem 0;
     }
 }

@@ -23,7 +23,6 @@ function Header() {
     const linkStyle = {
         fontFamily: "'Poppins', sans-serif",
         fontWeight: 600,
-        color: "var(--menu-item-color)",
         textDecoration: "none",
         padding: "0.4rem 0",
         fontSize: "1rem",
@@ -63,9 +62,9 @@ function Header() {
                 {user ? (
                     <>
                         {getIsSuperuser() && (
-                            <Link to="/admin" onClick={close} style={{ ...linkStyle, color: "var(--logo-color)" }}>Админ</Link>
+                            <Link to="/admin" onClick={close} className="accent" style={linkStyle}>Админ</Link>
                         )}
-                        <a href={`/profile/${getMyId()}`} onClick={close} style={{ ...linkStyle, color: "var(--logo-color)" }}>
+                        <a href={`/profile/${getMyId()}`} onClick={close} className="accent" style={linkStyle}>
                             {user.username}
                         </a>
                         <button
@@ -119,7 +118,9 @@ function Header() {
                     color: var(--menu-item-color);
                     transition: color 0.2s;
                 }
-                .main-nav a:hover { color: var(--logo-color); }
+                .main-nav a:hover, .main-nav button:hover { color: var(--logo-color); }
+                .main-nav a.accent { color: var(--logo-color); }
+                .main-nav a.accent:hover { color: var(--menu-item-color); }
 
                 @media (max-width: 1280px) {
                     .logo { font-size: 1.4rem !important; }

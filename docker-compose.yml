@@ -1,0 +1,56 @@
+services:
+  backend:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./backend
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      pg:
+        condition: service_healthy
+
+  frontend:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./frontend
+
+    ports:
+      - "5173:5173"
+
+    depends_on:
+      - backend
+
+  pg:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: zerw1337
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 12321
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d zerw1337" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.org
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_SERVER_MODE: False
+    ports:
+      - "5050:80"
+
+
+volumes:
+  pgdata:

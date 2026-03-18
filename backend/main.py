@@ -7,6 +7,7 @@ from api.categories.views import cat_router
 from src.models.database import db_dispose
 from api.auth.schemas import UserOut
 from api.auth.dependencies import get_auth
+from src.redis import redis_config
 
 from api.reactions.views import reaction_router
 from api.users.views import users_router
@@ -19,8 +20,13 @@ from api.comments.views import comments_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
+    await redis_config.init_redis()
+
     yield
+    
     await db_dispose()
+    await redis_config.close_redis()
+
 
 app = FastAPI(lifespan=lifespan)
 

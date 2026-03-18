@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     SMTP_USERNAME: str
     SMTP_PASSWORD: str
 
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_DB_CACHE: int
+    REDIS_DB_LIMITER: int
+
     naming_conventions: dict[str, str] = {
         "ix": "ix_%(column_0_label)s",
         "uq": "uq_%(table_name)s_%(column_0_name)s",

@@ -11,6 +11,12 @@ services:
       pg:
         condition: service_healthy
 
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /backend
+
   frontend:
     build:
       dockerfile: ./Dockerfile
@@ -21,6 +27,12 @@ services:
 
     depends_on:
       - backend
+
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /frontend
 
   pg:
     image: postgres:18

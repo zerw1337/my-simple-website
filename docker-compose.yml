@@ -19,7 +19,10 @@ services:
       watch:
         - action: sync
           path: ./backend
-          target: /backend
+          target: /app
+
+    env_file:
+      - ./backend/.env
 
   frontend:
     build:
@@ -38,7 +41,7 @@ services:
       watch:
         - action: sync
           path: ./frontend
-          target: /frontend
+          target: /app
 
 
 
@@ -86,6 +89,14 @@ services:
       interval: 1s
       timeout: 3s
       retries: 30
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    depends_on:
+      redis:
+        condition: service_healthy
 
 
 

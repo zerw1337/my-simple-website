@@ -5,6 +5,7 @@ from src.models.database import get_session
 from api.profiles.schemas import ProfileOut
 from .crud import get_current_profile
 from .dto import profile_dto
+from src.redis.dependencies import get_cache
 
 
 profiles_router = APIRouter(prefix="/profile", tags=["Profiles"])

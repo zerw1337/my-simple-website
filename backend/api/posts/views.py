@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+import json
+from redis.asyncio import Redis
 
 from api.auth.dependencies import get_auth_admin
 from api.auth.schemas import UserOut
@@ -10,12 +12,16 @@ from api.posts.dto import get_all_posts_dto, get_post_by_id_dto
 from api.posts.schemas import CreatePost, PostOut, UpdatePost
 from api.posts_rating.utils import update_posts_rating_by_post_model
 from src.models.database import get_session
+from src.redis.dependencies import get_cache
+from src.config import settings
 
 posts_router = APIRouter(prefix="/posts", tags=["Posts"])
 
 @posts_router.post("/create/")
-async def create_post(new_post : CreatePost, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session)):
-    return await create_new_post(user=user, post=new_post, session=session)
+async def create_post(new_post : CreatePost, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
+    await create_new_post(user=user, post=new_post, session=session)
+    await r.delete("five_latest")
+    return {"status": "Post created"}
 
 @posts_router.get("/")
 async def get_posts(session: AsyncSession = Depends(get_session)):
@@ -23,9 +29,14 @@ async def get_posts(session: AsyncSession = Depends(get_session)):
     return get_all_posts_dto(posts=posts_orm)
 
 @posts_router.get("/five_latest/")
-async def get_five_latest(session: AsyncSession = Depends(get_session)):
+async def get_five_latest(session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
+    cached = await r.get("five_latest")
+    if cached:
+        return json.loads(cached)
     posts_orm = await get_five_latest_posts(session=session)
-    return get_all_posts_dto(posts=posts_orm)
+    posts_dto = get_all_posts_dto(posts=posts_orm)
+    await r.set("five_latest", json.dumps([p.model_dump(mode="json") for p in posts_dto]))
+    return posts_dto
 
 @posts_router.get("/next_post/")
 async def get_next_post(current_post_id: int, session: AsyncSession = Depends(get_session)):
@@ -63,8 +74,10 @@ async def get_top_viewed_posts(session: AsyncSession = Depends(get_session)):
     return get_all_posts_dto(posts=posts_orm)
 
 @posts_router.patch("/update/")
-async def edit_post(post_id: int, edited_post: UpdatePost, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session)):
-    return await edit_current_post(post_id=post_id, edited_post=edited_post, session=session)
+async def edit_post(post_id: int, edited_post: UpdatePost, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
+    await edit_current_post(post_id=post_id, edited_post=edited_post, session=session)
+    await r.delete("five_latest")
+    return {"status": "Post edited"}
 
 @posts_router.delete("/delete/")
 async def delete_post(post_id: int, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session)):

@@ -16,6 +16,7 @@ from api.registration.views import register_router
 from api.profiles.views import profiles_router
 from api.posts.views import posts_router
 from api.comments.views import comments_router
+from middleware import RateLimitMiddleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -49,6 +50,7 @@ app.add_middleware(CORSMiddleware,
                     allow_methods=["*"],
                     allow_headers=["*"],
                    )
+app.add_middleware(RateLimitMiddleware)
 
 @app.get('/')
 async def root(user: UserOut = Depends(get_auth)):

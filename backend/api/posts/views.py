@@ -10,7 +10,7 @@ from api.posts.crud import create_new_post, get_all_posts, get_current_post_by_i
     get_all_posts_ordered_by_views, get_all_posts_ordered_by_rating
 from api.posts.dto import get_all_posts_dto, get_post_by_id_dto
 from api.posts.schemas import CreatePost, PostOut, UpdatePost
-from api.posts_rating.utils import update_posts_rating_by_post_model
+from api.posts_rating.utils import update_posts_rating_by_post_model, update_posts_rating_by_post_id
 from src.models.database import get_session
 from src.redis.dependencies import get_cache
 from src.config import settings
@@ -21,12 +21,19 @@ posts_router = APIRouter(prefix="/posts", tags=["Posts"])
 async def create_post(new_post : CreatePost, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
     await create_new_post(user=user, post=new_post, session=session)
     await r.delete("five_latest")
+    await r.delete("all_posts")
+    await r.delete(f"posts_by_user/{user.id}")
     return {"status": "Post created"}
 
 @posts_router.get("/")
-async def get_posts(session: AsyncSession = Depends(get_session)):
+async def get_posts(session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
+    cached = await r.get("all_posts")
+    if cached:
+        return json.loads(cached)
     posts_orm = await get_all_posts(session=session)
-    return get_all_posts_dto(posts=posts_orm)
+    posts_dto = get_all_posts_dto(posts=posts_orm)
+    await r.set("all_posts", json.dumps([p.model_dump(mode="json") for p in posts_dto]), ex=settings.CACHE_EXPIRE)
+    return posts_dto
 
 @posts_router.get("/five_latest/")
 async def get_five_latest(session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
@@ -43,42 +50,65 @@ async def get_next_post(current_post_id: int, session: AsyncSession = Depends(ge
     res = await get_next_post_after_this(current_post_id=current_post_id, session=session)
     if not res:
         raise HTTPException(status_code=404, detail="This is last post")
-    return get_post_by_id_dto(res)
+    post_dto = get_post_by_id_dto(post=res)
+    return post_dto
 
 @posts_router.get("/previous_post/")
 async def get_previous_post(current_post_id: int, session: AsyncSession = Depends(get_session)):
     res = await get_previous_post_from_this(current_post_id=current_post_id, session=session)
     if not res:
         raise HTTPException(status_code=404, detail="This is the first post")
-    return get_post_by_id_dto(res)
+    post_dto = get_post_by_id_dto(post=res)
+    return post_dto
 
 @posts_router.get("/{id}")
 async def get_post_by_id(id: int, session: AsyncSession = Depends(get_session)) -> PostOut:
     post_orm = await get_current_post_by_id(post_id=id, session=session)
     await update_posts_rating_by_post_model(post=post_orm, session=session)
-    return get_post_by_id_dto(post=post_orm)
+    post_dto = get_post_by_id_dto(post=post_orm)
+    return post_dto
 
 @posts_router.get("/by_user/{user_id}")
-async def get_posts_by_current_user(user_id: int, session: AsyncSession = Depends(get_session)) -> list[PostOut]:
+async def get_posts_by_current_user(user_id: int, session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)) -> list[PostOut]:
+    cached = await r.get(f"posts_by_user/{user_id}")
+    if cached:
+        return json.loads(cached)
     posts_orm = await get_posts_by_user_id(user_id=user_id, session=session)
-    return get_all_posts_dto(posts=posts_orm)
+    posts_dto = get_all_posts_dto(posts=posts_orm)
+    await r.set(f"posts_by_user/{user_id}", json.dumps([p.model_dump(mode="json") for p in posts_dto]), ex=settings.CACHE_EXPIRE)
+    return posts_dto
+
 
 @posts_router.get("/top_viewed/")
-async def get_top_viewed_posts(session: AsyncSession = Depends(get_session)):
+async def get_top_viewed_posts(session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
+    cached = await r.get("top_viewed_posts")
+    if cached:
+        return json.loads(cached)
     posts_orm = await get_all_posts_ordered_by_views(session=session)
-    return get_all_posts_dto(posts=posts_orm)
+    posts_dto = get_all_posts_dto(posts=posts_orm)
+    await r.set("top_viewed_posts", json.dumps([p.model_dump(mode="json") for p in posts_dto]), ex=settings.CACHE_EXPIRE)
+    return posts_dto
 
 @posts_router.get("/top_rated/")
-async def get_top_viewed_posts(session: AsyncSession = Depends(get_session)):
+async def get_top_rated_posts(session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
+    cached = await r.get("top_rated_posts")
+    if cached:
+        return json.loads(cached)
     posts_orm = await get_all_posts_ordered_by_rating(session=session)
-    return get_all_posts_dto(posts=posts_orm)
+    posts_dto = get_all_posts_dto(posts=posts_orm)
+    await r.set("top_rated_posts", json.dumps([p.model_dump(mode="json") for p in posts_dto]), ex=settings.CACHE_EXPIRE)
+    return posts_dto
 
 @posts_router.patch("/update/")
 async def edit_post(post_id: int, edited_post: UpdatePost, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
     await edit_current_post(post_id=post_id, edited_post=edited_post, session=session)
+    await r.delete("all_posts")
     await r.delete("five_latest")
     return {"status": "Post edited"}
 
 @posts_router.delete("/delete/")
-async def delete_post(post_id: int, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session)):
-    return await delete_post_by_id(post_id=post_id, session=session)
+async def delete_post(post_id: int, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
+     await delete_post_by_id(post_id=post_id, session=session)
+     await r.delete("five_latest")
+     await r.delete("all_posts")
+     return {"status": "Post deleted"}

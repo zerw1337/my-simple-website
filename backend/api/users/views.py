@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import EmailStr
+import json
+from redis.asyncio import Redis
 
 from api.auth.schemas import UserOut
 from api.auth.dependencies import get_auth, get_auth_admin
@@ -15,6 +17,8 @@ from ..auth.auth_validation import get_current_user
 from ..auth.views import oauth2_scheme
 from ..registration.utils import upload_verify_code_to_database, verify_email_change_via_code, \
     check_if_current_users_verify_code_exists
+from src.redis.dependencies import get_cache
+from src.config import settings
 
 users_router = APIRouter(prefix="/user", tags=["Users"])
 
@@ -23,17 +27,26 @@ async def get_me(user: UserOut = Depends(get_auth)):
     return user
 
 @users_router.get("/get_all_users/")
-async def get_all_users(user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session)):
+async def get_all_users(user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r:Redis = Depends(get_cache)):
+    cached = await r.get("all_users")
+    if cached:
+        return json.loads(cached)
     users_orm = await get_all_users_list(session=session)
-    return get_all_users_list_dto(users_orm)
+    users_dto = get_all_users_list_dto(users_orm)
+    await r.set("all_users", json.dumps([u.model_dump(mode="json") for u in users_dto]), ex=settings.CACHE_EXPIRE)
+    return users_dto
 
 @users_router.post("/ban/")
-async def ban_user(user_id: int, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session)):
-    return await ban_current_user(user_id=user_id, session=session)
+async def ban_user(user_id: int, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r:Redis = Depends(get_cache)):
+    await ban_current_user(user_id=user_id, session=session)
+    await r.delete("all_users")
+    return {"success": True}
 
 @users_router.post("/unban/")
-async def ban_user(user_id: int, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session)):
-    return await unban_current_user(user_id=user_id, session=session)
+async def unban_user(user_id: int, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r:Redis = Depends(get_cache)):
+    await unban_current_user(user_id=user_id, session=session)
+    await r.delete("all_users")
+    return {"success": True}
 
 @users_router.patch("/settings/change_password/")
 async def change_password(new_password: str, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):

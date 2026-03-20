@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+import json
+from redis.asyncio import Redis
 
 from api.auth.dependencies import get_auth
 from api.auth.schemas import UserOut
@@ -8,13 +10,18 @@ from api.reactions.crud import post_reaction_for_current_user, get_reactions_by_
 from api.reactions.dto import get_reactions_by_post_id_dto
 from api.reactions.schemas import ReactionsEnum, Reaction, ReactionEmojis
 from src.models.database import get_session
+from src.redis.dependencies import get_cache
 
 reaction_router = APIRouter(prefix="/reactions", tags=["Reactions"])
 
 
 @reaction_router.get("/reaction_types/")
-async def get_reaction_types():
+async def get_reaction_types(r: Redis = Depends(get_cache)):
+    cached = await r.get("reaction_types")
+    if cached:
+        return json.loads(cached)
     response = ReactionEmojis().emojis
+    await r.set("reaction_types", json.dumps(response))
     return response
 
 @reaction_router.post("/")
@@ -28,4 +35,5 @@ async def reaction_react(post_id: int, reaction: ReactionsEnum, user: UserOut = 
 @reaction_router.get("/{post_id}/")
 async def get_reactions_by_post_id(post_id: int, session: AsyncSession = Depends(get_session)):
     res = await get_reactions_by_id(post_id=post_id, session=session)
-    return get_reactions_by_post_id_dto(res)
+    res_dto = get_reactions_by_post_id_dto(res)
+    return res_dto

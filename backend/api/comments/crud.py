@@ -47,7 +47,7 @@ async def create_new_comment(comment: CreateComment, post_id: int, user: UserOut
         raise HTTPException(status_code=403, detail="Something went wrong")
     return {"success": True}
 
-async def delete_current_comment(comment_id: int, user: UserOut, session: AsyncSession):
+async def delete_current_comment(comment_id: int, user: UserOut, session: AsyncSession) -> Comments:
     query = (
         select(Comments)
         .where(Comments.id == comment_id)
@@ -56,10 +56,11 @@ async def delete_current_comment(comment_id: int, user: UserOut, session: AsyncS
     result = res.scalar_one_or_none()
     if not result:
         raise HTTPException(status_code=404, detail="Comment not found")
+    deleted_comment = result
     if user.id == result.user_id or user.is_superuser:
         try:
             await session.delete(result)
             await session.commit()
         except Exception:
             raise HTTPException(status_code=403, detail="Something went wrong")
-    return {"success": True}
+    return deleted_comment

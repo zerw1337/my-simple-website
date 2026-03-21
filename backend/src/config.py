@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     REDIS_DB_LIMITER: int
     CACHE_EXPIRE: int = 300
     LIMITER_WINDOW : int = 10
-    LIMITER_LIMIT : int = 100
+    LIMITER_LIMIT : int = 50
 
     naming_conventions: dict[str, str] = {
         "ix": "ix_%(column_0_label)s",

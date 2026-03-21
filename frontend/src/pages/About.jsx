@@ -64,9 +64,9 @@ function About() {
     ];
 
     const games = [
-        { en: "Kingdom Come: Deliverance", ru: "Kingdom Come: Deliverance" },
+        { en: "Kingdom Come: Deliverance I & II", ru: "Kingdom Come: Deliverance I & II" },
         { en: "Cyberpunk 2077", ru: "Cyberpunk 2077" },
-        { en: "The Last of Us", ru: "Одни из нас" },
+        { en: "The Last of Us I & II", ru: "Одни из нас I & II" },
         { en: "Red Dead Redemption 2", ru: "Red Dead Redemption 2" },
         { en: "God of War III", ru: "God of War III" },
     ];
@@ -111,6 +111,28 @@ function About() {
                     </p>
                     <p style={{ margin: 0, lineHeight: 1.8, color: "var(--main-text-color)" }}>
                         Проект также служит площадкой для экспериментов с технологиями. Это место, где я совмещаю практику программирования с публикацией собственных заметок и идей.
+                    </p>
+                </div>
+
+                {/* Переход к топам */}
+                <div style={{ textAlign: "center", margin: "0.5rem 0 2rem" }}>
+                    <div style={{
+                        width: "40px",
+                        height: "2px",
+                        background: "var(--logo-color)",
+                        borderRadius: "2px",
+                        margin: "0 auto 1.25rem",
+                        opacity: 0.5,
+                    }} />
+                    <p style={{
+                        margin: 0,
+                        color: "#a0a0a0",
+                        fontSize: "0.95rem",
+                        lineHeight: 1.7,
+                        fontStyle: "italic",
+                    }}>
+                        Помимо программирования — кино, сериалы и игры занимают немало времени.<br />
+                        Ниже — личный топ того, что оставило наибольшее впечатление.
                     </p>
                 </div>
 

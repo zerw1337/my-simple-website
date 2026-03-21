@@ -3,13 +3,12 @@ from src.config import settings
 
 
 async def is_limited(ip: str) -> bool:
-    r = await get_limiter()
     key = f"rate:{ip}"
-    current = await r.incr(key)
-
-    if current == 1:
-        await r.expire(key, settings.LIMITER_WINDOW)
-
+    r = await get_limiter()
+    pipe = r.pipeline()
+    pipe.incr(key)
+    pipe.expire(key, settings.LIMITER_WINDOW)
+    current, _ = await pipe.execute()
     return current > settings.LIMITER_LIMIT
 
 

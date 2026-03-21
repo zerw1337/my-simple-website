@@ -40,6 +40,7 @@ app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(cat_router)
 
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(CORSMiddleware,
                    allow_origins=[
                        "http://localhost:5173",
@@ -50,7 +51,7 @@ app.add_middleware(CORSMiddleware,
                     allow_methods=["*"],
                     allow_headers=["*"],
                    )
-app.add_middleware(RateLimitMiddleware)
+
 
 @app.get('/')
 async def root(user: UserOut = Depends(get_auth)):

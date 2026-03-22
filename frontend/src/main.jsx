@@ -10,7 +10,6 @@ function showRateLimitToast() {
     if (toastVisible) return;
     toastVisible = true;
 
-    // Overlay
     const overlay = document.createElement("div");
     overlay.style.cssText = `
         position: fixed; inset: 0;
@@ -20,7 +19,6 @@ function showRateLimitToast() {
         display: flex; align-items: center; justify-content: center;
     `;
 
-    // Modal
     const modal = document.createElement("div");
     modal.style.cssText = `
         background: #1f1f1f;

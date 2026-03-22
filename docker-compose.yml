@@ -1,4 +1,5 @@
 services:
+
   backend:
     build:
       dockerfile: ./Dockerfile
@@ -97,7 +98,6 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-
 
 
 volumes:

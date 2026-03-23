@@ -24,9 +24,9 @@ async def init_redis():
 async def close_redis():
     global r_cache, r_limiter
     if r_cache:
-        await r_cache.close()
+        await r_cache.aclose()
         r_cache = None
     if r_limiter:
-        await r_limiter.close()
+        await r_limiter.aclose()
         r_limiter = None
 

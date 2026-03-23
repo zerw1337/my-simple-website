@@ -16,14 +16,22 @@ class Database:
                                                         expire_on_commit=False,
                                                         autocommit=False)
 
-db = Database(settings)
+
+_db: Database | None = None
+
+def get_db() -> Database:
+    global _db
+    if _db is None:
+        _db = Database(settings)
+    return _db
+
 
 async def get_session() -> AsyncIterator[AsyncSession]:
-    async with db.async_session_factory() as session:
+    async with get_db().async_session_factory() as session:
         yield session
 
 async def db_dispose():
-    await db.async_engine.dispose()
+    await get_db().async_engine.dispose()
 
 class Base(DeclarativeBase):
 

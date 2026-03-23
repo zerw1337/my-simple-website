@@ -23,7 +23,7 @@ services:
     image: redis:7.2
     restart: always
     ports:
-      - "6389:6389"
+      - "6389:6379"
     volumes:
       - redis_data_test:/data
     healthcheck:

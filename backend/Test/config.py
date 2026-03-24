@@ -13,7 +13,7 @@ class TestSettings(BaseSettings):
     JWT_SECRET_KEY: Path
     JWT_PUBLIC_KEY: Path
     JWT_ALGORITHM: str
-    JWT_ACCESS_TOKEN_EXPIRES_MINUTES: int = 15
+    JWT_ACCESS_TOKEN_EXPIRES_MINUTES: int = 6000
     JWT_REFRESH_TOKEN_EXPIRES_DAYS: int = 7
 
     REDIS_HOST: str

@@ -28,7 +28,7 @@ async def get_category_by_id(id:int, session: AsyncSession):
     raise HTTPException(status_code=404, detail="Category not found")
 
 async def create_category(in_cat: CreateCategory, session: AsyncSession):
-    new = Categories(**in_cat.dict())
+    new = Categories(**in_cat.model_dump())
     session.add(new)
     await session.commit()
 
@@ -40,7 +40,7 @@ async def edit_category_by_id(id: int, updated: EditCategory, session: AsyncSess
     res = await session.execute(query)
     result = res.scalar_one_or_none()
     if result:
-        for name, val in updated.dict().items():
+        for name, val in updated.model_dump().items():
             setattr(result, name, val)
         session.add(result)
         await session.commit()

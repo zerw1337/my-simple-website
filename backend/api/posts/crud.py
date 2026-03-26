@@ -10,7 +10,7 @@ from api.posts.schemas import CreatePost, PostOut, UpdatePost
 from src.models.models import Posts, Categories, Users
 
 
-async def create_new_post(user : UserOut, post: CreatePost, session: AsyncSession):
+async def create_new_post(user : UserOut, post: CreatePost, session: AsyncSession) -> Posts:
     new_post = Posts(
         title=post.title,
         content=post.content,
@@ -26,7 +26,17 @@ async def create_new_post(user : UserOut, post: CreatePost, session: AsyncSessio
     except Exception:
         await session.rollback()
         raise HTTPException(status_code=500, detail="Failed to create new post")
-    return {"status": "Post created"}
+    query = (
+        select(Posts)
+        .where(Posts.id == new_post.id)
+        .options(selectinload(Posts.user))
+        .options(selectinload(Posts.category))
+        .options(selectinload(Posts.comments))
+        .options(selectinload(Posts.reactions))
+    )
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
+    return result
 
 async def get_all_posts(session: AsyncSession) -> Sequence[Posts]:
     query = (
@@ -127,9 +137,9 @@ async def get_all_posts_ordered_by_rating(session: AsyncSession) -> Sequence[Pos
     return results
 
 
-async def edit_current_post(post_id: int, edited_post: UpdatePost, session: AsyncSession):
+async def edit_current_post(post_id: int, edited_post: UpdatePost, session: AsyncSession) -> Posts:
     post = await get_current_post_by_id(post_id, session)
-    for name, val in edited_post.dict(exclude_unset=True).items():
+    for name, val in edited_post.model_dump(exclude_unset=True).items():
         setattr(post, name, val)
     session.add(post)
     try:
@@ -137,7 +147,15 @@ async def edit_current_post(post_id: int, edited_post: UpdatePost, session: Asyn
     except IntegrityError:
         await session.rollback()
         raise HTTPException(status_code=403, detail="Something went wrong")
-    return {"status": "Post edited"}
+    query = (
+        select(Posts)
+        .where(Posts.id == post_id)
+        .options(selectinload(Posts.category))
+        .options(selectinload(Posts.user))
+    )
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
+    return result
 
 async def delete_post_by_id(post_id: int, session: AsyncSession):
     post = await get_current_post_by_id(post_id, session)

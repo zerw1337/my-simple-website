@@ -19,7 +19,6 @@ async def get_auth_new_user(token: str = Depends(oauth2_scheme), session: AsyncS
 
 async def get_auth_admin(token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)) -> UserOut:
     user = await get_current_user(token=token, session=session)
-    print("User:", user)
     if user.is_verified and user.is_active and not user.is_banned:
         if user.is_superuser:
             return user

@@ -90,6 +90,16 @@ async def prepare_database(patch_settings):
                 emoji=":)",
                 description="test",
             ),
+            Posts(
+                title="First post",
+                content="First post",
+                user_id=1,
+                category_id=1,
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+                views=1,
+                rating=1,
+            )
         ])
         await session.commit()
     yield

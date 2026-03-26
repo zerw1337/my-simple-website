@@ -17,13 +17,13 @@ from src.config import settings
 
 posts_router = APIRouter(prefix="/posts", tags=["Posts"])
 
-@posts_router.post("/create/")
+@posts_router.post("/create/", response_model=PostOut, status_code=201)
 async def create_post(new_post : CreatePost, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
-    await create_new_post(user=user, post=new_post, session=session)
+    new_post = await create_new_post(user=user, post=new_post, session=session)
     await r.delete("five_latest")
     await r.delete("all_posts")
     await r.delete(f"posts_by_user/{user.id}")
-    return {"status": "Post created"}
+    return get_post_by_id_dto(new_post)
 
 @posts_router.get("/")
 async def get_posts(session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
@@ -99,12 +99,13 @@ async def get_top_rated_posts(session: AsyncSession = Depends(get_session), r: R
     await r.set("top_rated_posts", json.dumps([p.model_dump(mode="json") for p in posts_dto]), ex=settings.CACHE_EXPIRE)
     return posts_dto
 
-@posts_router.patch("/update/")
+@posts_router.patch("/update/", response_model=PostOut)
 async def edit_post(post_id: int, edited_post: UpdatePost, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
-    await edit_current_post(post_id=post_id, edited_post=edited_post, session=session)
+    updated = await edit_current_post(post_id=post_id, edited_post=edited_post, session=session)
     await r.delete("all_posts")
     await r.delete("five_latest")
-    return {"status": "Post edited"}
+    result = get_post_by_id_dto(post=updated)
+    return result
 
 @posts_router.delete("/delete/")
 async def delete_post(post_id: int, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):

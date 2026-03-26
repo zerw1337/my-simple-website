@@ -16,7 +16,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 @auth_router.post("/login/", response_model=Token, summary="Выполнить вход в учетную запись, возвращает access+refresh токены")
-async def login(username: str = Form(...), password: str = Form(...), session: AsyncSession = Depends(get_session)):
+async def login(username: str = Form(... , min_length=3, max_length=64), password: str = Form(... , min_length=6, max_length=255), session: AsyncSession = Depends(get_session)):
     user = await verify_login(login=username, password=password, session=session)
     access_token = create_access_token(id=str(user.id), username=user.username, user_version=user.user_version, user=user)
     refresh_token = create_refresh_token(id=user.id, username=user.username, user_version=user.user_version, user=user)

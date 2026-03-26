@@ -2,7 +2,6 @@ from jose import jwt
 from datetime import datetime, timedelta
 import uuid
 
-from sqlalchemy.testing.pickleable import User
 
 from src.config import settings
 from .schemas import token_fields

@@ -12,6 +12,7 @@ from src.models.models import Users, Categories, Posts
 from src.redis import redis_config
 from api.auth.dependencies import get_auth, get_auth_new_user, get_auth_admin
 from Test.users_test import admin, user, new_user
+from api.registration.utils import encode_password, check_password
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -52,7 +53,7 @@ async def prepare_database(patch_settings):
                 id=1,
                 username="admin",
                 email="admin@mail.ru",
-                password="test_hash",
+                password=encode_password(password=test_settings.TEST_API_USER_PASSWORD),
                 is_active=True,
                 is_banned=False,
                 is_superuser=True,
@@ -64,7 +65,7 @@ async def prepare_database(patch_settings):
                 id=2,
                 username="user",
                 email="321@mail.ru",
-                password="test_hash",
+                password=encode_password(password=test_settings.TEST_API_USER_PASSWORD),
                 is_active=True,
                 is_banned=False,
                 is_superuser=False,
@@ -76,9 +77,21 @@ async def prepare_database(patch_settings):
                 id=3,
                 username="new_user",
                 email="456@mail.ru",
-                password="test_hash",
+                password=encode_password(password=test_settings.TEST_API_USER_PASSWORD),
                 is_active=True,
                 is_banned=False,
+                is_superuser=False,
+                is_verified=False,
+                user_version=1,
+                pending_email=None,
+            ),
+            Users(
+                id=4,
+                username="banned",
+                email="789@mail.ru",
+                password=encode_password(password=test_settings.TEST_API_USER_PASSWORD),
+                is_active=True,
+                is_banned=True,
                 is_superuser=False,
                 is_verified=False,
                 user_version=1,
@@ -134,3 +147,4 @@ async def client_new_user():
     async with AsyncClient(transport=ASGITransport(app), base_url="http://testserver") as client:
         yield client
     app.dependency_overrides.pop(get_auth_new_user, None)
+

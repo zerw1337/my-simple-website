@@ -24,6 +24,8 @@ class TestSettings(BaseSettings):
     LIMITER_WINDOW: int = 10
     LIMITER_LIMIT: int = 100
 
+    TEST_API_USER_PASSWORD: str = "qwerty"
+
     naming_conventions: dict[str, str] = {
         "ix": "ix_%(column_0_label)s",
         "uq": "uq_%(table_name)s_%(column_0_name)s",

@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 
 from Test.conftest import client_unauthorized
 from Test.config import test_settings
@@ -79,8 +80,29 @@ async def test_auth_login(client_unauthorized, creds, exp):
 
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "creds, exp",
+    [
+        (
+                {"username": "admin", "password": str(test_settings.TEST_API_USER_PASSWORD)}, 200
+        ),
+        (
+                {"username": "user", "password": str(test_settings.TEST_API_USER_PASSWORD)}, 200
+        ),
+    ])
+async def test_refresh_token(client_unauthorized, creds, exp):
+    response = await client_unauthorized.post("/auth/login/", data=creds)
+    data = response.json()
+    assert response.status_code == 200
+    refresh_token_encoded = data["refresh_token"]
 
-
-
+    headers = {"Authorization": f"Bearer {refresh_token_encoded}"}
+    response = await client_unauthorized.get("/auth/refresh/", headers=headers)
+    data = response.json()
+    assert response.status_code == 200
+    access_token = get_token_payload(data["access_token"])
+    assert access_token["username"] == creds["username"]
+    assert access_token["type"] == "access"
 
 

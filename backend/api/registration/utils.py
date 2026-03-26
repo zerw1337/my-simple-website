@@ -112,7 +112,7 @@ async def upload_verify_code_to_database(code: int, code_type: VerifyCodesEnum, 
     except IntegrityError:
         await session.rollback()
         code = generate_verify_code()
-        await upload_verify_code_to_database(code=code, session=session, user=user)
+        await upload_verify_code_to_database(code=code, session=session, user=user, code_type=code_type)
     return {"success": True}
 
 

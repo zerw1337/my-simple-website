@@ -13,6 +13,7 @@ from .token_database_operations import validate_refresh_token_by_db
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme_unauthorized = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
 @auth_router.post("/login/", response_model=Token, summary="Выполнить вход в учетную запись, возвращает access+refresh токены")

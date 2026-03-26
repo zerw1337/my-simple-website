@@ -17,6 +17,14 @@ from api.registration.utils import encode_password, check_password
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
+
+@pytest.fixture(autouse=True)
+def patch_send_email():
+    async def fake_send_email(*args, **kwargs):
+        return None
+    with patch("api.registration.views.send_email", fake_send_email):
+        yield
+
 @pytest_asyncio.fixture(autouse=True)
 async def use_test_redis(monkeypatch):
     test_cache = Redis(host=test_settings.REDIS_HOST,
@@ -50,7 +58,6 @@ async def prepare_database(patch_settings):
     async with test_db.async_session_factory() as session:
         session.add_all([
             Users(
-                id=1,
                 username="admin",
                 email="admin@mail.ru",
                 password=encode_password(password=test_settings.TEST_API_USER_PASSWORD),
@@ -62,7 +69,6 @@ async def prepare_database(patch_settings):
                 pending_email=None,
             ),
             Users(
-                id=2,
                 username="user",
                 email="321@mail.ru",
                 password=encode_password(password=test_settings.TEST_API_USER_PASSWORD),
@@ -74,7 +80,6 @@ async def prepare_database(patch_settings):
                 pending_email=None,
             ),
             Users(
-                id=3,
                 username="new_user",
                 email="456@mail.ru",
                 password=encode_password(password=test_settings.TEST_API_USER_PASSWORD),
@@ -86,7 +91,6 @@ async def prepare_database(patch_settings):
                 pending_email=None,
             ),
             Users(
-                id=4,
                 username="banned",
                 email="789@mail.ru",
                 password=encode_password(password=test_settings.TEST_API_USER_PASSWORD),
@@ -98,7 +102,6 @@ async def prepare_database(patch_settings):
                 pending_email=None,
             ),
             Categories(
-                id=1,
                 name="test",
                 emoji=":)",
                 description="test",

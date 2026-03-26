@@ -8,7 +8,7 @@ from .schemas import CreateUser, CreateProfile
 from .utils import create_new_user, create_new_profile, upload_verify_code_to_database, verify_new_user_via_code, \
     check_if_current_users_verify_code_exists
 from src.models.database import get_session
-from api.auth.dependencies import get_auth, get_auth_new_user
+from api.auth.dependencies import get_auth, get_auth_new_user, get_auth_unauthorized
 from api.auth.schemas import UserOut
 from api.SMTP.utils import generate_verify_code, generate_html_verify_message_for_registration
 from api.SMTP.email import send_email
@@ -19,7 +19,7 @@ from ..auth.token_database_operations import submit_refresh_token
 register_router = APIRouter(prefix="/register", tags=["Registration"])
 
 @register_router.post("/", response_model=Token)
-async def register(background_tasks : BackgroundTasks, username: str = Form(), email: EmailStr = Form(), password: str = Form(), session: AsyncSession = Depends(get_session)):
+async def register(background_tasks : BackgroundTasks, user: UserOut = Depends(get_auth_unauthorized), username: str = Form(), email: EmailStr = Form(), password: str = Form(), session: AsyncSession = Depends(get_session)):
     try:
         user = CreateUser(username=username, email=email, password=password)
     except ValidationError as e:

@@ -11,6 +11,7 @@ from api.reactions.dto import get_reactions_by_post_id_dto
 from api.reactions.schemas import ReactionsEnum, Reaction, ReactionEmojis
 from src.models.database import get_session
 from src.redis.dependencies import get_cache
+from api.rate_limiter.limiter import is_limited_reactions
 
 reaction_router = APIRouter(prefix="/reactions", tags=["Reactions"])
 
@@ -28,6 +29,8 @@ async def get_reaction_types(r: Redis = Depends(get_cache)):
 async def reaction_react(post_id: int, reaction: ReactionsEnum, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
     if not user.is_verified:
         raise HTTPException(status_code=403, detail="Email not verified")
+    if await is_limited_reactions(user_id=user.id):
+        raise HTTPException(status_code=429, detail="Your reaction limit per day has been reached")
     await post_reaction_for_current_user(user_id=user.id, post_id=post_id, reaction=reaction, session=session)
     await update_posts_rating_by_post_id(post_id=post_id, session=session)
     return {"status": "success"}

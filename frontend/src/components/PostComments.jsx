@@ -88,7 +88,7 @@ function PostComments({ postId }) {
                         onFocus={e => e.target.style.borderColor = "var(--logo-color)"}
                         onBlur={e => e.target.style.borderColor = "#444"}
                     />
-                    <span style={{ fontSize: "0.8rem", color: text.length > 255 ? "#ff5555" : "#a0a0a0", alignSelf: "flex-end" }}>
+                    <span style={{ fontSize: "0.8rem", color: text.length > 255 ? "#ff5555" : text.length > 0 && text.trim().length < 3 ? "#ff5555" : "#a0a0a0", alignSelf: "flex-end" }}>
                         {text.length}/255
                     </span>
                     <button

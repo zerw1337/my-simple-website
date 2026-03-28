@@ -4,6 +4,7 @@ import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import "./index.css"
 
+// --- Глобальный 429 (блокирующий) ---
 let toastVisible = false;
 
 function showRateLimitToast() {
@@ -111,12 +112,62 @@ function showRateLimitToast() {
     }, 1000);
 }
 
+
+function showSoftToast(message) {
+
+    if (document.getElementById("soft-rate-toast")) return;
+
+    const toast = document.createElement("div");
+    toast.id = "soft-rate-toast";
+    toast.textContent = "⏱ " + message;
+    toast.style.cssText = `
+        position: fixed;
+        top: 1.25rem;
+        right: 1.25rem;
+        background: #2a2a2a;
+        border: 1px solid #ff9900;
+        border-radius: 10px;
+        padding: 0.65rem 1.1rem;
+        color: #ffb347;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 600;
+        z-index: 9999;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+        animation: fadeIn 0.2s ease;
+        max-width: 280px;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+
+const SOFT_LIMIT_DETAILS = [
+    "Your comment limit per day has been reached",
+    "Your reaction limit per day has been reached",
+];
+
+const SOFT_LIMIT_MESSAGES = {
+    "Your comment limit per day has been reached": "Достигнут дневной лимит комментариев",
+    "Your reaction limit per day has been reached": "Достигнут дневной лимит реакций",
+};
+
 const originalFetch = window.fetch;
 window.fetch = async (...args) => {
     const res = await originalFetch(...args);
     if (res.status === 429) {
-        showRateLimitToast();
-        return res.clone();
+        const clone = res.clone();
+        try {
+            const data = await clone.json();
+            const detail = data?.detail;
+            if (SOFT_LIMIT_DETAILS.includes(detail)) {
+                showSoftToast(SOFT_LIMIT_MESSAGES[detail]);
+            } else {
+                showRateLimitToast();
+            }
+        } catch {
+            showRateLimitToast();
+        }
     }
     return res;
 };

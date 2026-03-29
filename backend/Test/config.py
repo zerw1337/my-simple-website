@@ -23,6 +23,10 @@ class TestSettings(BaseSettings):
     CACHE_EXPIRE: int = 300
     LIMITER_WINDOW: int = 10
     LIMITER_LIMIT: int = 100
+    COMMENT_LIMITER_WINDOW: int = 60 * 60 * 24
+    COMMENT_LIMITER_LIMIT: int = 15
+    REACTIONS_LIMITER_WINDOW: int = 60 * 60 * 24
+    REACTIONS_LIMITER_LIMIT: int = 30
 
     TEST_API_USER_PASSWORD: str = "qwerty"
 

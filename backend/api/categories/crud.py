@@ -3,7 +3,7 @@ from sqlalchemy import select
 from fastapi import HTTPException
 
 from api.categories.dto import validate_categories_list, validate_category
-from api.categories.schemas import CreateCategory, EditCategory
+from api.categories.schemas import CreateCategory, EditCategory, Category
 from src.models.models import Categories
 
 
@@ -27,12 +27,14 @@ async def get_category_by_id(id:int, session: AsyncSession):
         return validate_category(in_cat=result)
     raise HTTPException(status_code=404, detail="Category not found")
 
-async def create_category(in_cat: CreateCategory, session: AsyncSession):
+async def create_category(in_cat: CreateCategory, session: AsyncSession) -> Category:
     new = Categories(**in_cat.model_dump())
     session.add(new)
     await session.commit()
+    res = validate_category(in_cat=new)
+    return res
 
-async def edit_category_by_id(id: int, updated: EditCategory, session: AsyncSession):
+async def edit_category_by_id(id: int, updated: EditCategory, session: AsyncSession) -> Category:
     query = (
         select(Categories)
         .where(Categories.id == id)
@@ -44,7 +46,8 @@ async def edit_category_by_id(id: int, updated: EditCategory, session: AsyncSess
             setattr(result, name, val)
         session.add(result)
         await session.commit()
-        return {"success": True}
+        updated = validate_category(in_cat=result)
+        return updated
     raise HTTPException(status_code=404, detail="Category not found")
 
 async def delete_category_by_id(id: int, session: AsyncSession):

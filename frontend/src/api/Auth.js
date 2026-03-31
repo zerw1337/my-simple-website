@@ -107,13 +107,23 @@ export async function getMe() {
 }
 
 export async function changePassword(newPassword) {
-    const res = await fetchWithAuth(`${API_URL}/user/settings/change_password/?new_password=${encodeURIComponent(newPassword)}`, {
+    const res = await fetchWithAuth(`${API_URL}/user/settings/change_password/`, {
         method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            new_password: newPassword,
+        }),
     });
-    if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
+
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || "Ошибка");
+    }
+
     return await res.json();
 }
-
 export async function changeEmail(newEmail) {
     const res = await fetchWithAuth(`${API_URL}/user/settings/change_email/?new_email=${encodeURIComponent(newEmail)}`, {
         method: "PATCH",

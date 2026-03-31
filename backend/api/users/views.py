@@ -19,6 +19,7 @@ from ..registration.utils import upload_verify_code_to_database, verify_email_ch
     check_if_current_users_verify_code_exists
 from src.redis.dependencies import get_cache
 from src.config import settings
+from api.users.schemas import ChangePassword
 
 users_router = APIRouter(prefix="/user", tags=["Users"])
 
@@ -49,9 +50,8 @@ async def unban_user(user_id: int, user: UserOut = Depends(get_auth_admin), sess
     return {"success": True}
 
 @users_router.patch("/settings/change_password/")
-async def change_password(new_password: str, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
-    return await change_current_user_password(new_password=new_password, in_user=user, session=session)
-
+async def change_password(body: ChangePassword, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
+    return await change_current_user_password(new_password=body.new_password, in_user=user, session=session)
 @users_router.patch("/settings/change_email/")
 async def change_email(background_tasks: BackgroundTasks, new_email: EmailStr, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
     await change_current_user_pending_email(new_email=new_email, in_user=user, session=session)

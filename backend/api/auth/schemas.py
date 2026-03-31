@@ -1,6 +1,5 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy.testing.pickleable import User
 
 
 class TokenFields(BaseModel):

@@ -8,7 +8,7 @@ from httpx import AsyncClient, ASGITransport
 from unittest.mock import patch
 
 from Test.config import test_settings
-from src.models.models import Users, Categories, Posts
+from src.models.models import Users, Categories, Posts, Comments
 from src.redis import redis_config
 from api.auth.dependencies import get_auth, get_auth_new_user, get_auth_admin
 from Test.users_test import admin, user, new_user
@@ -37,6 +37,7 @@ async def use_test_redis(monkeypatch):
                          decode_responses=True)
     monkeypatch.setattr(redis_config, "r_cache", test_cache)
     monkeypatch.setattr(redis_config, "r_limiter", test_limiter)
+    await test_limiter.flushdb()
 
 @pytest.fixture(scope="session", autouse=True)
 def patch_settings():
@@ -115,6 +116,11 @@ async def prepare_database(patch_settings):
                 updated_at=datetime.now(),
                 views=1,
                 rating=1,
+            ),
+            Comments(
+                content="Comment",
+                post_id=1,
+                user_id=2,
             )
         ])
         await session.commit()

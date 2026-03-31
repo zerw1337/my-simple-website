@@ -71,7 +71,7 @@ export async function getProfile(userId) {
 }
 
 export async function getCommentsByUserId(userId) {
-    const res = await fetch(`${API_URL}/comments/${userId}/`);
+    const res = await fetch(`${API_URL}/comments/by_user/${userId}/`);
     if (!res.ok) return [];
     const data = await res.json();
     return Array.isArray(data) ? data : [];

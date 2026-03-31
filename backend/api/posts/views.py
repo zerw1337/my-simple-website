@@ -61,12 +61,6 @@ async def get_previous_post(current_post_id: int, session: AsyncSession = Depend
     post_dto = get_post_by_id_dto(post=res)
     return post_dto
 
-@posts_router.get("/{id}")
-async def get_post_by_id(id: int, session: AsyncSession = Depends(get_session)) -> PostOut:
-    post_orm = await get_current_post_by_id(post_id=id, session=session)
-    await update_posts_rating_by_post_model(post=post_orm, session=session)
-    post_dto = get_post_by_id_dto(post=post_orm)
-    return post_dto
 
 @posts_router.get("/by_user/{user_id}")
 async def get_posts_by_current_user(user_id: int, session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)) -> list[PostOut]:
@@ -98,6 +92,13 @@ async def get_top_rated_posts(session: AsyncSession = Depends(get_session), r: R
     posts_dto = get_all_posts_dto(posts=posts_orm)
     await r.set("top_rated_posts", json.dumps([p.model_dump(mode="json") for p in posts_dto]), ex=settings.CACHE_EXPIRE)
     return posts_dto
+
+@posts_router.get("/{id}")
+async def get_post_by_id(id: int, session: AsyncSession = Depends(get_session)) -> PostOut:
+    post_orm = await get_current_post_by_id(post_id=id, session=session)
+    await update_posts_rating_by_post_model(post=post_orm, session=session)
+    post_dto = get_post_by_id_dto(post=post_orm)
+    return post_dto
 
 @posts_router.patch("/update/", response_model=PostOut)
 async def edit_post(post_id: int, edited_post: UpdatePost, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):

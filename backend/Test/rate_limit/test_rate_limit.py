@@ -34,7 +34,7 @@ async def test_rate_limit_comments(client_user, client_admin):
     post_id = data["id"]
     for _ in range(settings.COMMENT_LIMITER_LIMIT):
         response = await client_user.post("/comments/", json={"content":"rate_test", "post_id":post_id})
-        assert response.status_code == 200
+        assert response.status_code == 201
     response = await client_user.post("/comments/", json={"content":"rate_test", "post_id":post_id})
     data = response.json()
     assert response.status_code == 429

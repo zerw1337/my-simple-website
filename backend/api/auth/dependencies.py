@@ -30,5 +30,4 @@ async def get_auth_unauthorized(token: str | None = Depends(oauth2_scheme_unauth
         user = await get_current_user(token=token, session=session)
         if user:
             raise HTTPException(status_code=403, detail="Forbidden")
-        return True
     return True

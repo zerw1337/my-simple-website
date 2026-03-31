@@ -34,7 +34,7 @@ async def get_all_comments_by_user_id(user_id: int, session: AsyncSession) -> Se
         raise HTTPException(status_code=404,detail=f"No comments found for this user [id:{user_id}]")
     return comments
 
-async def create_new_comment(comment: CreateComment, post_id: int, user: UserOut, session: AsyncSession):
+async def create_new_comment(comment: CreateComment, post_id: int, user: UserOut, session: AsyncSession) -> Comments:
     new_comment = Comments(
         content=comment.content,
         post_id=post_id,
@@ -45,7 +45,14 @@ async def create_new_comment(comment: CreateComment, post_id: int, user: UserOut
         await session.commit()
     except IntegrityError:
         raise HTTPException(status_code=403, detail="Something went wrong")
-    return {"success": True}
+    query = (
+        select(Comments)
+        .where(Comments.id == new_comment.id)
+        .options(selectinload(Comments.user))
+    )
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
+    return result
 
 async def delete_current_comment(comment_id: int, user: UserOut, session: AsyncSession) -> Comments:
     query = (
@@ -57,10 +64,11 @@ async def delete_current_comment(comment_id: int, user: UserOut, session: AsyncS
     if not result:
         raise HTTPException(status_code=404, detail="Comment not found")
     deleted_comment = result
-    if user.id == result.user_id or user.is_superuser:
-        try:
-            await session.delete(result)
-            await session.commit()
-        except Exception:
-            raise HTTPException(status_code=403, detail="Something went wrong")
+    if user.id != result.user_id and not user.is_superuser:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    try:
+        await session.delete(result)
+        await session.commit()
+    except Exception:
+        raise HTTPException(status_code=409, detail="Something went wrong")
     return deleted_comment

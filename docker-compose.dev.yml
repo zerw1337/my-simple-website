@@ -1,26 +1,12 @@
-networks:
-  app:
-
-
 services:
-  nginx:
-    image: nginx:stable-alpine
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-      - frontend
-    volumes:
-      - "./nginx.conf:/etc/nginx/nginx.conf"
-    networks:
-      - app
-
-
 
   backend:
     build:
       dockerfile: ./Dockerfile
       context: ./backend
+
+    ports:
+      - "8000:8000"
 
     depends_on:
       pg:
@@ -30,75 +16,73 @@ services:
 
     restart: unless-stopped
 
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app
+
     env_file:
       - ./backend/.env
-
-
-    networks:
-      - app
-
-
 
   frontend:
     build:
       dockerfile: ./Dockerfile
       context: ./frontend
 
+    ports:
+      - "80:80"
+
     depends_on:
       - backend
 
     restart: unless-stopped
 
-    networks:
-      - app
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
+
 
 
   pg:
-    env_file:
-      - .env
     image: postgres:16
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: zerw1337
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 12321
 
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      test: [ "CMD-SHELL", "pg_isready -U admin -d zerw1337" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
 
+    ports:
+      - "5432:5432"
+
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-    networks:
-      - app
-
   pgadmin:
-    env_file:
-      - .env
     image: dpage/pgadmin4
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_DEFAULT_EMAIL: admin@admin.org
+      PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_DEFAULT_SERVER_MODE: False
     ports:
       - "5050:80"
-
     depends_on:
       pg:
         condition: service_healthy
 
-    networks:
-      - app
-
-
-
   redis:
     image: redis:7.2
     restart: always
-
+    ports:
+      - "6379:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -107,8 +91,13 @@ services:
       timeout: 3s
       retries: 30
 
-    networks:
-      - app
+  redisinsight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    depends_on:
+      redis:
+        condition: service_healthy
 
 
 volumes:

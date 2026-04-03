@@ -60,7 +60,7 @@ async def root(user: UserOut = Depends(get_auth)):
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True, host="0.0.0.0")
+    uvicorn.run("main:app", reload=False, host="0.0.0.0")
 
 
 

@@ -2,8 +2,9 @@
 /.idea
 /backend/.env
 /backend/certs
-__pucache__/
-/__pycache__
-/__pycache__/
+__pycache__/
 /*.pyc
 /node_modules/
+certbot/
+.env
+.env*

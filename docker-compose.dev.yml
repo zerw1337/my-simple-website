@@ -1,4 +1,19 @@
+networks:
+  app:
+
 services:
+
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - "./nginx.test.conf:/etc/nginx/nginx.conf"
+    networks:
+      - app
 
   backend:
     build:
@@ -25,13 +40,13 @@ services:
     env_file:
       - ./backend/.env
 
+    networks:
+      - app
+
   frontend:
     build:
       dockerfile: ./Dockerfile
       context: ./frontend
-
-    ports:
-      - "80:80"
 
     depends_on:
       - backend
@@ -44,17 +59,22 @@ services:
           path: ./frontend
           target: /app
 
+    networks:
+      - app
+
 
 
   pg:
+    env_file:
+      - .env
     image: postgres:16
     environment:
-      POSTGRES_DB: zerw1337
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: 12321
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
 
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U admin -d zerw1337" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -66,17 +86,25 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+    networks:
+      - app
+
   pgadmin:
+    env_file:
+      - .env
     image: dpage/pgadmin4
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.org
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
       PGADMIN_DEFAULT_SERVER_MODE: False
     ports:
       - "5050:80"
     depends_on:
       pg:
         condition: service_healthy
+
+    networks:
+      - app
 
   redis:
     image: redis:7.2
@@ -90,6 +118,8 @@ services:
       interval: 1s
       timeout: 3s
       retries: 30
+    networks:
+      - app
 
   redisinsight:
     image: redis/redisinsight:latest
@@ -98,6 +128,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    networks:
+      - app
 
 
 volumes:

@@ -57,6 +57,12 @@ class VerifyCodes(Base):
 
     user: Mapped["Users"] = relationship("Users", back_populates="verify_codes")
 
+class PasswordChangeUrls(Base):
+    __tablename__ = 'password_change_urls'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    url: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
+
 
 class Profiles(Base):
     __tablename__ = 'profiles'

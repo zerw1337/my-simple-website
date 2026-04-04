@@ -56,7 +56,7 @@ async def change_password(body: ChangePassword, user: UserOut = Depends(get_auth
 async def change_email(background_tasks: BackgroundTasks, new_email: EmailStr, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
     await change_current_user_pending_email(new_email=new_email, in_user=user, session=session)
     code = generate_verify_code()
-    html = generate_html_verify_message_for_manage_account(code=code, username=user.username)
+    html = generate_html_verify_message_for_manage_account(code=code, user=user)
     await upload_verify_code_to_database(code=code, code_type=VerifyCodesEnum.manage_account, user=user, session=session)
     background_tasks.add_task(send_email, user=user, subject="Confirm recent email change", html=html)
     return {"status": "Request pending, email with confirmation code sent to your old email"}
@@ -72,6 +72,6 @@ async def resend_verify_code_for_registration(background_tasks: BackgroundTasks,
     await check_if_current_users_verify_code_exists(code_type=VerifyCodesEnum.manage_account, user=user, session=session)
     code = generate_verify_code()
     await upload_verify_code_to_database(code=code, code_type=VerifyCodesEnum.manage_account, user=user, session=session)
-    html = generate_html_verify_message_for_manage_account(code=code, username=user.username)
+    html = generate_html_verify_message_for_manage_account(code=code, user=user)
     background_tasks.add_task(send_email, user=user, subject="Confirm recent email change", html=html)
     return {"Status": "Request pending, email with confirmation code sent to your old email"}

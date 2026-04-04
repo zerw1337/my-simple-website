@@ -1,15 +1,21 @@
-from fastapi import APIRouter, Form, Depends,  HTTPException
+from fastapi import APIRouter, Form, Depends,  HTTPException, BackgroundTasks
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.auth.utils import verify_login
+from api.auth.utils import verify_login, check_if_this_account_exists_via_email, upload_password_change_link_to_db, \
+    check_if_this_url_password_change_exists, change_users_password_via_url
 from src.models.database import get_session
+from src.models.models import VerifyCodesEnum
 from .jwt import create_access_token, create_refresh_token
 from .auth_validation import get_current_user
 from .schemas import Token, UserOut, token_fields, AccessToken, RefreshToken
 from .jwt_payload_operations import validate_token_type, get_token_payload
 from .token_database_operations import submit_refresh_token
 from .token_database_operations import validate_refresh_token_by_db
+from ..SMTP.email import send_email
+from ..SMTP.utils import generate_html_verify_message_for_password_change, \
+    generate_password_reset_url
+
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -33,4 +39,26 @@ async def get_new_access_token_by_refresh(token: str = Depends(oauth2_scheme), s
     user = await get_current_user(token=token, session=session)
     token = AccessToken(access_token=create_access_token(id=str(user.id), username=user.username, user_version=user.user_version, user=user))
     return token
+
+@auth_router.get("/forgot_password/")
+async def reset_password(background_tasks: BackgroundTasks, email: str, session: AsyncSession = Depends(get_session)):
+    user = await check_if_this_account_exists_via_email(email=email, session=session)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Account with this email does not exist")
+    user = UserOut.model_validate(user)
+    url = generate_password_reset_url()
+    await upload_password_change_link_to_db(url=url, user=user, session=session)
+    html = generate_html_verify_message_for_password_change(password_reset_url=url, user=user)
+    background_tasks.add_task(send_email, user=user, subject="Password change link", html=html)
+    return {"message": "Email sent"}
+
+@auth_router.post("/forgot_password/{url}/")
+async def change_password_via_url_link(url: str, new_password : str = Form(), session: AsyncSession = Depends(get_session)):
+    url_dto = await check_if_this_url_password_change_exists(url=url, session=session)
+    if url_dto is None:
+        raise HTTPException(status_code=401, detail="Link is invalid")
+    await change_users_password_via_url(url=url_dto, new_password=new_password, session=session)
+    return {"success": True}
+
+
 

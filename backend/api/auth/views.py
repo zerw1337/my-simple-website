@@ -45,7 +45,6 @@ async def reset_password(background_tasks: BackgroundTasks, email: str, session:
     user = await check_if_this_account_exists_via_email(email=email, session=session)
     if user is None:
         raise HTTPException(status_code=401, detail="Account with this email does not exist")
-    user = UserOut.model_validate(user)
     url = generate_password_reset_url()
     await upload_password_change_link_to_db(url=url, user=user, session=session)
     html = generate_html_verify_message_for_password_change(password_reset_url=url, user=user)

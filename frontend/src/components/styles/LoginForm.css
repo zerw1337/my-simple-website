@@ -63,3 +63,56 @@
     background-color: #03b0d0;
     color: var(--bg-main);
 }
+.login-form button[type="submit"] {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+}
+
+.login-forgot-link {
+    display: block;
+    text-align: center;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #2a2a2a;
+    background: transparent;
+    color: #666;
+    border: none;
+    border-top: 1px solid #2a2a2a;
+    width: 100%;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.85rem;
+    padding-top: 1.25rem;
+    margin-top: 1.25rem;
+    transition: color 0.2s;
+}
+
+.login-forgot-link:hover {
+    color: var(--logo-color);
+    background: transparent;
+}
+
+.login-back-link {
+    display: block;
+    text-align: center;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #2a2a2a;
+    background: transparent;
+    color: var(--logo-color);
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    width: 100%;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.login-back-link:hover {
+    color: var(--main-text-color);
+    background: transparent;
+}

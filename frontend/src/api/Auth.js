@@ -157,3 +157,26 @@ export async function refreshTokens() {
     localStorage.setItem("access_token", data.access_token);
     return data;
 }
+export async function requestPasswordReset(email) {
+    const res = await fetch(`${API_URL}/auth/forgot_password/?email=${encodeURIComponent(email)}`);
+    if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail || "Ошибка");
+    }
+    return await res.json();
+}
+
+export async function resetPasswordViaUrl(url, newPassword) {
+    const formData = new URLSearchParams();
+    formData.append("new_password", newPassword);
+    const res = await fetch(`${API_URL}/auth/forgot_password/${url}/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData.toString(),
+    });
+    if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail || "Ошибка");
+    }
+    return await res.json();
+}

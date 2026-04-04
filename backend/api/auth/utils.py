@@ -34,8 +34,17 @@ async def check_if_this_account_exists_via_email(email: str, session: AsyncSessi
     result = res.scalar_one_or_none()
     return result
 
-async def upload_password_change_link_to_db(url: str, user: UserOut, session: AsyncSession):
+async def upload_password_change_link_to_db(url: str, user: Users, session: AsyncSession):
     new = PasswordChangeUrls(url=url, user_id=user.id)
+    query = (
+        select(PasswordChangeUrls)
+        .where(PasswordChangeUrls.user_id == user.id)
+    )
+    res = await session.execute(query)
+    result = res.scalars().all()
+    if result:
+        for url in result:
+            await session.delete(url)
     session.add(new)
     try:
         await session.commit()

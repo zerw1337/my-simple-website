@@ -112,9 +112,7 @@ function showRateLimitToast() {
     }, 1000);
 }
 
-
 function showSoftToast(message) {
-
     if (document.getElementById("soft-rate-toast")) return;
 
     const toast = document.createElement("div");
@@ -134,22 +132,26 @@ function showSoftToast(message) {
         font-weight: 600;
         z-index: 9999;
         box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-        animation: fadeIn 0.2s ease;
         max-width: 280px;
     `;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 4000);
 }
 
-
 const SOFT_LIMIT_DETAILS = [
     "Your comment limit per day has been reached",
     "Your reaction limit per day has been reached",
+    "Your limit for sending emails per day has been reached",
+    "Password changing limit per day has been reached",
+    "Too Many Requests",
 ];
 
 const SOFT_LIMIT_MESSAGES = {
     "Your comment limit per day has been reached": "Достигнут дневной лимит комментариев",
     "Your reaction limit per day has been reached": "Достигнут дневной лимит реакций",
+    "Your limit for sending emails per day has been reached": "Достигнут дневной лимит отправки писем",
+    "Password changing limit per day has been reached": "Достигнут дневной лимит смены пароля",
+    "Too Many Requests": "Слишком много запросов. Подождите немного.",
 };
 
 const originalFetch = window.fetch;
@@ -159,8 +161,8 @@ window.fetch = async (...args) => {
         const clone = res.clone();
         try {
             const data = await clone.json();
-            const detail = data?.detail;
-            if (SOFT_LIMIT_DETAILS.includes(detail)) {
+            const detail = data?.detail || data?.message;
+            if (detail && SOFT_LIMIT_DETAILS.includes(detail)) {
                 showSoftToast(SOFT_LIMIT_MESSAGES[detail]);
             } else {
                 showRateLimitToast();

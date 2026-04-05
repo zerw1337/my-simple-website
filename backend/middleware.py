@@ -5,8 +5,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from api.rate_limiter.limiter import is_limited
 
 def get_current_ip_address(request: Request) -> str:
-    ip = request.client.host
-    return ip
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.client.host
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):

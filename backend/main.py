@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends
 from contextlib import asynccontextmanager
 import uvicorn
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from api.categories.views import cat_router
@@ -40,6 +41,7 @@ app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(cat_router)
 
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(CORSMiddleware,
                    allow_origins=[

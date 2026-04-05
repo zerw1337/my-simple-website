@@ -2,7 +2,6 @@ from aiosmtplib import SMTP
 from email.message import EmailMessage
 import ssl
 from aiosmtplib.errors import SMTPException
-from fastapi import HTTPException
 
 from api.auth.schemas import UserOut
 from api.registration.schemas import CreateUser

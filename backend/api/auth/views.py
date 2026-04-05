@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Form, Depends,  HTTPException, BackgroundTasks
+from fastapi import APIRouter, Form, Depends,  HTTPException, BackgroundTasks, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,7 +15,7 @@ from .token_database_operations import validate_refresh_token_by_db
 from ..SMTP.email import send_email
 from ..SMTP.utils import generate_html_verify_message_for_password_change, \
     generate_password_reset_url
-
+from ..rate_limiter.limiter import is_limited_password_change, is_limited_smtp_service
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -41,18 +41,22 @@ async def get_new_access_token_by_refresh(token: str = Depends(oauth2_scheme), s
     return token
 
 @auth_router.get("/forgot_password/")
-async def reset_password(background_tasks: BackgroundTasks, email: str, session: AsyncSession = Depends(get_session)):
+async def reset_password(request: Request, background_tasks: BackgroundTasks, email: str, session: AsyncSession = Depends(get_session)):
+    if await is_limited_smtp_service(ip=request.client.host):
+        raise HTTPException(status_code=429, detail="Your limit for sending emails per day has been reached")
     user = await check_if_this_account_exists_via_email(email=email, session=session)
     if user is None:
-        raise HTTPException(status_code=401, detail="Account with this email does not exist")
+        return {"status": "success"}
     url = generate_password_reset_url()
     await upload_password_change_link_to_db(url=url, user=user, session=session)
     html = generate_html_verify_message_for_password_change(password_reset_url=url, user=user)
     background_tasks.add_task(send_email, user=user, subject="Password change link", html=html)
-    return {"message": "Email sent"}
+    return {"status": "success"}
 
 @auth_router.post("/forgot_password/{url}/")
-async def change_password_via_url_link(url: str, new_password : str = Form(), session: AsyncSession = Depends(get_session)):
+async def change_password_via_url_link(request: Request, url: str, new_password : str = Form(), session: AsyncSession = Depends(get_session)):
+    if await is_limited_password_change(ip=request.client.host):
+        raise HTTPException(status_code=429, detail="Password changing limit per day has been reached")
     url_dto = await check_if_this_url_password_change_exists(url=url, session=session)
     if url_dto is None:
         raise HTTPException(status_code=401, detail="Link is invalid")

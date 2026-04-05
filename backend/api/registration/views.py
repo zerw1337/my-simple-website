@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Form, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Form, Depends, HTTPException, BackgroundTasks, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import EmailStr, ValidationError
 
@@ -15,6 +15,7 @@ from api.SMTP.email import send_email
 from api.auth.schemas import Token
 from api.auth.jwt import create_access_token, create_refresh_token
 from ..auth.token_database_operations import submit_refresh_token
+from ..rate_limiter.limiter import is_limited_smtp_service
 
 register_router = APIRouter(prefix="/register", tags=["Registration"])
 
@@ -27,9 +28,9 @@ async def register(background_tasks : BackgroundTasks, user: UserOut = Depends(g
         raise HTTPException(status_code=422, detail=detail)
     new_user = await create_new_user(user, session)
     code = generate_verify_code()
-    await upload_verify_code_to_database(code=code, code_type=VerifyCodesEnum.registration, user=user, session=session)
-    html = generate_html_verify_message_for_registration(code=code, user=user)
-    background_tasks.add_task(send_email, user=user, subject="Verification code", html=html)
+    await upload_verify_code_to_database(code=code, code_type=VerifyCodesEnum.registration, user=new_user, session=session)
+    html = generate_html_verify_message_for_registration(code=code, user=new_user)
+    background_tasks.add_task(send_email, user=new_user, subject="Verification code", html=html)
     access_token = create_access_token(id=new_user.id, username=new_user.username, user_version=new_user.user_version, user=new_user)
     refresh_token = create_refresh_token(id=new_user.id, username=new_user.username, user_version=new_user.user_version, user=new_user)
     await submit_refresh_token(token=refresh_token, session=session)
@@ -46,7 +47,9 @@ async def verify_registration(code: int, user: UserOut = Depends(get_auth_new_us
     return {"status": f"Account {user.username} successfully verified"}
 
 @register_router.post("/verify/resend_code/")
-async def resend_verify_code_for_registration(background_tasks: BackgroundTasks, user: UserOut = Depends(get_auth_new_user), session: AsyncSession = Depends(get_session)):
+async def resend_verify_code_for_registration(request: Request, background_tasks: BackgroundTasks, user: UserOut = Depends(get_auth_new_user), session: AsyncSession = Depends(get_session)):
+    if await is_limited_smtp_service(ip=request.client.host):
+        raise HTTPException(status_code=429, detail="Your limit for sending emails per day has been reached")
     await check_if_current_users_verify_code_exists(code_type=VerifyCodesEnum.registration, user=user, session=session)
     code = generate_verify_code()
     await upload_verify_code_to_database(code=code, code_type=VerifyCodesEnum.registration, user=user, session=session)

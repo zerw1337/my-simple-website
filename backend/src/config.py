@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     COMMENT_LIMITER_LIMIT : int = 15
     REACTIONS_LIMITER_WINDOW: int = 60 * 60 * 24
     REACTIONS_LIMITER_LIMIT : int = 30
+    CHANGE_PASSWORD_LIMITER_WINDOW: int = 60 * 60 * 24
+    CHANGE_PASSWORD_LIMITER_LIMIT : int = 5
+    SMTP_SERVICE_LIMITER_WINDOW: int = 60 * 60 * 24
+    SMTP_SERVICE_LIMITER_LIMIT : int = 10
 
     naming_conventions: dict[str, str] = {
         "ix": "ix_%(column_0_label)s",

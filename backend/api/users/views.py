@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends, BackgroundTasks, Request, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import EmailStr
 import json
@@ -15,6 +15,7 @@ from api.SMTP.utils import generate_verify_code, generate_html_verify_message_fo
 from .dto import get_all_users_list_dto
 from ..auth.auth_validation import get_current_user
 from ..auth.views import oauth2_scheme
+from ..rate_limiter.limiter import is_limited_password_change, is_limited_smtp_service
 from ..registration.utils import upload_verify_code_to_database, verify_email_change_via_code, \
     check_if_current_users_verify_code_exists
 from src.redis.dependencies import get_cache
@@ -50,10 +51,15 @@ async def unban_user(user_id: int, user: UserOut = Depends(get_auth_admin), sess
     return {"success": True}
 
 @users_router.patch("/settings/change_password/")
-async def change_password(body: ChangePassword, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
+async def change_password(request: Request, body: ChangePassword, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
+    if await is_limited_password_change(ip=request.client.host):
+        raise HTTPException(status_code=429, detail="Password changing limit per day has been reached")
     return await change_current_user_password(new_password=body.new_password, in_user=user, session=session)
+
 @users_router.patch("/settings/change_email/")
-async def change_email(background_tasks: BackgroundTasks, new_email: EmailStr, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
+async def change_email(request: Request, background_tasks: BackgroundTasks, new_email: EmailStr, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
+    if await is_limited_smtp_service(ip=request.client.host):
+        raise HTTPException(status_code=429, detail="Your limit for sending emails per day has been reached")
     await change_current_user_pending_email(new_email=new_email, in_user=user, session=session)
     code = generate_verify_code()
     html = generate_html_verify_message_for_manage_account(code=code, user=user)
@@ -67,7 +73,9 @@ async def confirm_email_update(code: int, user: UserOut = Depends(get_auth), ses
     return {"status": f"email successfully changed to {user.pending_email}"}
 
 @users_router.post("/settings/change_email/resend_code/")
-async def resend_verify_code_for_registration(background_tasks: BackgroundTasks, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
+async def resend_verify_code_for_registration(request: Request, background_tasks: BackgroundTasks, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
+    if await is_limited_smtp_service(ip=request.client.host):
+        raise HTTPException(status_code=429, detail="Your limit for sending emails per day has been reached")
     await check_if_current_user_has_pending_email(user=user, session=session)
     await check_if_current_users_verify_code_exists(code_type=VerifyCodesEnum.manage_account, user=user, session=session)
     code = generate_verify_code()

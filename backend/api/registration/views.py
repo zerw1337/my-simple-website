@@ -19,7 +19,7 @@ from ..rate_limiter.limiter import is_limited_smtp_service
 
 register_router = APIRouter(prefix="/register", tags=["Registration"])
 
-@register_router.post("/", response_model=Token)
+@register_router.post("/", response_model=Token, summary="Регистрация, при успешной регистрации -> access refresh tokens")
 async def register(background_tasks : BackgroundTasks, user: UserOut = Depends(get_auth_unauthorized), username: str = Form(), email: EmailStr = Form(), password: str = Form(), session: AsyncSession = Depends(get_session)):
     try:
         user = CreateUser(username=username, email=email, password=password)
@@ -36,17 +36,17 @@ async def register(background_tasks : BackgroundTasks, user: UserOut = Depends(g
     await submit_refresh_token(token=refresh_token, session=session)
     return Token(access_token=access_token, refresh_token=refresh_token, user=new_user.username)
 
-@register_router.post("/create_profile/")
+@register_router.post("/create_profile/", summary="Создать профиль")
 async def create_profile(new_profile: CreateProfile, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
     await create_new_profile(profile=new_profile, user=user, session=session)
     return {"success": True}
 
-@register_router.post("/verify/")
+@register_router.post("/verify/", summary="Подтвердить is_verified по коду из имейл")
 async def verify_registration(code: int, user: UserOut = Depends(get_auth_new_user), session: AsyncSession = Depends(get_session)):
     await verify_new_user_via_code(code=code, user=user, session=session)
     return {"status": f"Account {user.username} successfully verified"}
 
-@register_router.post("/verify/resend_code/")
+@register_router.post("/verify/resend_code/", summary="Отправить письмо с кодом для подтверждения учетки еще раз")
 async def resend_verify_code_for_registration(request: Request, background_tasks: BackgroundTasks, user: UserOut = Depends(get_auth_new_user), session: AsyncSession = Depends(get_session)):
     if await is_limited_smtp_service(ip=request.client.host):
         raise HTTPException(status_code=429, detail="Your limit for sending emails per day has been reached")

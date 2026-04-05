@@ -22,7 +22,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 oauth2_scheme_unauthorized = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
-@auth_router.post("/login/", response_model=Token, summary="Выполнить вход в учетную запись, возвращает access+refresh токены")
+@auth_router.post("/login/", response_model=Token, summary="Выполнить вход в учетную запись", description="На вход login/email + password. Возвращает access, refresh token.")
 async def login(username: str = Form(... , min_length=3, max_length=64), password: str = Form(... , min_length=6, max_length=255), session: AsyncSession = Depends(get_session)):
     user = await verify_login(login=username, password=password, session=session)
     access_token = create_access_token(id=str(user.id), username=user.username, user_version=user.user_version, user=user)
@@ -40,7 +40,7 @@ async def get_new_access_token_by_refresh(token: str = Depends(oauth2_scheme), s
     token = AccessToken(access_token=create_access_token(id=str(user.id), username=user.username, user_version=user.user_version, user=user))
     return token
 
-@auth_router.get("/forgot_password/")
+@auth_router.get("/forgot_password/", summary="Запросить письмо на имейл со ссылкой на смену пароля.")
 async def reset_password(request: Request, background_tasks: BackgroundTasks, email: str, session: AsyncSession = Depends(get_session)):
     if await is_limited_smtp_service(ip=request.client.host):
         raise HTTPException(status_code=429, detail="Your limit for sending emails per day has been reached")
@@ -53,7 +53,7 @@ async def reset_password(request: Request, background_tasks: BackgroundTasks, em
     background_tasks.add_task(send_email, user=user, subject="Password change link", html=html)
     return {"status": "success"}
 
-@auth_router.post("/forgot_password/{url}/")
+@auth_router.post("/forgot_password/{url}/", summary="Смена пароля, на вход новые пароль + ссылка из имейл")
 async def change_password_via_url_link(request: Request, url: str, new_password : str = Form(), session: AsyncSession = Depends(get_session)):
     if await is_limited_password_change(ip=request.client.host):
         raise HTTPException(status_code=429, detail="Password changing limit per day has been reached")

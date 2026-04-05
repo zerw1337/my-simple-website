@@ -13,7 +13,7 @@ from src.config import settings
 
 cat_router = APIRouter(prefix="/categories", tags=["Categories"])
 
-@cat_router.get("/", response_model=list[Category])
+@cat_router.get("/", response_model=list[Category], summary=" GET Список всех категорий")
 async def get_all_categories(session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)) -> list[Category]:
     cached = await r.get("all_categories")
     if cached:
@@ -22,23 +22,23 @@ async def get_all_categories(session: AsyncSession = Depends(get_session), r: Re
     await r.set("all_categories", json.dumps([c.model_dump(mode="json") for c in categories]), ex=settings.CACHE_EXPIRE)
     return categories
 
-@cat_router.get("/{id}", response_model=Category)
+@cat_router.get("/{id}", response_model=Category, summary="GET Категория по ID")
 async def get_category(id: int = Path(gt=0, lt=100), session: AsyncSession = Depends(get_session)) -> list[Category]:
     return await get_category_by_id(id=id, session=session)
 
-@cat_router.post("/", response_model=Category)
+@cat_router.post("/", response_model=Category, summary="Создать новую категорию")
 async def create_new_category(in_cat: CreateCategory, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
     new_cat = await create_category(in_cat=in_cat, session=session)
     await r.delete("all_categories")
     return new_cat
 
-@cat_router.patch("/{category_id}", response_model=Category)
+@cat_router.patch("/{category_id}", response_model=Category,summary="Patch категории, на вход только поля которые нужно изменить")
 async def edit_category(updated: EditCategory, category_id: int = Path(gt=0, lt=100), user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
     cat = await edit_category_by_id(id=category_id, updated=updated, session=session)
     await r.delete("all_categories")
     return cat
 
-@cat_router.delete("/{category_id}")
+@cat_router.delete("/{category_id}", summary="Удалить категорию")
 async def delete_category(category_id: int = Path(gt=0, lt=100), user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
     await delete_category_by_id(id=category_id, session=session)
     await r.delete("all_categories")

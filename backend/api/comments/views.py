@@ -18,7 +18,7 @@ from api.rate_limiter.limiter import is_limited_comments
 
 comments_router = APIRouter(prefix="/comments", tags=["Comments"])
 
-@comments_router.get("/", response_model=list[Comment])
+@comments_router.get("/", response_model=list[Comment], summary="GET список всех комментов")
 async def get_comments_by_post_id(post_id: int, session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
     cached = await r.get(f"comments_by_post/{post_id}")
     if cached:
@@ -28,7 +28,7 @@ async def get_comments_by_post_id(post_id: int, session: AsyncSession = Depends(
     await r.set(f"comments_by_post/{post_id}", json.dumps([c.model_dump(mode="json") for c in comments_dto]), ex=settings.CACHE_EXPIRE)
     return comments_dto
 
-@comments_router.get("/by_user/{user_id}/", response_model=list[Comment])
+@comments_router.get("/by_user/{user_id}/", response_model=list[Comment], summary="GET список всех комментов пользователя, по user_id")
 async def get_comments_by_user_id(user_id: int, session: AsyncSession = Depends(get_session), r:Redis = Depends(get_cache)):
     cached = await r.get(f"comments_by_user/{user_id}")
     if cached:
@@ -39,7 +39,7 @@ async def get_comments_by_user_id(user_id: int, session: AsyncSession = Depends(
     return comments_dto
 
 
-@comments_router.post("/", response_model=Comment, status_code=201)
+@comments_router.post("/", response_model=Comment, status_code=201, summary="Создать новый комментарий")
 async def create_comment(comment: CreateComment, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
     if await is_limited_comments(user_id=user.id):
         raise HTTPException(status_code=429, detail="Your comment limit per day has been reached")
@@ -49,7 +49,7 @@ async def create_comment(comment: CreateComment, user: UserOut = Depends(get_aut
     await r.delete(f"comments_by_user/{user.id}")
     return get_comment_dto(new_orm)
 
-@comments_router.delete("/{comment_id}/")
+@comments_router.delete("/{comment_id}/", summary="DELETE комментарий")
 async def delete_comment(comment_id: int, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
      comment = await delete_current_comment(comment_id=comment_id, user=user, session=session)
      await r.delete(f"comments_by_post/{comment.post_id}")

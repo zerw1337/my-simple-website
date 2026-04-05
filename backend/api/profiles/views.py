@@ -13,7 +13,7 @@ from src.config import settings
 
 profiles_router = APIRouter(prefix="/profile", tags=["Profiles"])
 
-@profiles_router.get("/{user_id}", response_model=ProfileOut)
+@profiles_router.get("/{user_id}", response_model=ProfileOut, summary="GET профиль по user_id")
 async def get_profile(user_id: int = Path(..., gt=0, lt=10000), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)) -> ProfileOut:
     cached = await r.get(f"profile/{user_id}")
     if cached:

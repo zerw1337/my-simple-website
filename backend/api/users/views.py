@@ -13,8 +13,6 @@ from .crud import change_current_user_password, change_current_user_pending_emai
 from api.SMTP.email import send_email
 from api.SMTP.utils import generate_verify_code, generate_html_verify_message_for_manage_account
 from .dto import get_all_users_list_dto
-from ..auth.auth_validation import get_current_user
-from ..auth.views import oauth2_scheme
 from ..rate_limiter.limiter import is_limited_password_change, is_limited_smtp_service
 from ..registration.utils import upload_verify_code_to_database, verify_email_change_via_code, \
     check_if_current_users_verify_code_exists
@@ -24,11 +22,11 @@ from api.users.schemas import ChangePassword
 
 users_router = APIRouter(prefix="/user", tags=["Users"])
 
-@users_router.get("/me/")
+@users_router.get("/me/", response_model=UserOut, summary="ГЕТ юзер по авторизации, возвращает своего юзера")
 async def get_me(user: UserOut = Depends(get_auth)):
     return user
 
-@users_router.get("/get_all_users/")
+@users_router.get("/get_all_users/", response_model=list[UserOut], summary="ГЕТ все юзеры")
 async def get_all_users(user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r:Redis = Depends(get_cache)):
     cached = await r.get("all_users")
     if cached:
@@ -38,25 +36,25 @@ async def get_all_users(user: UserOut = Depends(get_auth_admin), session: AsyncS
     await r.set("all_users", json.dumps([u.model_dump(mode="json") for u in users_dto]), ex=settings.CACHE_EXPIRE)
     return users_dto
 
-@users_router.post("/ban/")
+@users_router.post("/ban/", summary="Ban user")
 async def ban_user(user_id: int, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r:Redis = Depends(get_cache)):
     await ban_current_user(user_id=user_id, session=session)
     await r.delete("all_users")
     return {"success": True}
 
-@users_router.post("/unban/")
+@users_router.post("/unban/", summary="Unban user")
 async def unban_user(user_id: int, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r:Redis = Depends(get_cache)):
     await unban_current_user(user_id=user_id, session=session)
     await r.delete("all_users")
     return {"success": True}
 
-@users_router.patch("/settings/change_password/")
+@users_router.patch("/settings/change_password/", summary="Изменить пароль")
 async def change_password(request: Request, body: ChangePassword, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
     if await is_limited_password_change(ip=request.client.host):
         raise HTTPException(status_code=429, detail="Password changing limit per day has been reached")
     return await change_current_user_password(new_password=body.new_password, in_user=user, session=session)
 
-@users_router.patch("/settings/change_email/")
+@users_router.patch("/settings/change_email/", summary="Изменить почту, почта не меняется, обновляется pending_email")
 async def change_email(request: Request, background_tasks: BackgroundTasks, new_email: EmailStr, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
     if await is_limited_smtp_service(ip=request.client.host):
         raise HTTPException(status_code=429, detail="Your limit for sending emails per day has been reached")
@@ -67,12 +65,12 @@ async def change_email(request: Request, background_tasks: BackgroundTasks, new_
     background_tasks.add_task(send_email, user=user, subject="Confirm recent email change", html=html)
     return {"status": "Request pending, email with confirmation code sent to your old email"}
 
-@users_router.post("/settings/change_email/confirm/")
+@users_router.post("/settings/change_email/confirm/", summary="Подтвердить изменение почты")
 async def confirm_email_update(code: int, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
     await verify_email_change_via_code(code=code, user=user, session=session)
     return {"status": f"email successfully changed to {user.pending_email}"}
 
-@users_router.post("/settings/change_email/resend_code/")
+@users_router.post("/settings/change_email/resend_code/", summary="Отправить код для изменения почты еще раз")
 async def resend_verify_code_for_registration(request: Request, background_tasks: BackgroundTasks, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session)):
     if await is_limited_smtp_service(ip=request.client.host):
         raise HTTPException(status_code=429, detail="Your limit for sending emails per day has been reached")

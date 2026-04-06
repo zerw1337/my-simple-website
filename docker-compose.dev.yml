@@ -3,18 +3,6 @@ networks:
 
 services:
 
-  nginx:
-    image: nginx:stable-alpine
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-      - frontend
-    volumes:
-      - "./nginx.test.conf:/etc/nginx/nginx.conf"
-    networks:
-      - app
-
   backend:
     build:
       dockerfile: ./Dockerfile
@@ -45,13 +33,16 @@ services:
 
   frontend:
     build:
-      dockerfile: ./Dockerfile
+      dockerfile: ./Dockerfile_dev
       context: ./frontend
 
     depends_on:
       - backend
 
     restart: unless-stopped
+
+    ports:
+      - "5173:5173"
 
     develop:
       watch:

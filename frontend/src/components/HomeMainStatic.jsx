@@ -71,8 +71,16 @@ function HomeMainStatic() {
                 </div>
 
 
-                <div style={{ position: "relative", flex: "1 1 350px", textAlign: "center" }}>
-
+                <div
+                    style={{
+                        position: "relative",
+                        flex: "1 1 350px",
+                        textAlign: "center",
+                        userSelect: "none",
+                        pointerEvents: "auto",
+                    }}
+                    onDragStart={e => e.preventDefault()}
+                >
                     <div
                         style={{
                             position: "absolute",
@@ -83,6 +91,7 @@ function HomeMainStatic() {
                             background: "radial-gradient(circle, rgba(180,220,255,0.4) 0%, rgba(0,0,0,0) 70%)",
                             filter: "blur(50px)",
                             zIndex: 0,
+                            pointerEvents: "none",
                         }}
                     />
 
@@ -96,7 +105,9 @@ function HomeMainStatic() {
                             filter: "brightness(70%)",
                             position: "relative",
                             zIndex: 1,
+                            userSelect: "none",
                         }}
+                        draggable={false}
                     />
                 </div>
             </div>

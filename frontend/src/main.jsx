@@ -22,8 +22,8 @@ function showRateLimitToast() {
 
     const modal = document.createElement("div");
     modal.style.cssText = `
-        background: #1f1f1f;
-        border: 1px solid #ff5555;
+        background: #161b24;
+        border: 1px solid rgba(255,80,80,0.35);
         border-radius: 16px;
         padding: 2.5rem 3rem;
         text-align: center;
@@ -39,8 +39,8 @@ function showRateLimitToast() {
     const title = document.createElement("div");
     title.textContent = "Слишком много запросов";
     title.style.cssText = `
-        color: #ff7070;
-        font-family: 'Poppins', sans-serif;
+        color: rgb(255,110,110);
+        font-family: 'Segoe UI', Tahoma, sans-serif;
         font-size: 1.4rem;
         font-weight: 700;
         margin-bottom: 0.5rem;
@@ -49,16 +49,16 @@ function showRateLimitToast() {
     const subtitle = document.createElement("div");
     subtitle.textContent = "Страница обновится автоматически через";
     subtitle.style.cssText = `
-        color: #aaa;
-        font-family: 'Poppins', sans-serif;
+        color: rgb(100,130,160);
+        font-family: 'Segoe UI', Tahoma, sans-serif;
         font-size: 0.95rem;
         margin-bottom: 1.25rem;
     `;
 
     const countdown = document.createElement("div");
     countdown.style.cssText = `
-        color: #ff7070;
-        font-family: 'Poppins', sans-serif;
+        color: rgb(255,110,110);
+        font-family: 'Segoe UI', Tahoma, sans-serif;
         font-size: 3.5rem;
         font-weight: 800;
         line-height: 1;
@@ -69,7 +69,7 @@ function showRateLimitToast() {
     bar.style.cssText = `
         width: 100%;
         height: 4px;
-        background: #333;
+        background: rgba(100,160,220,0.1);
         border-radius: 2px;
         overflow: hidden;
     `;
@@ -77,7 +77,7 @@ function showRateLimitToast() {
     barFill.style.cssText = `
         height: 100%;
         width: 100%;
-        background: #ff5555;
+        background: linear-gradient(90deg, rgb(4,198,233), rgb(180,255,255));
         border-radius: 2px;
         transition: width 1s linear;
     `;
@@ -122,12 +122,12 @@ function showSoftToast(message) {
         position: fixed;
         top: 1.25rem;
         right: 1.25rem;
-        background: #2a2a2a;
-        border: 1px solid #ff9900;
+        background: #161b24;
+        border: 1px solid rgba(180,200,255,0.2);
         border-radius: 10px;
         padding: 0.65rem 1.1rem;
-        color: #ffb347;
-        font-family: 'Poppins', sans-serif;
+        color: rgb(140,175,210);
+        font-family: 'Segoe UI', Tahoma, sans-serif;
         font-size: 0.85rem;
         font-weight: 600;
         z-index: 9999;

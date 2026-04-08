@@ -4,7 +4,7 @@
 }
 
 .post{
-    background: #262626;
+    background: rgba(0, 0, 0, 0.08);
     border: 1px solid transparent;
     border-radius: 10px;
     padding: 1.4em;
@@ -14,8 +14,8 @@
 }
 
 .post:hover{
-    background: #2f2f2f;
-    border-color: rgb(4,198,233);
+    background: rgba(9, 9, 9, 0.08);
+    border-color: rgb(200, 240, 255);
     transform: translateY(-4px);
     box-shadow: 0 6px 20px rgba(0,0,0,0.35);
 }

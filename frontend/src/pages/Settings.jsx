@@ -1,8 +1,7 @@
-import React, {useState, useContext, useEffect} from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { changePassword, changeEmail, confirmEmailChange, resendEmailChangeCode } from "../api/Auth";
+import { changePassword, changeEmail, confirmEmailChange, resendEmailChangeCode, getMe } from "../api/Auth";
 import { AuthContext } from "../context/AuthContext";
-import {getMe} from "../api/Auth";
 
 function Settings() {
     const navigate = useNavigate();
@@ -13,11 +12,11 @@ function Settings() {
     const [passwordLoading, setPasswordLoading] = useState(false);
     const [passwordError, setPasswordError] = useState("");
     const [passwordSuccess, setPasswordSuccess] = useState("");
+
     const [currentEmail, setCurrentEmail] = useState("");
+
     useEffect(() => {
-        getMe().then(data => {
-            if (data) setCurrentEmail(data.email);
-        });
+        getMe().then(data => data && setCurrentEmail(data.email));
     }, []);
 
     const [newEmail, setNewEmail] = useState("");
@@ -28,57 +27,14 @@ function Settings() {
     const [code, setCode] = useState("");
     const [resendTimer, setResendTimer] = useState(0);
 
-    const inputStyle = {
-        width: "100%",
-        padding: "0.5rem 0.75rem",
-        background: "#2a2a2a",
-        border: "1px solid #444",
-        borderRadius: "6px",
-        color: "var(--main-text-color)",
-        fontSize: "1rem",
-        outline: "none",
-        boxSizing: "border-box",
-        fontFamily: "'Poppins', sans-serif",
-        transition: "border-color 0.2s",
-    };
-
-    const btnStyle = {
-        padding: "0.5rem 1.5rem",
-        background: "var(--logo-color)",
-        color: "var(--bg-main)",
-        border: "none",
-        borderRadius: "6px",
-        fontFamily: "'Poppins', sans-serif",
-        fontWeight: 600,
-        fontSize: "1rem",
-        cursor: "pointer",
-        transition: "background 0.2s",
-        marginTop: "0.75rem",
-    };
-
-    const labelStyle = {
-        fontWeight: 600,
-        marginTop: "0.75rem",
-        marginBottom: "0.25rem",
-        display: "block",
-        fontFamily: "'Poppins', sans-serif",
-        fontSize: "0.9rem",
-        color: "#a0a0a0",
-    };
-
-    const sectionStyle = {
-        background: "#1f1f1f",
-        borderRadius: "12px",
-        padding: "1.75rem 2rem",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-        marginBottom: "1.5rem",
-    };
-
     const startResendTimer = () => {
         setResendTimer(60);
         const interval = setInterval(() => {
             setResendTimer(prev => {
-                if (prev <= 1) { clearInterval(interval); return 0; }
+                if (prev <= 1) {
+                    clearInterval(interval);
+                    return 0;
+                }
                 return prev - 1;
             });
         }, 1000);
@@ -87,9 +43,11 @@ function Settings() {
     const handlePasswordChange = async () => {
         setPasswordError("");
         setPasswordSuccess("");
-        if (!newPassword) { setPasswordError("Введите новый пароль"); return; }
-        if (newPassword.length < 6) { setPasswordError("Минимум 6 символов"); return; }
-        if (newPassword !== confirmPassword) { setPasswordError("Пароли не совпадают"); return; }
+
+        if (!newPassword) return setPasswordError("Введите новый пароль");
+        if (newPassword.length < 6) return setPasswordError("Минимум 6 символов");
+        if (newPassword !== confirmPassword) return setPasswordError("Пароли не совпадают");
+
         setPasswordLoading(true);
         try {
             await changePassword(newPassword);
@@ -108,7 +66,9 @@ function Settings() {
     const handleEmailChange = async () => {
         setEmailError("");
         setEmailSuccess("");
-        if (!newEmail) { setEmailError("Введите новый email"); return; }
+
+        if (!newEmail) return setEmailError("Введите новый email");
+
         setEmailLoading(true);
         try {
             await changeEmail(newEmail);
@@ -123,7 +83,8 @@ function Settings() {
 
     const handleEmailConfirm = async () => {
         setEmailError("");
-        if (!code) { setEmailError("Введите код"); return; }
+        if (!code) return setEmailError("Введите код");
+
         setEmailLoading(true);
         try {
             await confirmEmailChange(code);
@@ -139,7 +100,6 @@ function Settings() {
     };
 
     const handleResend = async () => {
-        setEmailError("");
         try {
             await resendEmailChangeCode();
             startResendTimer();
@@ -156,172 +116,221 @@ function Settings() {
 
     return (
         <main>
-            <div style={{ maxWidth: "600px", margin: "2rem auto" }}>
+            <div className="settings-container">
 
-                <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "2rem" }}>
+                <div className="settings-header">
                     {myId && (
-                        <a
-                            href={"/profile/" + myId}
-                            style={{ color: "#a0a0a0", textDecoration: "none", fontSize: "0.9rem" }}
-                            onMouseEnter={e => e.currentTarget.style.color = "var(--logo-color)"}
-                            onMouseLeave={e => e.currentTarget.style.color = "#a0a0a0"}
-                        >
+                        <a href={"/profile/" + myId} className="back-link">
                             ← Профиль
                         </a>
                     )}
-                    <h2 style={{ margin: 0 }}>Настройки</h2>
+                    <h2>Настройки</h2>
                 </div>
 
-                {/* Смена пароля */}
-                <div style={sectionStyle}>
-                    <h3 style={{ margin: "0 0 1.25rem", fontSize: "1.1rem" }}>Смена пароля</h3>
+                <div className="settings-section">
+                    <h3>Смена пароля</h3>
 
-                    {passwordError && (
-                        <div style={{ color: "#ff5555", fontSize: "0.9rem", marginBottom: "0.75rem", fontFamily: "'Poppins', sans-serif" }}>
-                            {passwordError}
-                        </div>
-                    )}
-                    {passwordSuccess && (
-                        <div style={{ color: "#55cc55", fontSize: "0.9rem", marginBottom: "0.75rem", fontFamily: "'Poppins', sans-serif" }}>
-                            {passwordSuccess}
-                        </div>
-                    )}
+                    {passwordError && <div className="error">{passwordError}</div>}
+                    {passwordSuccess && <div className="success">{passwordSuccess}</div>}
 
-                    <label style={labelStyle}>Новый пароль</label>
+                    <label>Новый пароль</label>
                     <input
                         type="password"
-                        style={inputStyle}
                         value={newPassword}
                         onChange={e => setNewPassword(e.target.value)}
                         placeholder="от 6 до 32 символов"
-                        onFocus={e => e.target.style.borderColor = "var(--logo-color)"}
-                        onBlur={e => e.target.style.borderColor = "#444"}
                     />
 
-                    <label style={labelStyle}>Повторите пароль</label>
+                    <label>Повторите пароль</label>
                     <input
                         type="password"
-                        style={inputStyle}
                         value={confirmPassword}
                         onChange={e => setConfirmPassword(e.target.value)}
                         placeholder="повторите пароль"
-                        onFocus={e => e.target.style.borderColor = "var(--logo-color)"}
-                        onBlur={e => e.target.style.borderColor = "#444"}
                     />
 
-                    <button
-                        style={btnStyle}
-                        disabled={passwordLoading}
-                        onClick={handlePasswordChange}
-                        onMouseEnter={e => { if (!passwordLoading) e.currentTarget.style.background = "#03b0d0"; }}
-                        onMouseLeave={e => e.currentTarget.style.background = "var(--logo-color)"}
-                    >
+                    <button onClick={handlePasswordChange} disabled={passwordLoading}>
                         {passwordLoading ? "..." : "Изменить пароль"}
                     </button>
                 </div>
 
-                {/* Смена email */}
-                <div style={sectionStyle}>
-                    <h3 style={{ margin: "0 0 1.25rem", fontSize: "1.1rem" }}>Смена email</h3>
+                <div className="settings-section">
+                    <h3>Смена email</h3>
 
-                    {emailError && (
-                        <div style={{ color: "#ff5555", fontSize: "0.9rem", marginBottom: "0.75rem", fontFamily: "'Poppins', sans-serif" }}>
-                            {emailError}
-                        </div>
-                    )}
-                    {emailSuccess && (
-                        <div style={{ color: "#55cc55", fontSize: "0.9rem", marginBottom: "0.75rem", fontFamily: "'Poppins', sans-serif" }}>
-                            {emailSuccess}
-                        </div>
-                    )}
+                    {emailError && <div className="error">{emailError}</div>}
+                    {emailSuccess && <div className="success">{emailSuccess}</div>}
 
                     {emailStep === 1 ? (
                         <>
                             {currentEmail && (
-                                <p style={{ color: "#a0a0a0", fontSize: "0.9rem", margin: "0 0 0.75rem" }}>
-                                    Текущий email: <b style={{ color: "var(--main-text-color)" }}>{currentEmail}</b>
+                                <p className="hint">
+                                    Текущий email: <b>{currentEmail}</b>
                                 </p>
                             )}
-                            <label style={labelStyle}>Новый email</label>
+
+                            <label>Новый email</label>
                             <input
                                 type="email"
-                                style={inputStyle}
                                 value={newEmail}
                                 onChange={e => setNewEmail(e.target.value)}
                                 placeholder="example@mail.com"
-                                onFocus={e => e.target.style.borderColor = "var(--logo-color)"}
-                                onBlur={e => e.target.style.borderColor = "#444"}
                             />
-                            <button
-                                style={btnStyle}
-                                disabled={emailLoading}
-                                onClick={handleEmailChange}
-                                onMouseEnter={e => { if (!emailLoading) e.currentTarget.style.background = "#03b0d0"; }}
-                                onMouseLeave={e => e.currentTarget.style.background = "var(--logo-color)"}
-                            >
+
+                            <button onClick={handleEmailChange} disabled={emailLoading}>
                                 {emailLoading ? "..." : "Изменить email"}
                             </button>
                         </>
                     ) : (
                         <>
-                            <p style={{ color: "#a0a0a0", fontSize: "0.9rem", margin: "0 0 1rem" }}>
-                                Код подтверждения отправлен на текущий email.
-                            </p>
+                            <p className="hint">Код отправлен на email</p>
 
-                            <label style={labelStyle}>Код подтверждения</label>
+                            <label>Код</label>
                             <input
-                                style={inputStyle}
                                 value={code}
                                 onChange={e => setCode(e.target.value)}
                                 placeholder="Введите код"
-                                onFocus={e => e.target.style.borderColor = "var(--logo-color)"}
-                                onBlur={e => e.target.style.borderColor = "#444"}
                             />
 
-                            <button
-                                style={btnStyle}
-                                disabled={emailLoading}
-                                onClick={handleEmailConfirm}
-                                onMouseEnter={e => { if (!emailLoading) e.currentTarget.style.background = "#03b0d0"; }}
-                                onMouseLeave={e => e.currentTarget.style.background = "var(--logo-color)"}
-                            >
+                            <button onClick={handleEmailConfirm} disabled={emailLoading}>
                                 {emailLoading ? "..." : "Подтвердить"}
                             </button>
 
-                            <button
-                                onClick={handleResend}
-                                disabled={resendTimer > 0}
-                                style={{
-                                    ...btnStyle,
-                                    background: "transparent",
-                                    color: resendTimer > 0 ? "#666" : "var(--logo-color)",
-                                    border: `1px solid ${resendTimer > 0 ? "#444" : "var(--logo-color)"}`,
-                                    marginLeft: "0.75rem",
-                                    cursor: resendTimer > 0 ? "default" : "pointer",
-                                }}
-                                onMouseEnter={e => { if (!resendTimer) { e.currentTarget.style.background = "var(--logo-color)"; e.currentTarget.style.color = "var(--bg-main)"; }}}
-                                onMouseLeave={e => { if (!resendTimer) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--logo-color)"; }}}
-                            >
-                                {resendTimer > 0 ? `Повторно через ${resendTimer}с` : "Отправить повторно"}
-                            </button>
+                            <div className="row">
+                                <button
+                                    onClick={handleResend}
+                                    disabled={resendTimer > 0}
+                                    className="outline"
+                                >
+                                    {resendTimer > 0 ? `Через ${resendTimer}с` : "Отправить ещё"}
+                                </button>
 
-                            <button
-                                onClick={() => { setEmailStep(1); setCode(""); setEmailError(""); }}
-                                style={{
-                                    ...btnStyle,
-                                    background: "transparent",
-                                    color: "#666",
-                                    border: "1px solid #444",
-                                    marginLeft: "0.75rem",
-                                }}
-                            >
-                                Отмена
-                            </button>
+                                <button
+                                    onClick={() => {
+                                        setEmailStep(1);
+                                        setCode("");
+                                        setEmailError("");
+                                    }}
+                                    className="outline grey"
+                                >
+                                    Отмена
+                                </button>
+                            </div>
                         </>
                     )}
                 </div>
 
             </div>
+
+            <style>{`
+                .settings-container {
+                    max-width: 600px;
+                    margin: 2rem auto;
+                }
+
+                .settings-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                    margin-bottom: 2rem;
+                }
+
+                .back-link {
+                    color: #888;
+                    text-decoration: none;
+                    transition: 0.2s;
+                }
+
+                .back-link:hover {
+                    color: var(--logo-color);
+                }
+
+                .settings-section {
+                    background: #1f1f1f;
+                    border-radius: 12px;
+                    padding: 1.75rem 2rem;
+                    margin-bottom: 1.5rem;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                }
+
+                input {
+                    width: 100%;
+                    padding: 0.6rem;
+                    margin-top: 0.3rem;
+                    margin-bottom: 0.8rem;
+                    background: #2a2a2a;
+                    border: 1px solid #444;
+                    border-radius: 6px;
+                    color: white;
+                    transition: 0.2s;
+                }
+
+                input:focus {
+                    border-color: var(--logo-color);
+                }
+
+                button {
+                    padding: 0.5rem 1.5rem;
+                    background: var(--logo-color);
+                    color: black;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    transition: 0.2s;
+                    margin-top: 0.5rem;
+                }
+
+                button:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 0 10px rgba(0,200,255,0.4);
+                }
+
+                button:disabled {
+                    opacity: 0.5;
+                    cursor: default;
+                }
+
+                .outline {
+                    background: transparent;
+                    border: 1px solid var(--logo-color);
+                    color: var(--logo-color);
+                }
+
+                .outline:hover {
+                    background: var(--logo-color);
+                    color: black;
+                }
+
+                .outline.grey {
+                    border-color: #444;
+                    color: #777;
+                }
+
+                .outline.grey:hover {
+                    background: #444;
+                    color: white;
+                }
+
+                .row {
+                    display: flex;
+                    gap: 0.75rem;
+                    margin-top: 0.75rem;
+                }
+
+                .error {
+                    color: #ff5555;
+                    margin-bottom: 0.5rem;
+                }
+
+                .success {
+                    color: #55cc55;
+                    margin-bottom: 0.5rem;
+                }
+
+                .hint {
+                    color: #aaa;
+                    font-size: 0.9rem;
+                }
+            `}</style>
         </main>
     );
 }

@@ -1,36 +1,29 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import notFoundImg from "../assets/images/404nf.png";
+import img404 from "../assets/images/404nf.png";
 
 function NotFound() {
-    const navigate = useNavigate();
-
     return (
-        <main style={{ display: "flex", alignItems: "center", justifyContent: "center", paddingTop: "3rem" }}>
-            <div style={{ textAlign: "center" }}>
-                <img src={notFoundImg} alt="404"/>
-                <p style={{ fontSize: "1.2rem", color: "#a0a0a0", margin: "1rem 0 1rem" }}>
-                    Страница не найдена
-                </p>
-                <button
-                    onClick={() => navigate("/")}
-                    style={{
-                        padding: "0.5rem 1.5rem",
-                        background: "transparent",
-                        border: "1px solid var(--logo-color)",
-                        borderRadius: "6px",
-                        color: "var(--logo-color)",
-                        fontFamily: "'Poppins', sans-serif",
-                        fontWeight: 600,
-                        fontSize: "1rem",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "var(--logo-color)"; e.currentTarget.style.color = "var(--bg-main)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--logo-color)"; }}
-                >
+        <main>
+            <div style={{ maxWidth: "500px", margin: "5rem auto", textAlign: "center", padding: "2rem" }}>
+                <img src={img404} alt="404" style={{ width: "200px", opacity: 0.7, marginBottom: "2rem", filter: "brightness(0.8) hue-rotate(190deg)" }} />
+                <h1 style={{ color: "rgb(180,255,255)", marginBottom: "0.5rem", textShadow: "0 0 12px rgba(180,255,255,0.2)" }}>404</h1>
+                <p style={{ color: "rgb(100,130,160)", marginBottom: "2rem" }}>Страница не найдена</p>
+                <a href="/" style={{
+                    display: "inline-block",
+                    padding: "0.6rem 1.5rem",
+                    background: "rgba(4,198,233,0.1)",
+                    border: "1px solid rgba(4,198,233,0.3)",
+                    borderRadius: "8px",
+                    color: "var(--logo-color)",
+                    textDecoration: "none",
+                    fontFamily: "inherit",
+                    fontWeight: 600,
+                    transition: "all 0.2s",
+                }}
+                   onMouseEnter={e => { e.currentTarget.style.background = "rgba(4,198,233,0.15)"; e.currentTarget.style.color = "rgb(180,255,255)"; }}
+                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(4,198,233,0.1)"; e.currentTarget.style.color = "var(--logo-color)"; }}>
                     На главную
-                </button>
+                </a>
             </div>
         </main>
     );

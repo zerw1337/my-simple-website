@@ -1,82 +1,136 @@
 .full-post-card {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 1.5rem;
-    background-color: #1f1f1f;
-    color: #ececec;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    font-family: 'Arial', sans-serif;
-    line-height: 1.6;
-    transition: transform 0.2s, box-shadow 0.2s;
+    background: var(--bg-card, #161b24);
+    border: 1px solid rgba(100,160,220,0.12);
+    border-radius: 14px;
+    padding: 1.4rem 1.5rem;
+    color: rgb(200,220,240);
+
+    line-height: 1.65;
+    box-shadow: 0 6px 28px rgba(0,0,0,0.45);
+    margin: 1.2rem 0;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
 }
 
-@media (max-width: 1600px) {
-    .full-post-card {
-        max-width: 100%;
-        margin: 2rem 0;
-    }
-}
-
-.full-post-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-}
+/* HEADER */
 
 .full-post-header {
-    margin-bottom: 1rem;
+    margin-bottom: 0.4rem;
 }
 
 .full-post-header h2 {
     margin: 0;
-    font-size: 2rem;
-    color: #04c6e9;
+    font-size: 1.85rem;
+    line-height: 1.35;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+
+    background: linear-gradient(90deg, #e6f4ff, #7dd3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .full-post-header span {
-    font-size: 0.9rem;
-    color: #a0a0a0;
+    font-size: 0.8rem;
+    color: rgb(100,130,160);
 }
 
+/* META (самое важное) */
 
 .full-post-meta {
-    margin-bottom: 1rem;
     display: flex;
-    gap: 1rem;
-    font-size: 0.95rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+    color: rgb(120,150,180);
+    margin-bottom: 0.6rem;
 }
 
 .full-post-meta b {
-    color: #ececec;
+    color: rgb(180,220,255);
 }
 
+.full-post-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* КОНТЕНТ */
+
+.full-post-content {
+    margin-top: 0.6rem;
+    margin-bottom: 1rem;
+}
 
 .full-post-content p {
     margin: 0;
     white-space: pre-line;
-    color: #ececec;
+    color: rgb(180,210,240);
+    font-size: 0.92rem;
+    line-height: 1.7;
 }
 
+/* НАВИГАЦИЯ */
+
+.nav-link {
+    color: var(--logo-color);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    opacity: 0.8;
+}
+
+.nav-link:hover {
+    background: var(--logo-color);
+    color: var(--bg-main);
+    opacity: 1;
+}
+
+/* AUTHOR */
+
+.author-link {
+    color: var(--logo-color);
+    text-decoration: none;
+    opacity: 0.9;
+}
+
+.author-link:hover {
+    text-decoration: underline;
+    opacity: 1;
+}
+
+/* РЕАКЦИИ (если compact режим) */
+
+.reactions-compact {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    font-size: 0.85rem;
+}
+
+/* МОБИЛКА */
 
 @media (max-width: 600px) {
     .full-post-card {
-        padding: 1rem;
-        margin: 1rem;
+        padding: 1.1rem;
+        border-radius: 12px;
     }
 
     .full-post-header h2 {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
 
     .full-post-meta {
         flex-direction: column;
-        gap: 0.5rem;
+        align-items: flex-start;
+        gap: 0.3rem;
     }
-}
 
-@media (min-width: 601px) and (max-width: 1600px) {
-    .full-post-card {
-        max-width: 100%;
-        margin: 2rem 0;
+    .full-post-content p {
+        font-size: 0.88rem;
     }
 }

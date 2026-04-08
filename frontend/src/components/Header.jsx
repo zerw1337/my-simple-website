@@ -1,5 +1,5 @@
 import { FaUser, FaSignInAlt, FaBars, FaTimes } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import React, { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext.jsx";
 
@@ -12,6 +12,7 @@ function Header() {
         if (!token) return false;
         try { return JSON.parse(atob(token.split(".")[1])).is_superuser === true; } catch { return false; }
     };
+
     const getMyId = () => {
         const token = localStorage.getItem("access_token");
         if (!token) return null;
@@ -21,7 +22,7 @@ function Header() {
     const close = () => setMenuOpen(false);
 
     const linkStyle = {
-        fontFamily: "'Poppins', sans-serif",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         fontWeight: 600,
         textDecoration: "none",
         padding: "0.4rem 0",
@@ -31,28 +32,19 @@ function Header() {
     return (
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "1rem", position: "relative" }}>
             <span className="logo">
-                <Link to="/" onClick={close}>zerw1337's website</Link>
+                <Link to="/" onClick={close} style={{ color: "rgb(180, 255, 255)", fontWeight: "bold", fontSize: "1.6rem" }}>
+                    zerw1337's website
+                </Link>
             </span>
 
-            {/* Бургер кнопка — только на мобиле */}
             <button
                 onClick={() => setMenuOpen(o => !o)}
-                style={{
-                    display: "none",
-                    background: "none",
-                    border: "none",
-                    color: "var(--menu-item-color)",
-                    fontSize: "1.5rem",
-                    cursor: "pointer",
-                    padding: "0.25rem",
-                }}
                 className="burger-btn"
                 aria-label="Меню"
             >
                 {menuOpen ? <FaTimes /> : <FaBars />}
             </button>
 
-            {/* Навигация */}
             <nav className={`main-nav${menuOpen ? " nav-open" : ""}`}>
                 <Link to="/" style={linkStyle} onClick={close}>Домой</Link>
                 <Link to="/blog" style={linkStyle} onClick={close}>Блог</Link>
@@ -62,9 +54,9 @@ function Header() {
                 {user ? (
                     <>
                         {getIsSuperuser() && (
-                            <Link to="/admin" onClick={close} className="accent" style={linkStyle}>Админ</Link>
+                            <Link to="/admin" onClick={close} style={linkStyle}>Админ</Link>
                         )}
-                        <a href={`/profile/${getMyId()}`} onClick={close} className="accent" style={linkStyle}>
+                        <a href={`/profile/${getMyId()}`} onClick={close} style={linkStyle}>
                             {user.username}
                         </a>
                         <button
@@ -74,12 +66,8 @@ function Header() {
                                 background: "none",
                                 border: "none",
                                 cursor: "pointer",
-                                fontSize: "inherit",
-                                padding: "0.4rem 0",
                                 textAlign: "left",
                             }}
-                            onMouseEnter={e => { e.currentTarget.style.color = "var(--logo-color)"; }}
-                            onMouseLeave={e => { e.currentTarget.style.color = "var(--menu-item-color)"; }}
                         >
                             Выйти
                         </button>
@@ -87,21 +75,25 @@ function Header() {
                 ) : (
                     <>
                         <Link to="/login" style={linkStyle} onClick={close}>
-                            <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><FaSignInAlt /> Login</span>
+                            <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                                <FaSignInAlt /> Login
+                            </span>
                         </Link>
                         <Link to="/register" style={linkStyle} onClick={close}>
-                            <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><FaUser /> Register</span>
+                            <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                                <FaUser /> Register
+                            </span>
                         </Link>
                     </>
                 )}
             </nav>
 
-            {/* Оверлей для закрытия меню */}
             {menuOpen && (
                 <div
                     onClick={close}
                     style={{
-                        position: "fixed", inset: 0,
+                        position: "fixed",
+                        inset: 0,
                         zIndex: 98,
                         background: "rgba(0,0,0,0.4)",
                     }}
@@ -109,18 +101,34 @@ function Header() {
             )}
 
             <style>{`
+                .burger-btn {
+                    display: none;
+                    background: none;
+                    border: none;
+                    color: rgb(180, 220, 255);
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    padding: 0.25rem;
+                }
+
                 .main-nav {
                     display: flex;
                     gap: 1rem;
                     align-items: center;
                 }
-                .main-nav a, .main-nav button {
-                    color: var(--menu-item-color);
-                    transition: color 0.2s;
+
+                .main-nav a,
+                .main-nav button {
+                    color: rgb(180, 220, 255);
+                    transition: all 0.2s ease;
                 }
-                .main-nav a:hover, .main-nav button:hover { color: var(--logo-color); }
-                .main-nav a.accent { color: var(--logo-color); }
-                .main-nav a.accent:hover { color: var(--menu-item-color); }
+
+                .main-nav a:hover,
+                .main-nav button:hover {
+                    color: rgb(180, 255, 255);
+                    transform: translateY(-1px);
+                    text-shadow: 0 0 6px rgba(180,255,255,0.4);
+                }
 
                 @media (max-width: 1280px) {
                     .logo { font-size: 1.4rem !important; }
@@ -135,7 +143,7 @@ function Header() {
                 }
 
                 @media (max-width: 768px) {
-                    .burger-btn { display: block !important; }
+                    .burger-btn { display: block; }
 
                     .main-nav {
                         display: none;
@@ -143,19 +151,28 @@ function Header() {
                         align-items: flex-start;
                         gap: 0.25rem;
                         position: fixed;
-                        top: 0; right: 0;
+                        top: 0;
+                        right: 0;
                         width: 70vw;
                         max-width: 280px;
                         height: 100vh;
-                        background: #1a1a1a;
+                        background: rgba(0,0,0,0.9);
                         border-left: 1px solid #333;
                         padding: 4rem 2rem 2rem;
                         z-index: 99;
-                        box-shadow: -4px 0 20px rgba(0,0,0,0.5);
+                        box-shadow: -4px 0 20px rgba(0,0,0,0.25);
                         overflow-y: auto;
                     }
+
                     .main-nav.nav-open { display: flex; }
-                    .main-nav a, .main-nav button { font-size: 1.1rem; padding: 0.6rem 0; width: 100%; border-bottom: 1px solid #2a2a2a; }
+
+                    .main-nav a,
+                    .main-nav button {
+                        font-size: 1.1rem;
+                        padding: 0.6rem 0;
+                        width: 100%;
+                        border-bottom: 1px solid rgba(180,220,255,0.2);
+                    }
                 }
             `}</style>
         </header>

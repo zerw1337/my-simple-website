@@ -143,7 +143,6 @@ const SOFT_LIMIT_DETAILS = [
     "Your reaction limit per day has been reached",
     "Your limit for sending emails per day has been reached",
     "Password changing limit per day has been reached",
-    "Too Many Requests",
 ];
 
 const SOFT_LIMIT_MESSAGES = {
@@ -151,7 +150,6 @@ const SOFT_LIMIT_MESSAGES = {
     "Your reaction limit per day has been reached": "Достигнут дневной лимит реакций",
     "Your limit for sending emails per day has been reached": "Достигнут дневной лимит отправки писем",
     "Password changing limit per day has been reached": "Достигнут дневной лимит смены пароля",
-    "Too Many Requests": "Слишком много запросов. Подождите немного.",
 };
 
 const originalFetch = window.fetch;

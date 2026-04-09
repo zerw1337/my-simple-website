@@ -1,6 +1,4 @@
 import React from "react";
-import book from "../assets/images/book.png";
-import pen from "../assets/images/pen.png";
 
 const skills = [
     "Иванов Глеб", "26 лет", "Backend", "Python",

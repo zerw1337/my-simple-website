@@ -30,7 +30,11 @@ async def lifespan(app: FastAPI):
     await redis_config.close_redis()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan,
+              docs_url="/docs",
+              openapi_url="/openapi.json",
+              root_path="/api"
+              )
 
 app.include_router(reaction_router)
 app.include_router(comments_router)
@@ -48,6 +52,7 @@ app.add_middleware(CORSMiddleware,
                        "http://localhost:5173",
                        "http://127.0.0.1:5173",
                        "http://frontend:5173",
+                       # "https://zerw1337.ru",
                    ],
                     allow_credentials=True,
                     allow_methods=["*"],

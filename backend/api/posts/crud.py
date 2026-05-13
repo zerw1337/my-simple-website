@@ -64,23 +64,25 @@ async def get_five_latest_posts(session: AsyncSession) -> Sequence[Posts]:
 async def get_next_post_after_this(current_post_id: int, session: AsyncSession) -> Posts:
     query = (
         select(Posts)
-        .where(Posts.id == current_post_id+1)
+        .where(Posts.id > current_post_id)
         .options(selectinload(Posts.category))
         .options(selectinload(Posts.user))
+        .order_by(Posts.id.asc())
     )
     res = await session.execute(query)
-    results = res.scalar_one_or_none()
+    results = res.scalars().first()
     return results
 
 async def get_previous_post_from_this(current_post_id: int, session: AsyncSession) -> Posts:
     query = (
         select(Posts)
-        .where(Posts.id == current_post_id-1)
+        .where(Posts.id < current_post_id)
         .options(selectinload(Posts.category))
         .options(selectinload(Posts.user))
+        .order_by(Posts.id.desc())
     )
     res = await session.execute(query)
-    results = res.scalar_one_or_none()
+    results = res.scalars().first()
     return results
 
 

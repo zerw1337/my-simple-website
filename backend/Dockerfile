@@ -10,6 +10,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+RUN sed -i 's/\r$//' migrations.sh
+
 RUN chmod +x migrations.sh
 
 ENTRYPOINT ["./migrations.sh"]

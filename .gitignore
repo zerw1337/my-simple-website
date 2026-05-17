@@ -9,3 +9,4 @@ certbot/
 .env
 .env*
 minio_data/
+minio_data/.minio.sys/

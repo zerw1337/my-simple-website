@@ -1,6 +1,7 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { register, verifyCode, resendCode, createProfile, refreshTokens } from "../api/Auth";
+import { uploadAvatar } from "../api/Posts";
 import { AuthContext } from "../context/AuthContext";
 
 const inp = {
@@ -37,6 +38,11 @@ function Register() {
     const [birthday, setBirthday] = useState("");
     const [bio, setBio] = useState("");
 
+    // Аватар
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [avatarPreview, setAvatarPreview] = useState(null);
+    const fileInputRef = useRef(null);
+
     useEffect(() => {
         if (location.state?.step) return;
         const token = localStorage.getItem("access_token");
@@ -50,6 +56,14 @@ function Register() {
         const interval = setInterval(() => {
             setResendTimer(prev => { if (prev <= 1) { clearInterval(interval); return 0; } return prev - 1; });
         }, 1000);
+    };
+
+    const handleAvatarChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setAvatarFile(file);
+        const url = URL.createObjectURL(file);
+        setAvatarPreview(url);
     };
 
     const handleRegister = async () => {
@@ -89,6 +103,10 @@ function Register() {
         try {
             await createProfile(firstName, lastName, birthday, bio);
             await refreshTokens();
+            // Загружаем аватар если выбран
+            if (avatarFile) {
+                try { await uploadAvatar(avatarFile); } catch {}
+            }
             loginUser({ username: localStorage.getItem("username"), access_token: localStorage.getItem("access_token"), refresh_token: localStorage.getItem("refresh_token") });
             navigate("/");
         } catch (e) { setError(e.message); }
@@ -217,6 +235,33 @@ function Register() {
                         <p style={{ margin: "0 0 1.5rem", textAlign: "center", color: "rgb(80,110,140)", fontSize: "0.875rem" }}>
                             Аккаунт подтверждён ✓ Заполните профиль
                         </p>
+
+                        {/* Аватар */}
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "1.25rem" }}>
+                            <div
+                                onClick={() => fileInputRef.current?.click()}
+                                style={{
+                                    width: "88px", height: "88px", borderRadius: "50%",
+                                    background: avatarPreview ? "transparent" : "rgba(4,198,233,0.07)",
+                                    border: "2px dashed rgba(4,198,233,0.3)",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    cursor: "pointer", overflow: "hidden", transition: "border-color 0.2s",
+                                    marginBottom: "0.5rem",
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(4,198,233,0.7)"}
+                                onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(4,198,233,0.3)"}
+                            >
+                                {avatarPreview
+                                    ? <img src={avatarPreview} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    : <span style={{ fontSize: "1.75rem" }}>📷</span>
+                                }
+                            </div>
+                            <span style={{ fontSize: "0.78rem", color: "rgb(80,110,140)" }}>
+                                {avatarFile ? avatarFile.name : "Нажмите чтобы добавить фото (необязательно)"}
+                            </span>
+                            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarChange} />
+                        </div>
+
                         <label style={lbl}>Имя *</label>
                         <input style={inp} value={firstName} onChange={e => setFirstName(e.target.value)} onFocus={focusStyle} onBlur={blurStyle} />
                         <label style={lbl}>Фамилия *</label>

@@ -184,3 +184,27 @@ export async function unbanUser(userId) {
     if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
     return await res.json();
 }
+
+// Получить аватар пользователя как blob URL
+export async function getAvatarUrl(userId) {
+    try {
+        const res = await fetch(`${API_URL}/profile/avatar/${userId}/`);
+        if (!res.ok) return null;
+        const blob = await res.blob();
+        return URL.createObjectURL(blob);
+    } catch {
+        return null;
+    }
+}
+
+// Загрузить аватар
+export async function uploadAvatar(file) {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const res = await fetchWithAuth(`${API_URL}/profile/upload_avatar/`, {
+        method: "POST",
+        body: formData,
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || "Ошибка загрузки аватара");
+    return await res.json();
+}

@@ -4,6 +4,7 @@ import { getPostById, getNextPost, getPreviousPost } from "../api/Posts";
 import "./styles/PostCardFull.css";
 import PostReactions from "./PostReactions";
 import PostComments from "./PostComments";
+import UserAvatar from "./UserAvatar";
 
 function PostCardFullWrapper() {
     const { id } = useParams();
@@ -91,18 +92,21 @@ function PostCardFull({ post, prevId, nextId }) {
                     {post.title}
                 </h1>
 
-                {/* Мета */}
+                {/* Мета с аватаром автора */}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem 1.25rem", fontSize: "0.82rem", color: "rgb(80,110,140)", marginBottom: "1.5rem", alignItems: "center" }}>
-                    <span>
-                        {post.author_id
-                            ? <Link to={`/profile/${post.author_id}`} style={{ color: "var(--logo-color)", textDecoration: "none", fontWeight: 600 }}
-                                    onMouseEnter={e => e.currentTarget.style.color = "rgb(180,255,255)"}
-                                    onMouseLeave={e => e.currentTarget.style.color = "var(--logo-color)"}>
-                                {post.author}
-                            </Link>
-                            : <span style={{ color: "rgb(120,155,190)", fontWeight: 600 }}>{post.author}</span>
-                        }
-                    </span>
+                    {post.author_id ? (
+                        <Link to={`/profile/${post.author_id}`} style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--logo-color)", textDecoration: "none", fontWeight: 600 }}
+                              onMouseEnter={e => e.currentTarget.style.color = "rgb(180,255,255)"}
+                              onMouseLeave={e => e.currentTarget.style.color = "var(--logo-color)"}>
+                            <UserAvatar userId={post.author_id} username={post.author} size={38} />
+                            {post.author}
+                        </Link>
+                    ) : (
+                        <span style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "rgb(120,155,190)", fontWeight: 600 }}>
+                            <UserAvatar username={post.author} size={38} />
+                            {post.author}
+                        </span>
+                    )}
                     <span>{new Date(post.date).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}</span>
                     <span>👁 {post.views} просмотров</span>
                     <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>

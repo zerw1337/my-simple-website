@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { getCommentsByPostId, createComment, deleteComment } from "../api/Posts";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import UserAvatar from "./UserAvatar";
 
 function PostComments({ postId }) {
     const { user } = useContext(AuthContext);
@@ -43,20 +44,13 @@ function PostComments({ postId }) {
             await createComment(postId, text.trim());
             setText("");
             await fetchComments();
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
+        } catch (e) { console.error(e); }
+        finally { setLoading(false); }
     };
 
     const handleDelete = async (commentId) => {
-        try {
-            await deleteComment(commentId);
-            await fetchComments();
-        } catch (e) {
-            console.error(e);
-        }
+        try { await deleteComment(commentId); await fetchComments(); }
+        catch (e) { console.error(e); }
     };
 
     return (
@@ -72,18 +66,11 @@ function PostComments({ postId }) {
                         placeholder="Напишите комментарий..."
                         rows={3}
                         style={{
-                            width: "100%",
-                            padding: "0.6rem 0.75rem",
-                            background: "#2a2a2a",
-                            border: "1px solid #444",
-                            borderRadius: "8px",
-                            color: "var(--main-text-color)",
-                            fontSize: "1rem",
-                            resize: "vertical",
-                            outline: "none",
-                            fontFamily: "'Poppins', sans-serif",
-                            boxSizing: "border-box",
-                            transition: "border-color 0.2s",
+                            width: "100%", padding: "0.6rem 0.75rem",
+                            background: "#2a2a2a", border: "1px solid #444",
+                            borderRadius: "8px", color: "var(--main-text-color)",
+                            fontSize: "1rem", resize: "vertical", outline: "none",
+                            fontFamily: "'Poppins', sans-serif", boxSizing: "border-box", transition: "border-color 0.2s",
                         }}
                         onFocus={e => e.target.style.borderColor = "var(--logo-color)"}
                         onBlur={e => e.target.style.borderColor = "#444"}
@@ -95,21 +82,15 @@ function PostComments({ postId }) {
                         onClick={handleSubmit}
                         disabled={loading || text.trim().length < 3 || text.trim().length > 255}
                         style={{
-                            alignSelf: "flex-end",
-                            padding: "0.4rem 1.2rem",
-                            background: "var(--logo-color)",
-                            color: "var(--bg-main)",
-                            border: "none",
-                            borderRadius: "6px",
-                            fontFamily: "'Poppins', sans-serif",
-                            fontWeight: 600,
+                            alignSelf: "flex-end", padding: "0.4rem 1.2rem",
+                            background: "var(--logo-color)", color: "var(--bg-main)",
+                            border: "none", borderRadius: "6px",
+                            fontFamily: "'Poppins', sans-serif", fontWeight: 600,
                             cursor: loading || !text.trim() ? "default" : "pointer",
-                            opacity: loading || !text.trim() ? 0.6 : 1,
-                            transition: "background 0.2s",
+                            opacity: loading || !text.trim() ? 0.6 : 1, transition: "background 0.2s",
                         }}
                         onMouseEnter={e => { if (!loading && text.trim()) e.currentTarget.style.background = "#03b0d0"; }}
                         onMouseLeave={e => e.currentTarget.style.background = "var(--logo-color)"}
-
                     >
                         Отправить
                     </button>
@@ -122,22 +103,27 @@ function PostComments({ postId }) {
                 <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                     {comments.map(comment => (
                         <div key={comment.id} style={{
-                            background: "#2a2a2a",
-                            border: "1px solid #333",
-                            borderRadius: "8px",
-                            padding: "0.75rem 1rem",
+                            background: "#2a2a2a", border: "1px solid #333",
+                            borderRadius: "8px", padding: "0.75rem 1rem",
                         }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
-                                <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
-                                    {comment.user_id
-                                        ? <a href={"/profile/" + comment.user_id}
-                                             style={{ color: "var(--logo-color)", textDecoration: "none" }}
-                                             onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
-                                             onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}>
-                                            {comment.user?.username || comment.username || "Аноним"}
-                                        </a>
-                                        : (comment.user?.username || comment.username || "Аноним")}
-                                </span>
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                                    <UserAvatar
+                                        userId={comment.user_id}
+                                        username={comment.user?.username || comment.username}
+                                        size={30}
+                                    />
+                                    <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
+                                        {comment.user_id
+                                            ? <a href={"/profile/" + comment.user_id}
+                                                 style={{ color: "var(--logo-color)", textDecoration: "none" }}
+                                                 onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+                                                 onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}>
+                                                {comment.user?.username || comment.username || "Аноним"}
+                                            </a>
+                                            : (comment.user?.username || comment.username || "Аноним")}
+                                    </span>
+                                </div>
                                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                                     <span style={{ fontSize: "0.8rem", color: "#a0a0a0" }}>
                                         {new Date(comment.created_at).toLocaleString()}
@@ -146,17 +132,11 @@ function PostComments({ postId }) {
                                         <button
                                             onClick={() => handleDelete(comment.id)}
                                             style={{
-                                                background: "none",
-                                                border: "none",
-                                                color: "#666",
-                                                cursor: "pointer",
-                                                fontSize: "0.8rem",
-                                                padding: 0,
-                                                transition: "color 0.2s",
+                                                background: "none", border: "none", color: "#666",
+                                                cursor: "pointer", fontSize: "0.8rem", padding: 0, transition: "color 0.2s",
                                             }}
                                             onMouseEnter={e => e.currentTarget.style.color = "#ff5555"}
                                             onMouseLeave={e => e.currentTarget.style.color = "#666"}
-
                                         >
                                             удалить
                                         </button>

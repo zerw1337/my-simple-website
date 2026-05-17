@@ -7,8 +7,8 @@ class MinioService:
         self.client = client
         self.bucket = bucket
 
-    async def upload_file(self, file: UploadFile, content_type: str):
-        key = f"{uuid.uuid4()}"
+    async def upload_file(self, file: UploadFile, content_type: str, prefix: str):
+        key = f"{prefix}/{uuid.uuid4()}"
 
         await self.client.upload_fileobj(
             file.file,

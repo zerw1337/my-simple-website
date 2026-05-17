@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
+from typing import ClassVar
 
 
 class Settings(BaseSettings):
@@ -43,6 +44,16 @@ class Settings(BaseSettings):
     MINIO_BUCKET_IMAGES: str = "images"
     MINIO_BUCKET_VIDEOS: str = "video"
     MINIO_BUCKET_AVATARS: str = "avatars"
+
+    ALLOWED_CONTENT_TYPES: ClassVar[set[str]]  = {
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+    }
+
+    ALLOWED_EXTENSIONS: ClassVar[set[str]] = {"jpg", "jpeg", "png", "webp"}
+
+    MAX_SIZE_MB: int = 5
 
     naming_conventions: dict[str, str] = {
         "ix": "ix_%(column_0_label)s",

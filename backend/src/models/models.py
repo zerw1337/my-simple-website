@@ -74,6 +74,17 @@ class Profiles(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
 
     user: Mapped["Users"] = relationship("Users", back_populates="profile")
+    avatar: Mapped["Avatars | None"] = relationship("Avatars", back_populates="profile")
+
+
+class Avatars(Base):
+    __tablename__ = 'avatars'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    profile_id: Mapped[int] = mapped_column(ForeignKey('profiles.id', ondelete="CASCADE"), nullable=False, unique=True)
+    uploaded_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now())
+
+    profile: Mapped["Profiles"] = relationship("Profiles", back_populates="avatar")
 
 class Categories(Base):
     __tablename__ = 'categories'

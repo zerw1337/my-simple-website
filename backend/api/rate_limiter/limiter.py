@@ -43,5 +43,13 @@ async def is_limited_smtp_service(ip: str) -> bool:
         await r.expire(key, settings.SMTP_SERVICE_LIMITER_WINDOW)
     return current > settings.SMTP_SERVICE_LIMITER_LIMIT
 
+async def is_limited_avatar_upload(user_id: int) -> bool:
+    key = f"avatar:{user_id}"
+    r = await get_limiter()
+    current = await r.incr(key)
+    if current == 1:
+        await r.expire(key, settings.AVATAR_LIMITER_WINDOW)
+    return current > settings.AVATAR_LIMITER_LIMIT
+
 
 

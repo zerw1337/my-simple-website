@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path, File, UploadFile, Response
+from fastapi import APIRouter, Depends, Path, File, UploadFile, Response, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 import json
 from redis.asyncio import Redis
@@ -9,10 +9,11 @@ from src.models.database import get_session
 from api.profiles.schemas import ProfileOut
 from .crud import get_current_profile, upload_avatar_process, get_current_profile_avatar
 from .dto import profile_dto
-from src.redis.dependencies import get_cache
+from src.redis.dependencies import get_cache, get_limiter
 from src.config import settings
 from ..auth.dependencies import get_auth
 from ..auth.schemas import UserOut
+from ..rate_limiter.limiter import is_limited_avatar_upload
 
 profiles_router = APIRouter(prefix="/profile", tags=["Profiles"])
 
@@ -35,7 +36,8 @@ async def get_users_avatar(user_id: int, session: AsyncSession = Depends(get_ses
 async def upload_avatar(avatar: UploadFile | None = File(...),
                         user: UserOut = Depends(get_auth),
                         session: AsyncSession = Depends(get_session),
-                        minio = Depends(get_minio)):
-
+                        minio = Depends(get_minio),):
+    if await is_limited_avatar_upload(user_id=user.id):
+        raise HTTPException(status_code=429, detail="You have reached your changing avatar limit per day.")
     await upload_avatar_process(avatar=avatar, user=user, session=session, minio=minio)
     return

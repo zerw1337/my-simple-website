@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import FastAPI, Depends
 from contextlib import asynccontextmanager
 import uvicorn
@@ -5,6 +7,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from api.categories.views import cat_router
+from src.minio.config import minio_bucket_setup
 from src.models.database import db_dispose
 from api.auth.schemas import UserOut
 from api.auth.dependencies import get_auth
@@ -23,6 +26,12 @@ from middleware import RateLimitMiddleware
 async def lifespan(app: FastAPI):
 
     await redis_config.init_redis()
+    for _ in range(5):
+        try:
+            await minio_bucket_setup()
+            break
+        except Exception:
+            await asyncio.sleep(1)
 
     yield
     

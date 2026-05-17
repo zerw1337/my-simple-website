@@ -36,6 +36,14 @@ class Settings(BaseSettings):
     SMTP_SERVICE_LIMITER_WINDOW: int = 60 * 60 * 24
     SMTP_SERVICE_LIMITER_LIMIT : int = 10
 
+    MINIO_URL: str = "http://minio:9000"
+    MINIO_REGION: str
+    MINIO_ROOT_USER: str
+    MINIO_ROOT_PASSWORD: str
+    MINIO_BUCKET_IMAGES: str = "images"
+    MINIO_BUCKET_VIDEOS: str = "video"
+    MINIO_BUCKET_AVATARS: str = "avatars"
+
     naming_conventions: dict[str, str] = {
         "ix": "ix_%(column_0_label)s",
         "uq": "uq_%(table_name)s_%(column_0_name)s",

@@ -30,7 +30,7 @@ async def get_profile(user_id: int = Path(..., gt=0, lt=10000), session: AsyncSe
 @profiles_router.get("/avatar/{user_id}/", response_class=Response)
 async def get_users_avatar(user_id: int, session: AsyncSession = Depends(get_session), minio = Depends(get_minio)):
     avatar, content_type = await get_current_profile_avatar(user_id=user_id, session=session, minio=minio)
-    return Response(avatar, media_type=f"image/{content_type}")
+    return Response(avatar, media_type=f"{content_type}")
 
 @profiles_router.post("/upload_avatar/", summary="Загрузить аватар")
 async def upload_avatar(avatar: UploadFile | None = File(...),

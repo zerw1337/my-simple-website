@@ -50,15 +50,18 @@ async def create_new_post(user : UserOut,
 
 async def create_post_image_process(imgs: list[UploadFile], post: Posts, minio, session: AsyncSession) -> None:
     minio_client = MinioService(client=minio, bucket=settings.MINIO_BUCKET_IMAGES)
+    count = 0
     for img in imgs:
         if img is None:
             continue
+        count += 1
         validate_image(file=img)
         prefix = str(post.id)
         key = await minio_client.upload_file(file=img, prefix=prefix, content_type=img.content_type)
         new_img = PostImages(
             key=key,
             post_id=post.id,
+            position=count
         )
         session.add(new_img)
         await session.flush()
@@ -215,16 +218,13 @@ async def get_post_images_by_post_id(post_id: int, session: AsyncSession, minio)
     if not result:
         return []
     minio_service = MinioService(client=minio, bucket=settings.MINIO_BUCKET_IMAGES)
-    images = []
+    output = []
     for r in result:
-        img = await minio_service.get_file(key=str(r.key))
-        images.append(img)
-    result = []
-    for img in images:
-        content = await img["Body"].read()
-        content_type = img["ContentType"]
-        result.append({
+        obj = await minio_service.get_file(key=str(r.key))
+        content = await obj["Body"].read()
+        output.append({
             "data": base64.b64encode(content).decode("utf-8"),
-            "content_type": content_type,
+            "content_type": obj["ContentType"],
+            "position": r.position,
         })
-    return result
+    return output

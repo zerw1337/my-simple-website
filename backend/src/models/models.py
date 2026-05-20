@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey, text, func, DateTime, UniqueConstraint, Enum as SAEnum
+from sqlalchemy import String, Text, ForeignKey, text, func, DateTime, UniqueConstraint, Enum as SAEnum, Integer
 import datetime
 from enum import Enum
 
@@ -92,6 +92,7 @@ class PostImages(Base):
     key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     uploaded_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now())
     post_id: Mapped[int] = mapped_column(ForeignKey('posts.id', ondelete="CASCADE"), nullable=False)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
 
     post: Mapped["Posts"] = relationship("Posts", back_populates="images")
 

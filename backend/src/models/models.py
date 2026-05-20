@@ -86,6 +86,15 @@ class Avatars(Base):
 
     profile: Mapped["Profiles"] = relationship("Profiles", back_populates="avatar")
 
+class PostImages(Base):
+    __tablename__ = 'post_images'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    uploaded_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now())
+    post_id: Mapped[int] = mapped_column(ForeignKey('posts.id', ondelete="CASCADE"), nullable=False)
+
+    post: Mapped["Posts"] = relationship("Posts", back_populates="images")
+
 class Categories(Base):
     __tablename__ = 'categories'
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -111,6 +120,7 @@ class Posts(Base):
     category: Mapped["Categories"] = relationship("Categories", back_populates="posts")
     comments: Mapped[list["Comments"]] = relationship("Comments", back_populates="post", cascade="all, delete-orphan")
     reactions: Mapped[list["Reactions"]] = relationship("Reactions", back_populates="post", cascade="all, delete-orphan")
+    images: Mapped["PostImages"] = relationship("PostImages", back_populates="post")
 
 class Comments(Base):
     __tablename__ = 'comments'

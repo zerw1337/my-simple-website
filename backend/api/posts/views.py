@@ -1,16 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 import json
 from redis.asyncio import Redis
+from starlette.responses import Response
 
 from api.auth.dependencies import get_auth_admin
 from api.auth.schemas import UserOut
 from api.posts.crud import create_new_post, get_all_posts, get_current_post_by_id, edit_current_post, delete_post_by_id, \
     get_five_latest_posts, get_next_post_after_this, get_previous_post_from_this, get_posts_by_user_id, \
-    get_all_posts_ordered_by_views, get_all_posts_ordered_by_rating
+    get_all_posts_ordered_by_views, get_all_posts_ordered_by_rating, get_post_images_by_post_id
 from api.posts.dto import get_all_posts_dto, get_post_by_id_dto
 from api.posts.schemas import CreatePost, PostOut, UpdatePost
 from api.posts_rating.utils import update_posts_rating_by_post_model, update_posts_rating_by_post_id
+from src.minio.config import get_minio
 from src.models.database import get_session
 from src.redis.dependencies import get_cache
 from src.config import settings
@@ -18,8 +21,29 @@ from src.config import settings
 posts_router = APIRouter(prefix="/posts", tags=["Posts"])
 
 @posts_router.post("/create/", response_model=PostOut, status_code=201, summary="Создать пост")
-async def create_post(new_post : CreatePost, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
-    new_post = await create_new_post(user=user, post=new_post, session=session)
+async def create_post(title: str = Form(...),
+                      content: str = Form(...),
+                      category_id: int = Form(...),
+                      img1: UploadFile | None = File(None),
+                      img2: UploadFile | None = File(None),
+                      img3: UploadFile | None = File(None),
+                      img4: UploadFile | None = File(None),
+                      img5: UploadFile | None = File(None),
+                      img6: UploadFile | None = File(None),
+                      img7: UploadFile | None = File(None),
+                      img8: UploadFile | None = File(None),
+                      img9: UploadFile | None = File(None),
+                      img10: UploadFile | None = File(None),
+                      user: UserOut = Depends(get_auth_admin),
+                      session: AsyncSession = Depends(get_session),
+                      minio = Depends(get_minio),
+                      r: Redis = Depends(get_cache)):
+    try:
+        new_post = CreatePost(title=title, content=content, category_id=category_id)
+    except ValidationError:
+        raise HTTPException(status_code=400, detail="Validation error")
+    imgs: list[UploadFile] = [img1, img2, img3, img4, img5, img6, img7, img8, img9, img10]
+    new_post = await create_new_post(user=user, post=new_post, imgs=imgs, session=session, minio=minio)
     await r.delete("five_latest")
     await r.delete("all_posts")
     await r.delete(f"posts_by_user/{user.id}")
@@ -99,6 +123,11 @@ async def get_post_by_id(id: int, session: AsyncSession = Depends(get_session)) 
     await update_posts_rating_by_post_model(post=post_orm, session=session)
     post_dto = get_post_by_id_dto(post=post_orm)
     return post_dto
+
+@posts_router.get("/{post_id}/images/")
+async def get_post_images(post_id: int, session: AsyncSession = Depends(get_session), minio = Depends(get_minio)):
+    images = await get_post_images_by_post_id(post_id=post_id, session=session, minio=minio)
+    return images
 
 @posts_router.patch("/update/", response_model=PostOut, summary="Патч поста, на вход поля которые изменить в посте")
 async def edit_post(post_id: int, edited_post: UpdatePost, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):

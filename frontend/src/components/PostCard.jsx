@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getPostById, getNextPost, getPreviousPost } from "../api/Posts";
+import { getPostById, getNextPost, getPreviousPost, getPostImages } from "../api/Posts";
 import "./styles/PostCardFull.css";
 import PostReactions from "./PostReactions";
 import PostComments from "./PostComments";
@@ -9,6 +9,7 @@ import UserAvatar from "./UserAvatar";
 function PostCardFullWrapper() {
     const { id } = useParams();
     const [post, setPost] = useState(null);
+    const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [prevId, setPrevId] = useState(null);
@@ -16,17 +17,26 @@ function PostCardFullWrapper() {
 
     useEffect(() => {
         setLoading(true);
-        getPostById(id).then(data => {
-            setPost({
-                id: data.id, title: data.title,
-                author: data.user?.username || "Аноним",
-                author_id: data.user?.id || null,
-                date: data.created_at, content: data.content,
-                category: data.category || null,
-                views: data.views ?? 0, rating: data.rating ?? 0,
-            });
-            setLoading(false);
-        }).catch(() => { setError("Не удалось загрузить пост"); setLoading(false); });
+        setImages([]);
+        getPostById(id)
+            .then(data => {
+                setPost({
+                    id: data.id,
+                    title: data.title,
+                    author: data.user?.username || "Аноним",
+                    author_id: data.user?.id || null,
+                    date: data.created_at,
+                    content: data.content,
+                    category: data.category || null,
+                    views: data.views ?? 0,
+                    rating: data.rating ?? 0,
+                });
+                setLoading(false);
+                // Загружаем картинки отдельно, не блокируем рендер поста
+                getPostImages(data.id).then(setImages);
+            })
+            .catch(() => { setError("Не удалось загрузить пост"); setLoading(false); });
+
         getNextPost(id).then(data => setNextId(data ? data.id : null));
         getPreviousPost(id).then(data => setPrevId(data ? data.id : null));
     }, [id]);
@@ -42,7 +52,7 @@ function PostCardFullWrapper() {
     if (error) return <main style={{ paddingTop: "3rem" }}><p style={{ textAlign: "center", color: "rgb(80,110,140)" }}>{error}</p></main>;
     if (!post) return <main style={{ paddingTop: "3rem" }}><p style={{ textAlign: "center", color: "rgb(80,110,140)" }}>Пост не найден</p></main>;
 
-    return <PostCardFull post={post} prevId={prevId} nextId={nextId} />;
+    return <PostCardFull post={post} prevId={prevId} nextId={nextId} images={images} />;
 }
 
 function NavBtn({ to, label }) {
@@ -63,7 +73,107 @@ function NavBtn({ to, label }) {
     );
 }
 
-function PostCardFull({ post, prevId, nextId }) {
+function PostImages({ images }) {
+    const [lightbox, setLightbox] = useState(null); // индекс открытой картинки
+
+    if (!images || images.length === 0) return null;
+
+    return (
+        <>
+            <div style={{
+                marginBottom: "2rem",
+                display: "grid",
+                gridTemplateColumns: images.length === 1 ? "1fr" : "repeat(auto-fill, minmax(220px, 1fr))",
+                gap: "0.75rem",
+            }}>
+                {images.map((img, i) => (
+                    <div
+                        key={i}
+                        onClick={() => setLightbox(i)}
+                        style={{
+                            borderRadius: "10px",
+                            overflow: "hidden",
+                            cursor: "zoom-in",
+                            border: "1px solid rgba(100,160,220,0.12)",
+                            background: "rgba(100,160,220,0.04)",
+                            aspectRatio: images.length === 1 ? "auto" : "4/3",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        <img
+                            src={`data:${img.content_type};base64,${img.data}`}
+                            alt={`Фото ${i + 1}`}
+                            style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: images.length === 1 ? "contain" : "cover",
+                                display: "block",
+                                transition: "transform 0.2s",
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"}
+                            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                        />
+                    </div>
+                ))}
+            </div>
+
+            {/* Лайтбокс */}
+            {lightbox !== null && (
+                <div
+                    onClick={() => setLightbox(null)}
+                    style={{
+                        position: "fixed", inset: 0,
+                        background: "rgba(0,0,0,0.92)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        zIndex: 2000, cursor: "zoom-out",
+                        padding: "1rem",
+                    }}
+                >
+                    {/* Стрелка влево */}
+                    {lightbox > 0 && (
+                        <button
+                            onClick={e => { e.stopPropagation(); setLightbox(lightbox - 1); }}
+                            style={{
+                                position: "absolute", left: "1rem",
+                                background: "rgba(255,255,255,0.08)", border: "none",
+                                color: "#fff", fontSize: "2rem", cursor: "pointer",
+                                borderRadius: "50%", width: "48px", height: "48px",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                            }}
+                        >‹</button>
+                    )}
+                    <img
+                        src={`data:${images[lightbox].content_type};base64,${images[lightbox].data}`}
+                        alt={`Фото ${lightbox + 1}`}
+                        style={{ maxWidth: "90vw", maxHeight: "90vh", borderRadius: "10px", objectFit: "contain" }}
+                        onClick={e => e.stopPropagation()}
+                    />
+                    {/* Стрелка вправо */}
+                    {lightbox < images.length - 1 && (
+                        <button
+                            onClick={e => { e.stopPropagation(); setLightbox(lightbox + 1); }}
+                            style={{
+                                position: "absolute", right: "1rem",
+                                background: "rgba(255,255,255,0.08)", border: "none",
+                                color: "#fff", fontSize: "2rem", cursor: "pointer",
+                                borderRadius: "50%", width: "48px", height: "48px",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                            }}
+                        >›</button>
+                    )}
+                    {/* Счётчик */}
+                    <div style={{ position: "absolute", bottom: "1.25rem", color: "rgba(255,255,255,0.5)", fontSize: "0.85rem" }}>
+                        {lightbox + 1} / {images.length}
+                    </div>
+                </div>
+            )}
+        </>
+    );
+}
+
+function PostCardFull({ post, prevId, nextId, images }) {
     return (
         <main style={{ paddingTop: "3rem", paddingBottom: "4rem" }}>
             <div className="full-post-card">
@@ -92,7 +202,7 @@ function PostCardFull({ post, prevId, nextId }) {
                     {post.title}
                 </h1>
 
-                {/* Мета с аватаром автора */}
+                {/* Мета */}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem 1.25rem", fontSize: "0.82rem", color: "rgb(80,110,140)", marginBottom: "1.5rem", alignItems: "center" }}>
                     {post.author_id ? (
                         <Link to={`/profile/${post.author_id}`} style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--logo-color)", textDecoration: "none", fontWeight: 600 }}
@@ -127,6 +237,9 @@ function PostCardFull({ post, prevId, nextId }) {
                 <div style={{ marginBottom: "2rem", color: "rgb(160,200,235)", lineHeight: 1.85, fontSize: "1rem" }}>
                     <p style={{ margin: 0, whiteSpace: "pre-line" }}>{post.content}</p>
                 </div>
+
+                {/* Изображения поста */}
+                <PostImages images={images} />
 
                 {/* Реакции */}
                 <div style={{ paddingTop: "1.25rem", borderTop: "1px solid rgba(100,160,220,0.08)", marginBottom: "1.5rem" }}>

@@ -12,6 +12,17 @@ export async function getPostById(id) {
     return await res.json();
 }
 
+export async function getPostImages(postId) {
+    try {
+        const res = await fetch(`${API_URL}/posts/${postId}/images/`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+    } catch {
+        return [];
+    }
+}
+
 export async function getReactionsByPostId(postId) {
     const res = await fetch(`${API_URL}/reactions/${postId}/`);
     if (!res.ok) return [];
@@ -30,6 +41,7 @@ export async function postReaction(postId, reaction) {
     });
     return await res.json();
 }
+
 export async function getCommentsByPostId(postId) {
     const res = await fetch(`${API_URL}/comments/?post_id=${postId}`);
     if (!res.ok) return [];
@@ -52,6 +64,7 @@ export async function deleteComment(commentId) {
     });
     return await res.json();
 }
+
 export async function getNextPost(currentPostId) {
     const res = await fetch(`${API_URL}/posts/next_post/?current_post_id=${currentPostId}`);
     if (!res.ok) return null;
@@ -82,6 +95,7 @@ export async function getPostsByUserId(userId) {
     if (!res.ok) return [];
     return await res.json();
 }
+
 export async function getCategories() {
     const res = await fetch(`${API_URL}/categories/`);
     if (!res.ok) return [];
@@ -93,28 +107,29 @@ export async function getAllPosts() {
     if (!res.ok) return [];
     return await res.json();
 }
-export async function createPost(title, content, category_id) {
-    const token = localStorage.getItem("access_token");
+
+// images — массив File-объектов (максимум 10), необязательный
+export async function createPost(title, content, category_id, images = []) {
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("content", content);
+    formData.append("category_id", category_id);
+    images.slice(0, 10).forEach((file, i) => {
+        formData.append(`img${i + 1}`, file);
+    });
     const res = await fetchWithAuth(`${API_URL}/posts/create/`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({ title, content, category_id }),
+        body: formData,
+        // Content-Type НЕ выставляем — браузер сам добавит boundary для multipart
     });
     if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
     return await res.json();
 }
 
 export async function createCategory(name, emoji, description) {
-    const token = localStorage.getItem("access_token");
     const res = await fetchWithAuth(`${API_URL}/categories/`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, emoji, description }),
     });
     if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
@@ -122,37 +137,31 @@ export async function createCategory(name, emoji, description) {
 }
 
 export async function deleteCategory(id) {
-    const token = localStorage.getItem("access_token");
     const res = await fetchWithAuth(`${API_URL}/categories/${id}`, {
         method: "DELETE",
-        headers: { "Authorization": `Bearer ${token}` },
     });
     if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
     return await res.json();
 }
 
 export async function deletePost(id) {
-    const token = localStorage.getItem("access_token");
     const res = await fetchWithAuth(`${API_URL}/posts/delete/?post_id=${id}`, {
         method: "DELETE",
-        headers: { "Authorization": `Bearer ${token}` },
     });
     if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
     return await res.json();
 }
+
 export async function updatePost(id, title, content, category_id) {
-    const token = localStorage.getItem("access_token");
     const res = await fetchWithAuth(`${API_URL}/posts/update/?post_id=${id}`, {
         method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, content, category_id }),
     });
     if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
     return await res.json();
 }
+
 export async function getTopViewedPosts() {
     const res = await fetch(`${API_URL}/posts/top_viewed/`);
     if (!res.ok) return [];
@@ -164,6 +173,7 @@ export async function getTopRatedPosts() {
     if (!res.ok) return [];
     return await res.json();
 }
+
 export async function getAllUsers() {
     const res = await fetchWithAuth(`${API_URL}/user/get_all_users/`);
     if (!res.ok) return [];
@@ -177,6 +187,7 @@ export async function banUser(userId) {
     if (!res.ok) throw new Error((await res.json()).detail || "Ошибка");
     return await res.json();
 }
+
 export async function unbanUser(userId) {
     const res = await fetchWithAuth(`${API_URL}/user/unban/?user_id=${userId}`, {
         method: "POST",
@@ -185,7 +196,6 @@ export async function unbanUser(userId) {
     return await res.json();
 }
 
-// Получить аватар пользователя как blob URL
 export async function getAvatarUrl(userId) {
     try {
         const res = await fetch(`${API_URL}/profile/avatar/${userId}/`);
@@ -197,7 +207,6 @@ export async function getAvatarUrl(userId) {
     }
 }
 
-// Загрузить аватар
 export async function uploadAvatar(file) {
     const formData = new FormData();
     formData.append("avatar", file);

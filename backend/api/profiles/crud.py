@@ -2,9 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, UploadFile
-from PIL import Image
-import io
 
+from images.utils import validate_image
 from src.minio.utils import MinioService
 from api.auth.schemas import UserOut
 from src.config import settings
@@ -73,32 +72,5 @@ async def check_if_current_user_has_avatars_and_delete(session: AsyncSession, us
     await minio_service.delete_file(key=avatar.key)
     await session.delete(avatar)
     await session.flush()
-    return
-
-def validate_image(file: UploadFile) -> None:
-    if file.content_type not in settings.ALLOWED_CONTENT_TYPES:
-        raise HTTPException(status_code=400, detail="Invalid image type")
-
-    if "." not in file.filename:
-        raise HTTPException(status_code=400, detail="Missing file extension")
-
-    ext = file.filename.rsplit(".", 1)[1].lower()
-    if ext not in settings.ALLOWED_EXTENSIONS:
-        raise HTTPException(status_code=400, detail="Invalid file extension")
-
-    try:
-        contents = file.file.read()
-        Image.open(io.BytesIO(contents)).verify()
-        file.file.seek(0)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Corrupted or fake image")
-
-    contents = file.file.read()
-
-    if len(contents) > settings.MAX_SIZE_MB * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="Image too large")
-
-    file.file.seek(0)
-
     return
 

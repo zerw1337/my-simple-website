@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     MINIO_BUCKET_VIDEOS: str = "video"
     MINIO_BUCKET_AVATARS: str = "avatars"
 
+    NOTIFICATION_NEW_POST: str = "new_post"
+    NOTIFICATION_NEW_COMMENT: str = "new_comment"
+
     ALLOWED_CONTENT_TYPES: ClassVar[set[str]]  = {
         "image/jpeg",
         "image/png",

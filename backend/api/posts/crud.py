@@ -7,6 +7,7 @@ from typing import Sequence
 import base64
 
 from api.auth.schemas import UserOut
+from api.notifications.crud import create_notification_body, create_new_post_notification
 from api.posts.schemas import CreatePost, PostOut, UpdatePost
 from images.utils import validate_image
 from src.config import settings
@@ -26,6 +27,9 @@ async def create_new_post(user : UserOut,
         category_id=post.category_id,
     )
     session.add(new_post)
+    await session.flush()
+    notification = create_notification_body(notif_type=settings.NOTIFICATION_NEW_POST, post_id=new_post.id)
+    await create_new_post_notification(new_notification=notification,session=session)
     try:
         await session.commit()
         await session.refresh(new_post)

@@ -20,6 +20,7 @@ from api.registration.views import register_router
 from api.profiles.views import profiles_router
 from api.posts.views import posts_router
 from api.comments.views import comments_router
+from api.notifications.views import notification_router
 from middleware import RateLimitMiddleware
 
 @asynccontextmanager
@@ -53,6 +54,7 @@ app.include_router(register_router)
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(cat_router)
+app.include_router(notification_router)
 
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 app.add_middleware(RateLimitMiddleware)

@@ -150,6 +150,7 @@ const SOFT_LIMIT_MESSAGES = {
     "Your reaction limit per day has been reached": "Достигнут дневной лимит реакций",
     "Your limit for sending emails per day has been reached": "Достигнут дневной лимит отправки писем",
     "Password changing limit per day has been reached": "Достигнут дневной лимит смены пароля",
+    "You have reached your changing avatar limit per day.": "Достигнут дневной лимит смены аватара",
 };
 
 const originalFetch = window.fetch;

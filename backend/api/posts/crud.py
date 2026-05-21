@@ -1,16 +1,24 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from typing import Sequence
+import base64
 
 from api.auth.schemas import UserOut
 from api.posts.schemas import CreatePost, PostOut, UpdatePost
-from src.models.models import Posts, Categories, Users
+from images.utils import validate_image
+from src.config import settings
+from src.minio.utils import MinioService
+from src.models.models import Posts, Categories, Users, PostImages
 
 
-async def create_new_post(user : UserOut, post: CreatePost, session: AsyncSession) -> Posts:
+async def create_new_post(user : UserOut,
+                          post: CreatePost,
+                          imgs: list[UploadFile],
+                          minio,
+                          session: AsyncSession) -> Posts:
     new_post = Posts(
         title=post.title,
         content=post.content,
@@ -20,12 +28,14 @@ async def create_new_post(user : UserOut, post: CreatePost, session: AsyncSessio
     session.add(new_post)
     try:
         await session.commit()
+        await session.refresh(new_post)
     except IntegrityError:
         await session.rollback()
         raise HTTPException(status_code=403, detail="Post with that id already exists")
     except Exception:
         await session.rollback()
         raise HTTPException(status_code=500, detail="Failed to create new post")
+    await create_post_image_process(imgs=imgs, post=new_post, minio=minio, session=session)
     query = (
         select(Posts)
         .where(Posts.id == new_post.id)
@@ -37,6 +47,26 @@ async def create_new_post(user : UserOut, post: CreatePost, session: AsyncSessio
     res = await session.execute(query)
     result = res.scalar_one_or_none()
     return result
+
+async def create_post_image_process(imgs: list[UploadFile], post: Posts, minio, session: AsyncSession) -> None:
+    minio_client = MinioService(client=minio, bucket=settings.MINIO_BUCKET_IMAGES)
+    count = 0
+    for img in imgs:
+        if img is None:
+            continue
+        count += 1
+        validate_image(file=img)
+        prefix = str(post.id)
+        key = await minio_client.upload_file(file=img, prefix=prefix, content_type=img.content_type)
+        new_img = PostImages(
+            key=key,
+            post_id=post.id,
+            position=count
+        )
+        session.add(new_img)
+        await session.flush()
+    await session.commit()
+    return
 
 async def get_all_posts(session: AsyncSession) -> Sequence[Posts]:
     query = (
@@ -177,3 +207,24 @@ async def update_current_post_views_counter(post: Posts, session: AsyncSession):
     except IntegrityError:
         await session.rollback()
         return {"status": "Post views counter is already up to date"}
+
+async def get_post_images_by_post_id(post_id: int, session: AsyncSession, minio):
+    query = (
+        select(PostImages)
+        .where(PostImages.post_id == post_id)
+    )
+    res = await session.execute(query)
+    result = res.scalars().all()
+    if not result:
+        return []
+    minio_service = MinioService(client=minio, bucket=settings.MINIO_BUCKET_IMAGES)
+    output = []
+    for r in result:
+        obj = await minio_service.get_file(key=str(r.key))
+        content = await obj["Body"].read()
+        output.append({
+            "data": base64.b64encode(content).decode("utf-8"),
+            "content_type": obj["ContentType"],
+            "position": r.position,
+        })
+    return output

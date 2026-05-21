@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { getLatestPosts } from "../api/Posts.js";
 import "./styles/PostIconMain_styles.css";
 import moment from "moment";
-import {Link} from "react-router-dom";
+import { Link } from "react-router-dom";
+import { stripTags } from "./PostContent";
 
 function PostIconMain({ id, title, category, author, date, content }) {
     return (
@@ -14,9 +15,8 @@ function PostIconMain({ id, title, category, author, date, content }) {
                     <span className="post-author">{author}</span>
                     <span className="post-date">{date}</span>
                 </div>
-
                 <p className="post-content">
-                    {content}
+                    {stripTags(content)}
                 </p>
             </article>
         </Link>
@@ -29,14 +29,8 @@ function MainPostsList() {
 
     useEffect(() => {
         getLatestPosts()
-            .then(data => {
-                setPosts(data);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error("Ошибка при получении постов:", err);
-                setLoading(false);
-            });
+            .then(data => { setPosts(data); setLoading(false); })
+            .catch(err => { console.error("Ошибка при получении постов:", err); setLoading(false); });
     }, []);
 
     if (loading) return <p>Загрузка постов...</p>;

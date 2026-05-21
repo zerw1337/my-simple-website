@@ -5,6 +5,7 @@ import "./styles/PostCardFull.css";
 import PostReactions from "./PostReactions";
 import PostComments from "./PostComments";
 import UserAvatar from "./UserAvatar";
+import { parseContent } from "./PostContent";
 
 function PostCardFullWrapper() {
     const { id } = useParams();
@@ -33,12 +34,16 @@ function PostCardFullWrapper() {
                 });
                 setLoading(false);
                 // Загружаем картинки отдельно, не блокируем рендер поста
-                getPostImages(data.id).then(setImages);
+                // Сортируем по position чтобы [img:1] всегда был первым
+                getPostImages(data.id).then(imgs => {
+                    const sorted = [...imgs].sort((a, b) => a.position - b.position);
+                    setImages(sorted);
+                });
             })
             .catch(() => { setError("Не удалось загрузить пост"); setLoading(false); });
 
-        getNextPost(id).then(data => setNextId(data ? data.id : null));
-        getPreviousPost(id).then(data => setPrevId(data ? data.id : null));
+        getNextPost(id).then(data => setNextId(data ? data.id : null)).catch(() => setNextId(null));
+        getPreviousPost(id).then(data => setPrevId(data ? data.id : null)).catch(() => setPrevId(null));
     }, [id]);
 
     if (loading) return (
@@ -65,115 +70,84 @@ function NavBtn({ to, label }) {
             border: `1px solid ${hov ? "rgba(180,255,255,0.3)" : "rgba(4,198,233,0.25)"}`,
             background: hov ? "rgba(180,255,255,0.05)" : "transparent",
             fontSize: "0.875rem", transition: "all 0.2s",
-        }}
-              onMouseEnter={() => setHov(true)}
-              onMouseLeave={() => setHov(false)}>
+        }} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
             {label}
         </Link>
     );
 }
 
-function PostImages({ images }) {
-    const [lightbox, setLightbox] = useState(null); // индекс открытой картинки
+// Лайтбокс — открывается по клику на картинку в тексте или в галерее внизу
+function Lightbox({ images, initialPos, onClose }) {
+    // Работаем с отсортированным массивом по position
+    const sorted = [...images].sort((a, b) => a.position - b.position);
+    const initialIdx = sorted.findIndex(img => img.position === initialPos);
+    const [idx, setIdx] = useState(Math.max(0, initialIdx));
 
-    if (!images || images.length === 0) return null;
+    useEffect(() => {
+        const handler = (e) => {
+            if (e.key === "Escape") onClose();
+            if (e.key === "ArrowRight") setIdx(i => Math.min(i + 1, sorted.length - 1));
+            if (e.key === "ArrowLeft") setIdx(i => Math.max(i - 1, 0));
+        };
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, [sorted.length, onClose]);
+
+    const img = sorted[idx];
+    if (!img) return null;
 
     return (
-        <>
-            <div style={{
-                marginBottom: "2rem",
-                display: "grid",
-                gridTemplateColumns: images.length === 1 ? "1fr" : "repeat(auto-fill, minmax(220px, 1fr))",
-                gap: "0.75rem",
-            }}>
-                {images.map((img, i) => (
-                    <div
-                        key={i}
-                        onClick={() => setLightbox(i)}
-                        style={{
-                            borderRadius: "10px",
-                            overflow: "hidden",
-                            cursor: "zoom-in",
-                            border: "1px solid rgba(100,160,220,0.12)",
-                            background: "rgba(100,160,220,0.04)",
-                            aspectRatio: images.length === 1 ? "auto" : "4/3",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}
-                    >
-                        <img
-                            src={`data:${img.content_type};base64,${img.data}`}
-                            alt={`Фото ${i + 1}`}
-                            style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: images.length === 1 ? "contain" : "cover",
-                                display: "block",
-                                transition: "transform 0.2s",
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"}
-                            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
-                        />
+        <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.93)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, cursor: "zoom-out", padding: "1rem" }}>
+            {idx > 0 && (
+                <button onClick={e => { e.stopPropagation(); setIdx(i => i - 1); }}
+                        style={{ position: "absolute", left: "1rem", background: "rgba(255,255,255,0.07)", border: "none", color: "#fff", fontSize: "2rem", cursor: "pointer", borderRadius: "50%", width: "48px", height: "48px", display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
+            )}
+            <img src={`data:${img.content_type};base64,${img.data}`} alt={`Фото ${img.position}`}
+                 style={{ maxWidth: "90vw", maxHeight: "90vh", borderRadius: "10px", objectFit: "contain" }}
+                 onClick={e => e.stopPropagation()} />
+            {idx < sorted.length - 1 && (
+                <button onClick={e => { e.stopPropagation(); setIdx(i => i + 1); }}
+                        style={{ position: "absolute", right: "1rem", background: "rgba(255,255,255,0.07)", border: "none", color: "#fff", fontSize: "2rem", cursor: "pointer", borderRadius: "50%", width: "48px", height: "48px", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
+            )}
+            <div style={{ position: "absolute", bottom: "1.25rem", color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>
+                {idx + 1} / {sorted.length}
+            </div>
+        </div>
+    );
+}
+
+// Галерея для картинок, которые НЕ были вставлены тегом [img:N] в текст
+function PostGallery({ images, usedPositions, onLightbox }) {
+    const unused = images.filter(img => !usedPositions.has(img.position));
+    if (unused.length === 0) return null;
+
+    return (
+        <div style={{ marginBottom: "2rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: unused.length === 1 ? "1fr" : "repeat(auto-fill, minmax(200px, 1fr))", gap: "0.75rem" }}>
+                {unused.map(img => (
+                    <div key={img.position} onClick={() => onLightbox(img.position)}
+                         style={{ borderRadius: "10px", overflow: "hidden", cursor: "zoom-in", border: "1px solid rgba(100,160,220,0.12)", background: "rgba(100,160,220,0.04)", aspectRatio: unused.length === 1 ? "auto" : "4/3", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <img src={`data:${img.content_type};base64,${img.data}`} alt={`Фото ${img.position}`}
+                             style={{ width: "100%", height: "100%", objectFit: unused.length === 1 ? "contain" : "cover", display: "block", transition: "transform 0.2s" }}
+                             onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"}
+                             onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"} />
                     </div>
                 ))}
             </div>
-
-            {/* Лайтбокс */}
-            {lightbox !== null && (
-                <div
-                    onClick={() => setLightbox(null)}
-                    style={{
-                        position: "fixed", inset: 0,
-                        background: "rgba(0,0,0,0.92)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        zIndex: 2000, cursor: "zoom-out",
-                        padding: "1rem",
-                    }}
-                >
-                    {/* Стрелка влево */}
-                    {lightbox > 0 && (
-                        <button
-                            onClick={e => { e.stopPropagation(); setLightbox(lightbox - 1); }}
-                            style={{
-                                position: "absolute", left: "1rem",
-                                background: "rgba(255,255,255,0.08)", border: "none",
-                                color: "#fff", fontSize: "2rem", cursor: "pointer",
-                                borderRadius: "50%", width: "48px", height: "48px",
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                            }}
-                        >‹</button>
-                    )}
-                    <img
-                        src={`data:${images[lightbox].content_type};base64,${images[lightbox].data}`}
-                        alt={`Фото ${lightbox + 1}`}
-                        style={{ maxWidth: "90vw", maxHeight: "90vh", borderRadius: "10px", objectFit: "contain" }}
-                        onClick={e => e.stopPropagation()}
-                    />
-                    {/* Стрелка вправо */}
-                    {lightbox < images.length - 1 && (
-                        <button
-                            onClick={e => { e.stopPropagation(); setLightbox(lightbox + 1); }}
-                            style={{
-                                position: "absolute", right: "1rem",
-                                background: "rgba(255,255,255,0.08)", border: "none",
-                                color: "#fff", fontSize: "2rem", cursor: "pointer",
-                                borderRadius: "50%", width: "48px", height: "48px",
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                            }}
-                        >›</button>
-                    )}
-                    {/* Счётчик */}
-                    <div style={{ position: "absolute", bottom: "1.25rem", color: "rgba(255,255,255,0.5)", fontSize: "0.85rem" }}>
-                        {lightbox + 1} / {images.length}
-                    </div>
-                </div>
-            )}
-        </>
+        </div>
     );
 }
 
 function PostCardFull({ post, prevId, nextId, images }) {
+    const [lightboxPos, setLightboxPos] = useState(null);
+
+    // Собираем позиции картинок, упомянутых в тексте через [img:N]
+    const usedPositions = new Set();
+    const tagMatches = [...(post.content || "").matchAll(/\[img:(\d+)\]/g)];
+    tagMatches.forEach(m => usedPositions.add(parseInt(m[1])));
+
+    const renderedContent = parseContent(post.content, images, (pos) => setLightboxPos(pos));
+
     return (
         <main style={{ paddingTop: "3rem", paddingBottom: "4rem" }}>
             <div className="full-post-card">
@@ -187,11 +161,7 @@ function PostCardFull({ post, prevId, nextId, images }) {
                 {/* Категория */}
                 {post.category && (
                     <div style={{ marginBottom: "0.75rem" }}>
-                        <span style={{
-                            fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase",
-                            padding: "0.25rem 0.75rem", borderRadius: "999px",
-                            color: "var(--logo-color)", background: "rgba(4,198,233,0.08)", border: "1px solid rgba(4,198,233,0.2)",
-                        }}>
+                        <span style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.25rem 0.75rem", borderRadius: "999px", color: "var(--logo-color)", background: "rgba(4,198,233,0.08)", border: "1px solid rgba(4,198,233,0.2)" }}>
                             {post.category.emoji} {post.category.name}
                         </span>
                     </div>
@@ -233,13 +203,13 @@ function PostCardFull({ post, prevId, nextId, images }) {
                     </div>
                 </div>
 
-                {/* Контент */}
-                <div style={{ marginBottom: "2rem", color: "rgb(160,200,235)", lineHeight: 1.85, fontSize: "1rem" }}>
-                    <p style={{ margin: 0, whiteSpace: "pre-line" }}>{post.content}</p>
+                {/* Контент с форматированием */}
+                <div style={{ color: "rgb(160,200,235)", fontSize: "1rem" }}>
+                    {renderedContent}
                 </div>
 
-                {/* Изображения поста */}
-                <PostImages images={images} />
+                {/* Галерея незадействованных картинок */}
+                <PostGallery images={images} usedPositions={usedPositions} onLightbox={setLightboxPos} />
 
                 {/* Реакции */}
                 <div style={{ paddingTop: "1.25rem", borderTop: "1px solid rgba(100,160,220,0.08)", marginBottom: "1.5rem" }}>
@@ -252,6 +222,11 @@ function PostCardFull({ post, prevId, nextId, images }) {
                 </div>
 
             </div>
+
+            {/* Лайтбокс */}
+            {lightboxPos !== null && images.length > 0 && (
+                <Lightbox images={images} initialPos={lightboxPos} onClose={() => setLightboxPos(null)} />
+            )}
         </main>
     );
 }

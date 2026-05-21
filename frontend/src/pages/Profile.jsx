@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getProfile, getCommentsByUserId, getPostsByUserId } from "../api/Posts";
 import { AuthContext } from "../context/AuthContext";
 import UserAvatar from "../components/UserAvatar";
+import { stripTags } from "../components/PostContent";
 
 const C = {
     card: {
@@ -195,8 +196,19 @@ function Profile() {
                                                         {new Date(post.created_at).toLocaleDateString("ru-RU")}
                                                     </span>
                                                 </div>
-                                                <p style={{ margin: 0, fontSize: "0.825rem", color: "rgb(100,130,160)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                                    {post.content}
+                                                <p
+                                                    style={{
+                                                        margin: 0,
+                                                        fontSize: "0.825rem",
+                                                        color: "rgb(100,130,160)",
+                                                        display: "-webkit-box",
+                                                        WebkitLineClamp: 2,
+                                                        WebkitBoxOrient: "vertical",
+                                                        overflow: "hidden",
+                                                        lineHeight: 1.5,
+                                                    }}
+                                                >
+                                                    {stripTags(post.content)}
                                                 </p>
                                             </div>
                                         </a>

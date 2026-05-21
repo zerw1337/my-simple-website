@@ -161,3 +161,20 @@ class Reactions(Base):
 
     post: Mapped["Posts"] = relationship("Posts", back_populates="reactions")
     user: Mapped["Users"] = relationship("Users", back_populates="reactions")
+
+class Notifications(Base):
+    __tablename__ = 'notifications'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now())
+
+class NotificationsStatus(str, Enum):
+    unread = "unread"
+    read = "read"
+
+class NotificationsList(Base):
+    __tablename__ = 'notifications_list'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    notification_id: Mapped[int] = mapped_column(ForeignKey('notifications.id', ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
+    status: Mapped[NotificationsStatus] = mapped_column(SAEnum(NotificationsStatus), default=NotificationsStatus.unread, nullable=False)

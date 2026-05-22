@@ -7,6 +7,8 @@ from sqlalchemy.orm import selectinload
 
 from api.auth.schemas import UserOut
 from api.comments.schemas import CreateComment
+from api.notifications.crud import create_notification_body, create_new_comment_notification
+from src.config import settings
 from src.models.models import Comments
 
 
@@ -41,6 +43,8 @@ async def create_new_comment(comment: CreateComment, post_id: int, user: UserOut
         user_id=user.id,
     )
     session.add(new_comment)
+    notification = create_notification_body(notif_type=settings.NOTIFICATION_NEW_COMMENT, post_id=post_id)
+    await create_new_comment_notification(new_notification=notification, post_id=post_id, current_user_id=user.id, session=session)
     try:
         await session.commit()
     except IntegrityError:

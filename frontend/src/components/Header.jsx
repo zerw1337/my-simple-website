@@ -2,6 +2,7 @@ import { FaUser, FaSignInAlt, FaBars, FaTimes } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import React, { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext.jsx";
+import NotificationBell from "./NotificationBell.jsx";
 
 function Header() {
     const { user, logoutUser } = useContext(AuthContext);
@@ -56,6 +57,7 @@ function Header() {
                         {getIsSuperuser() && (
                             <Link to="/admin" onClick={close} style={linkStyle}>Админ</Link>
                         )}
+                        <NotificationBell onClose={close} />
                         <a href={`/profile/${getMyId()}`} onClick={close} style={linkStyle}>
                             {user.username}
                         </a>

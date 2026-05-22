@@ -4,6 +4,7 @@ import {
     getCategories, getAllPosts, createPost, createCategory,
     deleteCategory, deletePost, updatePost, getAllUsers, banUser, unbanUser
 } from "../api/Posts";
+import { createCustomNotification } from "../api/Notifications";
 import PostEditor from "../components/PostEditor";
 
 const MAX_IMAGES = 10;
@@ -43,6 +44,12 @@ function Admin() {
     const [editingPost, setEditingPost] = useState(null);
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState("");
+
+    const [notifTitle, setNotifTitle] = useState("");
+    const [notifBody, setNotifBody] = useState("");
+    const [notifLoading, setNotifLoading] = useState(false);
+    const [notifError, setNotifError] = useState("");
+    const [notifSuccess, setNotifSuccess] = useState("");
 
     useEffect(() => {
         if (!isSuperuser) { navigate("/"); return; }
@@ -136,6 +143,19 @@ function Admin() {
         try { await unbanUser(id); await loadData(); } catch (e) { alert(e.message); }
     };
 
+    const handleCreateNotification = async () => {
+        setNotifError(""); setNotifSuccess("");
+        if (!notifTitle.trim()) { setNotifError("Введите заголовок"); return; }
+        if (!notifBody.trim()) { setNotifError("Введите текст"); return; }
+        setNotifLoading(true);
+        try {
+            await createCustomNotification(notifTitle.trim(), notifBody.trim());
+            setNotifSuccess("Уведомление отправлено всем пользователям!");
+            setNotifTitle(""); setNotifBody("");
+        } catch (e) { setNotifError(e.message); }
+        finally { setNotifLoading(false); }
+    };
+
     const handleUpdatePost = async () => {
         setEditError("");
         if (!editingPost.title.trim()) { setEditError("Введите заголовок"); return; }
@@ -173,6 +193,7 @@ function Admin() {
                     <button style={tabStyle(activeTab === "posts")} onClick={() => setActiveTab("posts")}>{"Посты (" + posts.length + ")"}</button>
                     <button style={tabStyle(activeTab === "categories")} onClick={() => setActiveTab("categories")}>{"Категории (" + categories.length + ")"}</button>
                     <button style={tabStyle(activeTab === "users")} onClick={() => setActiveTab("users")}>{"Пользователи (" + users.length + ")"}</button>
+                    <button style={tabStyle(activeTab === "notifications")} onClick={() => setActiveTab("notifications")}>Уведомления</button>
                 </div>
 
                 {/* ── ПОСТЫ ── */}
@@ -344,7 +365,40 @@ function Admin() {
                         </div>
                     </div>
                 )}
-            </div>
+
+
+
+            {/* ── УВЕДОМЛЕНИЯ ── */}
+            {activeTab === "notifications" && (
+                <div>
+                    <div style={{ background: "#1f1f1f", borderRadius: "12px", padding: "1.5rem 2rem", marginBottom: "2rem", boxShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>
+                        <h3 style={{ margin: "0 0 0.5rem" }}>Создать кастомное уведомление</h3>
+                        <p style={{ color: "#666", fontSize: "0.875rem", fontFamily: "'Poppins', sans-serif", margin: "0 0 1.25rem" }}>
+                            Уведомление будет отправлено всем зарегистрированным пользователям.
+                        </p>
+                        {notifError && <div style={{ color: "#ff5555", fontSize: "0.9rem", marginBottom: "0.75rem" }}>{notifError}</div>}
+                        {notifSuccess && <div style={{ color: "#55cc55", fontSize: "0.9rem", marginBottom: "0.75rem" }}>{notifSuccess}</div>}
+                        <label style={labelStyle}>Заголовок</label>
+                        <input style={inputStyle} value={notifTitle} onChange={e => setNotifTitle(e.target.value)} placeholder="Например: Новые функции на сайте!"
+                               onFocus={e => e.target.style.borderColor = "var(--logo-color)"} onBlur={e => e.target.style.borderColor = "#444"} />
+                        <label style={labelStyle}>Текст уведомления</label>
+                        <textarea
+                            style={{ ...inputStyle, resize: "vertical", minHeight: "100px", lineHeight: 1.5 }}
+                            value={notifBody}
+                            onChange={e => setNotifBody(e.target.value)}
+                            placeholder="Текст, который увидят все пользователи..."
+                            onFocus={e => e.target.style.borderColor = "var(--logo-color)"}
+                            onBlur={e => e.target.style.borderColor = "#444"}
+                        />
+                        <button style={btnStyle} disabled={notifLoading} onClick={handleCreateNotification}
+                                onMouseEnter={e => { if (!notifLoading) e.currentTarget.style.background = "#03b0d0"; }}
+                                onMouseLeave={e => e.currentTarget.style.background = "var(--logo-color)"}>
+                            {notifLoading ? "..." : "Отправить всем"}
+                        </button>
+                    </div>
+                </div>
+            )}
+
 
             {/* ── Модалка редактирования ── */}
             {editingPost && (
@@ -383,6 +437,7 @@ function Admin() {
                     </div>
                 </div>
             )}
+            </div>
         </main>
     );
 }

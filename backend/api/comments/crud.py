@@ -44,7 +44,7 @@ async def create_new_comment(comment: CreateComment, post_id: int, user: UserOut
     )
     session.add(new_comment)
     notification = create_notification_body(notif_type=settings.NOTIFICATION_NEW_COMMENT, post_id=post_id)
-    await create_new_comment_notification(new_notification=notification, post_id=post_id, session=session)
+    await create_new_comment_notification(new_notification=notification, post_id=post_id, current_user_id=user.id, session=session)
     try:
         await session.commit()
     except IntegrityError:

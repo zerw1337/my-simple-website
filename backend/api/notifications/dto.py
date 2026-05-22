@@ -1,7 +1,7 @@
 from typing import Sequence
 
-from api.notifications.schemas import NotificationsListOut, Notification
-from src.models.models import NotificationsList
+from api.notifications.schemas import NotificationsListOut, Notification, WelcomeNotificationOut
+from src.models.models import NotificationsList, WelcomeNotifications
 
 
 def get_my_notifications_dto(notifications: Sequence[NotificationsList]) -> list[NotificationsListOut]:
@@ -20,3 +20,10 @@ def get_my_notifications_dto(notifications: Sequence[NotificationsList]) -> list
         )
         result.append(n)
     return result
+
+def get_welcome_notification_dto(notifications: Sequence[WelcomeNotifications]) -> list[WelcomeNotificationOut]:
+    res = []
+    for notif in notifications:
+        n = WelcomeNotificationOut.model_validate(notif)
+        res.append(n)
+    return res

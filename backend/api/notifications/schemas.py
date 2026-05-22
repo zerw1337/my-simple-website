@@ -9,6 +9,12 @@ class CreateNotification(BaseModel):
     body: str
     refer_to: str | None
 
+class CreateWelcomeNotification(BaseModel):
+    title: str
+    content: str
+    refer_to: str | None
+    pinned: bool = True
+
 class Notification(BaseModel):
     title: str
     body: str
@@ -23,5 +29,14 @@ class NotificationsListOut(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class WelcomeNotificationOut(BaseModel):
+    id: int
+    title: str
+    content: str
+    refer_to: str | None
+    created_at: datetime
+    pinned: bool
+
+    model_config = ConfigDict(from_attributes=True)
 
 

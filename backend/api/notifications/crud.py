@@ -1,13 +1,26 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, delete
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
 
 from api.auth.schemas import UserOut
-from api.notifications.dto import get_my_notifications_dto
-from api.notifications.schemas import CreateNotification
+from api.notifications.dto import get_my_notifications_dto, get_welcome_notification_dto
+from api.notifications.schemas import CreateNotification, CreateWelcomeNotification
 from src.config import settings
-from src.models.models import Notifications, Users, Comments, NotificationsList, NotificationsStatus
+from src.models.models import Notifications, Users, Comments, NotificationsList, NotificationsStatus, \
+    WelcomeNotifications
+
+
+async def create_welcome_notification_process(new_notification: CreateWelcomeNotification, session: AsyncSession):
+    new_notification = WelcomeNotifications(
+        title=new_notification.title,
+        content=new_notification.content,
+        refer_to=new_notification.refer_to,
+        pinned=new_notification.pinned,
+    )
+    session.add(new_notification)
+    await session.commit()
+    return
 
 
 async def create_custom_notification_process(new_notification: CreateNotification, session: AsyncSession):
@@ -82,12 +95,12 @@ async def create_new_comment_notification(new_notification: CreateNotification, 
 
 def create_notification_body(notif_type: str, post_id: int) -> CreateNotification:
     if notif_type == settings.NOTIFICATION_NEW_POST:
-        title = f"New post!"
-        body = f"Go checkout new post!"
+        title = f"Новый пост!"
+        body = f"Ты пропустил новый пост, кликни на уведомление для того чтобы ознакомиться!"
         refer_to = f"https://zerw1337.ru/posts/{post_id}/"
     elif notif_type == settings.NOTIFICATION_NEW_COMMENT:
-        title = f"New comment!"
-        body = f"Someone recently commented after your comment! Go check it out! "
+        title = f"Новый комментарий!"
+        body = f"Кто-то оставил комментарий в обсуждении с твойм участием, кликни на уведомление для того чтобы ознакомиться!"
         refer_to = f"https://zerw1337.ru/posts/{post_id}/"
     else:
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -160,5 +173,25 @@ async def delete_current_users_all_notifications(user: UserOut, session: AsyncSe
         raise HTTPException(status_code=404, detail="Notifications not found")
     for notification in result:
         await session.delete(notification)
+    await session.commit()
+    return
+
+async def get_welcome_notification_process(session: AsyncSession):
+    query = (
+        select(WelcomeNotifications)
+    )
+    res = await session.execute(query)
+    result = res.scalars().all()
+    if not result:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    notif_dto = get_welcome_notification_dto(notifications=result)
+    return notif_dto
+
+async def delete_current_welcome_notification(notification_id: int, user: UserOut, session: AsyncSession):
+    query = (
+        delete(WelcomeNotifications)
+        .where(WelcomeNotifications.id == notification_id)
+    )
+    await session.execute(query)
     await session.commit()
     return

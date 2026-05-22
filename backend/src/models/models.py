@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey, text, func, DateTime, UniqueConstraint, Enum as SAEnum, Integer
+from sqlalchemy import String, Text, ForeignKey, text, func, DateTime, UniqueConstraint, Enum as SAEnum, Integer, Boolean
 import datetime
 from enum import Enum
 
@@ -184,3 +184,12 @@ class NotificationsList(Base):
     status: Mapped[NotificationsStatus] = mapped_column(SAEnum(NotificationsStatus), default=NotificationsStatus.unread, nullable=False)
 
     notification: Mapped["Notifications"] = relationship("Notifications", back_populates="notifications_list")
+
+class WelcomeNotifications(Base):
+    __tablename__ = 'welcome_notifications'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    content: Mapped[str] = mapped_column(String(255), nullable=False)
+    refer_to: Mapped[str] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow)
+    pinned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

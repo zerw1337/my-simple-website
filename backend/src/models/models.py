@@ -167,6 +167,7 @@ class Notifications(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
+    refer_to: Mapped[str] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, server_default=func.now())
 
     notifications_list: Mapped["NotificationsList"] = relationship("NotificationsList", back_populates="notification")

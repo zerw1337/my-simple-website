@@ -20,6 +20,7 @@ async def create_custom_notification_process(new_notification: CreateNotificatio
     notification = Notifications(
         title=new_notification.title,
         body=new_notification.body,
+        refer_to=new_notification.refer_to,
     )
     session.add(notification)
     await session.flush()
@@ -43,6 +44,7 @@ async def create_new_post_notification(new_notification: CreateNotification, ses
     notification = Notifications(
         title=new_notification.title,
         body=new_notification.body,
+        refer_to=new_notification.refer_to,
     )
     session.add(notification)
     await session.flush()
@@ -65,6 +67,7 @@ async def create_new_comment_notification(new_notification: CreateNotification, 
     notification = Notifications(
             title=new_notification.title,
             body=new_notification.body,
+            refer_to=new_notification.refer_to,
         )
     session.add(notification)
     await session.flush()
@@ -80,15 +83,18 @@ async def create_new_comment_notification(new_notification: CreateNotification, 
 def create_notification_body(notif_type: str, post_id: int) -> CreateNotification:
     if notif_type == settings.NOTIFICATION_NEW_POST:
         title = f"New post!"
-        body = f"Checkout new post here: https://zerw1337.ru/posts/{post_id}/ !"
+        body = f"Go checkout new post!"
+        refer_to = f"https://zerw1337.ru/posts/{post_id}/"
     elif notif_type == settings.NOTIFICATION_NEW_COMMENT:
         title = f"New comment!"
-        body = f"Someone recently commented after your comment! Go check out here: https://zerw1337.ru/posts/{post_id}/ ! "
+        body = f"Someone recently commented after your comment! Go check it out! "
+        refer_to = f"https://zerw1337.ru/posts/{post_id}/"
     else:
         raise HTTPException(status_code=403, detail="Forbidden")
     new_notification = CreateNotification(
         title=title,
-        body=body
+        body=body,
+        refer_to=refer_to,
     )
     return new_notification
 

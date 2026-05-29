@@ -19,29 +19,26 @@ const S = {
 function Blog() {
     const navigate = useNavigate();
     const [categories, setCategories] = useState([]);
-    const [posts, setPosts] = useState([]);
+    const [allPosts, setAllPosts] = useState({ default: [], views: [], rating: [] });
     const [activeCategory, setActiveCategory] = useState(null);
     const [sort, setSort] = useState("default");
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getCategories().then(setCategories);
-    }, []);
-
-    useEffect(() => {
         setLoading(true);
-        const fetcher =
-            sort === "views"
-                ? getTopViewedPosts
-                : sort === "rating"
-                    ? getTopRatedPosts
-                    : getAllPosts;
-
-        fetcher().then(ps => {
-            setPosts(ps);
+        Promise.all([
+            getCategories(),
+            getAllPosts(),
+            getTopViewedPosts(),
+            getTopRatedPosts(),
+        ]).then(([cats, def, views, rating]) => {
+            setCategories(cats);
+            setAllPosts({ default: def, views, rating });
             setLoading(false);
         });
-    }, [sort]);
+    }, []);
+
+    const posts = allPosts[sort];
 
     const filteredPosts = activeCategory
         ? posts.filter(p => p.category?.id === activeCategory)

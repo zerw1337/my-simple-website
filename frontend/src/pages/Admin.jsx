@@ -4,7 +4,7 @@ import {
     getCategories, getAllPosts, createPost, createCategory,
     deleteCategory, deletePost, updatePost, getAllUsers, banUser, unbanUser
 } from "../api/Posts";
-import { createCustomNotification } from "../api/Notifications";
+import { createCustomNotification, createWelcomeNotification, getWelcomeNotifications, deleteWelcomeNotification } from "../api/Notifications";
 import PostEditor from "../components/PostEditor";
 
 const MAX_IMAGES = 10;
@@ -47,9 +47,20 @@ function Admin() {
 
     const [notifTitle, setNotifTitle] = useState("");
     const [notifBody, setNotifBody] = useState("");
+    const [notifReferTo, setNotifReferTo] = useState("");
     const [notifLoading, setNotifLoading] = useState(false);
     const [notifError, setNotifError] = useState("");
     const [notifSuccess, setNotifSuccess] = useState("");
+
+    const [welcomeTitle, setWelcomeTitle] = useState("");
+    const [welcomeContent, setWelcomeContent] = useState("");
+    const [welcomeReferTo, setWelcomeReferTo] = useState("");
+    const [welcomePinned, setWelcomePinned] = useState(true);
+    const [welcomeLoading, setWelcomeLoading] = useState(false);
+    const [welcomeError, setWelcomeError] = useState("");
+    const [welcomeSuccess, setWelcomeSuccess] = useState("");
+    const [welcomeList, setWelcomeList] = useState([]);
+    const [welcomeListLoading, setWelcomeListLoading] = useState(false);
 
     useEffect(() => {
         if (!isSuperuser) { navigate("/"); return; }
@@ -68,6 +79,16 @@ function Admin() {
         setUsers(us);
         if (cats.length > 0) setPostCategory(cats[0].id);
         setLoading(false);
+        loadWelcomeNotifications();
+    };
+
+    const loadWelcomeNotifications = async () => {
+        setWelcomeListLoading(true);
+        try {
+            const data = await getWelcomeNotifications();
+            setWelcomeList(data);
+        } catch {}
+        finally { setWelcomeListLoading(false); }
     };
 
     const handleImageSelect = (e) => {
@@ -149,13 +170,34 @@ function Admin() {
         if (!notifBody.trim()) { setNotifError("Введите текст"); return; }
         setNotifLoading(true);
         try {
-            await createCustomNotification(notifTitle.trim(), notifBody.trim());
+            await createCustomNotification(notifTitle.trim(), notifBody.trim(), notifReferTo.trim() || null);
             setNotifSuccess("Уведомление отправлено всем пользователям!");
-            setNotifTitle(""); setNotifBody("");
+            setNotifTitle(""); setNotifBody(""); setNotifReferTo("");
         } catch (e) { setNotifError(e.message); }
         finally { setNotifLoading(false); }
     };
 
+    const handleCreateWelcomeNotification = async () => {
+        setWelcomeError(""); setWelcomeSuccess("");
+        if (!welcomeTitle.trim()) { setWelcomeError("Введите заголовок"); return; }
+        if (!welcomeContent.trim()) { setWelcomeError("Введите текст"); return; }
+        setWelcomeLoading(true);
+        try {
+            await createWelcomeNotification(welcomeTitle.trim(), welcomeContent.trim(), welcomeReferTo.trim() || null, welcomePinned);
+            setWelcomeSuccess("Welcome-уведомление сохранено! Предыдущее удалено автоматически.");
+            setWelcomeTitle(""); setWelcomeContent(""); setWelcomeReferTo(""); setWelcomePinned(true);
+            await loadWelcomeNotifications();
+        } catch (e) { setWelcomeError(e.message); }
+        finally { setWelcomeLoading(false); }
+    };
+
+    const handleDeleteWelcomeNotification = async (id) => {
+        if (!confirm("Удалить welcome-уведомление?")) return;
+        try {
+            await deleteWelcomeNotification(id);
+            setWelcomeList(prev => prev.filter(n => n.id !== id));
+        } catch (e) { alert(e.message); }
+    };
     const handleUpdatePost = async () => {
         setEditError("");
         if (!editingPost.title.trim()) { setEditError("Введите заголовок"); return; }
@@ -368,75 +410,150 @@ function Admin() {
 
 
 
-            {/* ── УВЕДОМЛЕНИЯ ── */}
-            {activeTab === "notifications" && (
-                <div>
-                    <div style={{ background: "#1f1f1f", borderRadius: "12px", padding: "1.5rem 2rem", marginBottom: "2rem", boxShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>
-                        <h3 style={{ margin: "0 0 0.5rem" }}>Создать кастомное уведомление</h3>
-                        <p style={{ color: "#666", fontSize: "0.875rem", fontFamily: "'Poppins', sans-serif", margin: "0 0 1.25rem" }}>
-                            Уведомление будет отправлено всем зарегистрированным пользователям.
-                        </p>
-                        {notifError && <div style={{ color: "#ff5555", fontSize: "0.9rem", marginBottom: "0.75rem" }}>{notifError}</div>}
-                        {notifSuccess && <div style={{ color: "#55cc55", fontSize: "0.9rem", marginBottom: "0.75rem" }}>{notifSuccess}</div>}
-                        <label style={labelStyle}>Заголовок</label>
-                        <input style={inputStyle} value={notifTitle} onChange={e => setNotifTitle(e.target.value)} placeholder="Например: Новые функции на сайте!"
-                               onFocus={e => e.target.style.borderColor = "var(--logo-color)"} onBlur={e => e.target.style.borderColor = "#444"} />
-                        <label style={labelStyle}>Текст уведомления</label>
-                        <textarea
-                            style={{ ...inputStyle, resize: "vertical", minHeight: "100px", lineHeight: 1.5 }}
-                            value={notifBody}
-                            onChange={e => setNotifBody(e.target.value)}
-                            placeholder="Текст, который увидят все пользователи..."
-                            onFocus={e => e.target.style.borderColor = "var(--logo-color)"}
-                            onBlur={e => e.target.style.borderColor = "#444"}
-                        />
-                        <button style={btnStyle} disabled={notifLoading} onClick={handleCreateNotification}
-                                onMouseEnter={e => { if (!notifLoading) e.currentTarget.style.background = "#03b0d0"; }}
-                                onMouseLeave={e => e.currentTarget.style.background = "var(--logo-color)"}>
-                            {notifLoading ? "..." : "Отправить всем"}
-                        </button>
-                    </div>
-                </div>
-            )}
+                {/* ── УВЕДОМЛЕНИЯ ── */}
+                {activeTab === "notifications" && (
+                    <div>
 
+                        {/* ── Welcome-уведомление (для незарегистрированных) ── */}
+                        <div style={{ background: "#1f1f1f", borderRadius: "12px", padding: "1.5rem 2rem", marginBottom: "2rem", boxShadow: "0 4px 12px rgba(0,0,0,0.3)", border: "1px solid rgba(4,198,233,0.15)" }}>
+                            <h3 style={{ margin: "0 0 0.5rem" }}>📌 Welcome-уведомление</h3>
+                            <p style={{ color: "#666", fontSize: "0.875rem", fontFamily: "'Poppins', sans-serif", margin: "0 0 1.25rem" }}>
+                                Отображается на главной странице для <strong style={{ color: "#a0a0a0" }}>незарегистрированных</strong> пользователей. Хранится только одно — при создании нового старое удаляется автоматически.
+                            </p>
 
-            {/* ── Модалка редактирования ── */}
-            {editingPost && (
-                <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}
-                     onClick={() => setEditingPost(null)}>
-                    <div style={{ background: "#1f1f1f", borderRadius: "12px", padding: "2rem", width: "100%", maxWidth: "700px", margin: "1rem", boxShadow: "0 8px 32px rgba(0,0,0,0.5)", maxHeight: "90vh", overflowY: "auto" }}
-                         onClick={e => e.stopPropagation()}>
-                        <h3 style={{ margin: "0 0 1rem" }}>Редактировать пост</h3>
-                        {editError && <div style={{ color: "#ff5555", fontSize: "0.9rem", marginBottom: "0.75rem" }}>{editError}</div>}
-                        <label style={labelStyle}>Заголовок</label>
-                        <input style={inputStyle} value={editingPost.title}
-                               onChange={e => setEditingPost({ ...editingPost, title: e.target.value })}
-                               onFocus={e => e.target.style.borderColor = "var(--logo-color)"} onBlur={e => e.target.style.borderColor = "#444"} />
-                        <label style={labelStyle}>Категория</label>
-                        <select style={{ ...inputStyle, cursor: "pointer" }} value={editingPost.category_id}
-                                onChange={e => setEditingPost({ ...editingPost, category_id: parseInt(e.target.value) })}>
-                            {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.emoji + " " + cat.name}</option>)}
-                        </select>
-                        <label style={labelStyle}>Содержимое</label>
-                        <PostEditor
-                            value={editingPost.content}
-                            onChange={v => setEditingPost({ ...editingPost, content: v })}
-                            images={[]}
-                            rows={12}
-                        />
-                        <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
-                            <button style={btnStyle} disabled={editLoading} onClick={handleUpdatePost}
-                                    onMouseEnter={e => { if (!editLoading) e.currentTarget.style.background = "#03b0d0"; }}
+                            {welcomeError && <div style={{ color: "#ff5555", fontSize: "0.9rem", marginBottom: "0.75rem" }}>{welcomeError}</div>}
+                            {welcomeSuccess && <div style={{ color: "#55cc55", fontSize: "0.9rem", marginBottom: "0.75rem" }}>{welcomeSuccess}</div>}
+
+                            <label style={labelStyle}>Заголовок</label>
+                            <input style={inputStyle} value={welcomeTitle} onChange={e => setWelcomeTitle(e.target.value)} placeholder="Например: Добро пожаловать!"
+                                   onFocus={e => e.target.style.borderColor = "var(--logo-color)"} onBlur={e => e.target.style.borderColor = "#444"} />
+
+                            <label style={labelStyle}>Текст</label>
+                            <textarea
+                                style={{ ...inputStyle, resize: "vertical", minHeight: "100px", lineHeight: 1.5 }}
+                                value={welcomeContent}
+                                onChange={e => setWelcomeContent(e.target.value)}
+                                placeholder="Текст приветствия для новых посетителей..."
+                                onFocus={e => e.target.style.borderColor = "var(--logo-color)"}
+                                onBlur={e => e.target.style.borderColor = "#444"}
+                            />
+
+                            <label style={labelStyle}>Ссылка <span style={{ fontWeight: 400, color: "#555" }}>(необязательно)</span></label>
+                            <input style={inputStyle} value={welcomeReferTo} onChange={e => setWelcomeReferTo(e.target.value)} placeholder="https://zerw1337.ru/blog/ или /blog"
+                                   onFocus={e => e.target.style.borderColor = "var(--logo-color)"} onBlur={e => e.target.style.borderColor = "#444"} />
+
+                            <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", marginTop: "0.75rem" }}>
+                                <input type="checkbox" checked={welcomePinned} onChange={e => setWelcomePinned(e.target.checked)}
+                                       style={{ accentColor: "var(--logo-color)", width: "16px", height: "16px", cursor: "pointer" }} />
+                                Закрепить (показывать значок 📌)
+                            </label>
+
+                            <button style={btnStyle} disabled={welcomeLoading} onClick={handleCreateWelcomeNotification}
+                                    onMouseEnter={e => { if (!welcomeLoading) e.currentTarget.style.background = "#03b0d0"; }}
                                     onMouseLeave={e => e.currentTarget.style.background = "var(--logo-color)"}>
-                                {editLoading ? "..." : "Сохранить"}
+                                {welcomeLoading ? "..." : "Сохранить welcome-уведомление"}
                             </button>
-                            <button onClick={() => setEditingPost(null)} style={{ ...btnStyle, background: "transparent", color: "#666", border: "1px solid #444" }}
-                                    onMouseEnter={e => e.currentTarget.style.borderColor = "#666"}
-                                    onMouseLeave={e => e.currentTarget.style.borderColor = "#444"}>Отмена</button>
+
+                            {/* Текущее активное welcome-уведомление */}
+                            {welcomeListLoading ? (
+                                <p style={{ color: "#555", fontSize: "0.85rem", fontFamily: "'Poppins', sans-serif", marginTop: "1.25rem" }}>Загрузка...</p>
+                            ) : welcomeList.length > 0 && (
+                                <div style={{ marginTop: "1.5rem" }}>
+                                    <p style={{ color: "#a0a0a0", fontSize: "0.8rem", fontFamily: "'Poppins', sans-serif", marginBottom: "0.5rem", fontWeight: 600 }}>
+                                        АКТИВНОЕ УВЕДОМЛЕНИЕ:
+                                    </p>
+                                    {welcomeList.map(n => (
+                                        <div key={n.id} style={{ background: "rgba(4,198,233,0.05)", border: "1px solid rgba(4,198,233,0.2)", borderRadius: "8px", padding: "0.75rem 1rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "0.9rem", color: "rgb(220,235,255)", marginBottom: "0.2rem" }}>{n.title}</div>
+                                                <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: "0.8rem", color: "#a0b8d0", lineHeight: 1.4, whiteSpace: "pre-wrap" }}>{n.content}</div>
+                                                {n.refer_to && <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: "0.75rem", color: "#555", marginTop: "0.25rem" }}>{n.refer_to}</div>}
+                                            </div>
+                                            <button onClick={() => handleDeleteWelcomeNotification(n.id)}
+                                                    style={{ ...actionBtnStyle, color: "#666", flexShrink: 0 }}
+                                                    onMouseEnter={e => e.currentTarget.style.color = "#ff5555"}
+                                                    onMouseLeave={e => e.currentTarget.style.color = "#666"}>удалить</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ── Кастомное уведомление (для зарегистрированных) ── */}
+                        <div style={{ background: "#1f1f1f", borderRadius: "12px", padding: "1.5rem 2rem", marginBottom: "2rem", boxShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>
+                            <h3 style={{ margin: "0 0 0.5rem" }}>🔔 Кастомное уведомление</h3>
+                            <p style={{ color: "#666", fontSize: "0.875rem", fontFamily: "'Poppins', sans-serif", margin: "0 0 1.25rem" }}>
+                                Уведомление будет отправлено всем <strong style={{ color: "#a0a0a0" }}>зарегистрированным</strong> пользователям в колокольчик.
+                            </p>
+
+                            {notifError && <div style={{ color: "#ff5555", fontSize: "0.9rem", marginBottom: "0.75rem" }}>{notifError}</div>}
+                            {notifSuccess && <div style={{ color: "#55cc55", fontSize: "0.9rem", marginBottom: "0.75rem" }}>{notifSuccess}</div>}
+
+                            <label style={labelStyle}>Заголовок</label>
+                            <input style={inputStyle} value={notifTitle} onChange={e => setNotifTitle(e.target.value)} placeholder="Например: Новые функции на сайте!"
+                                   onFocus={e => e.target.style.borderColor = "var(--logo-color)"} onBlur={e => e.target.style.borderColor = "#444"} />
+
+                            <label style={labelStyle}>Текст уведомления</label>
+                            <textarea
+                                style={{ ...inputStyle, resize: "vertical", minHeight: "100px", lineHeight: 1.5 }}
+                                value={notifBody}
+                                onChange={e => setNotifBody(e.target.value)}
+                                placeholder="Текст, который увидят все пользователи..."
+                                onFocus={e => e.target.style.borderColor = "var(--logo-color)"}
+                                onBlur={e => e.target.style.borderColor = "#444"}
+                            />
+
+                            <label style={labelStyle}>Ссылка <span style={{ fontWeight: 400, color: "#555" }}>(необязательно)</span></label>
+                            <input style={inputStyle} value={notifReferTo} onChange={e => setNotifReferTo(e.target.value)} placeholder="https://zerw1337.ru/posts/123/ или /posts/123"
+                                   onFocus={e => e.target.style.borderColor = "var(--logo-color)"} onBlur={e => e.target.style.borderColor = "#444"} />
+
+                            <button style={btnStyle} disabled={notifLoading} onClick={handleCreateNotification}
+                                    onMouseEnter={e => { if (!notifLoading) e.currentTarget.style.background = "#03b0d0"; }}
+                                    onMouseLeave={e => e.currentTarget.style.background = "var(--logo-color)"}>
+                                {notifLoading ? "..." : "Отправить всем"}
+                            </button>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+
+
+                {/* ── Модалка редактирования ── */}
+                {editingPost && (
+                    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}
+                         onClick={() => setEditingPost(null)}>
+                        <div style={{ background: "#1f1f1f", borderRadius: "12px", padding: "2rem", width: "100%", maxWidth: "700px", margin: "1rem", boxShadow: "0 8px 32px rgba(0,0,0,0.5)", maxHeight: "90vh", overflowY: "auto" }}
+                             onClick={e => e.stopPropagation()}>
+                            <h3 style={{ margin: "0 0 1rem" }}>Редактировать пост</h3>
+                            {editError && <div style={{ color: "#ff5555", fontSize: "0.9rem", marginBottom: "0.75rem" }}>{editError}</div>}
+                            <label style={labelStyle}>Заголовок</label>
+                            <input style={inputStyle} value={editingPost.title}
+                                   onChange={e => setEditingPost({ ...editingPost, title: e.target.value })}
+                                   onFocus={e => e.target.style.borderColor = "var(--logo-color)"} onBlur={e => e.target.style.borderColor = "#444"} />
+                            <label style={labelStyle}>Категория</label>
+                            <select style={{ ...inputStyle, cursor: "pointer" }} value={editingPost.category_id}
+                                    onChange={e => setEditingPost({ ...editingPost, category_id: parseInt(e.target.value) })}>
+                                {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.emoji + " " + cat.name}</option>)}
+                            </select>
+                            <label style={labelStyle}>Содержимое</label>
+                            <PostEditor
+                                value={editingPost.content}
+                                onChange={v => setEditingPost({ ...editingPost, content: v })}
+                                images={[]}
+                                rows={12}
+                            />
+                            <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
+                                <button style={btnStyle} disabled={editLoading} onClick={handleUpdatePost}
+                                        onMouseEnter={e => { if (!editLoading) e.currentTarget.style.background = "#03b0d0"; }}
+                                        onMouseLeave={e => e.currentTarget.style.background = "var(--logo-color)"}>
+                                    {editLoading ? "..." : "Сохранить"}
+                                </button>
+                                <button onClick={() => setEditingPost(null)} style={{ ...btnStyle, background: "transparent", color: "#666", border: "1px solid #444" }}
+                                        onMouseEnter={e => e.currentTarget.style.borderColor = "#666"}
+                                        onMouseLeave={e => e.currentTarget.style.borderColor = "#444"}>Отмена</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </main>
     );

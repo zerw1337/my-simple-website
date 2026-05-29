@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, delete
+from sqlalchemy import select, and_, delete, update
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
 
@@ -19,6 +19,12 @@ async def create_welcome_notification_process(new_notification: CreateWelcomeNot
         pinned=new_notification.pinned,
     )
     session.add(new_notification)
+    await session.flush()
+    query = (
+        delete(WelcomeNotifications)
+        .where(WelcomeNotifications.id != new_notification.id)
+    )
+    await session.execute(query)
     await session.commit()
     return
 

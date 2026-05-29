@@ -1,7 +1,12 @@
-import HomeMainStatic from "../components/HomeMainStatic.jsx"
+import { useContext } from "react";
+import HomeMainStatic from "../components/HomeMainStatic.jsx";
 import MainPostsList from "../components/MainPostsList.jsx";
+import WelcomeBanner from "../components/WelcomeBanner.jsx";
+import { AuthContext } from "../context/AuthContext.jsx";
 
 function Home() {
+    const { user } = useContext(AuthContext);
+
     return (
         <main
             style={{
@@ -11,6 +16,9 @@ function Home() {
                 fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
             }}
         >
+            {/* Welcome-уведомления — только для незалогиненных */}
+            {!user && <WelcomeBanner />}
+
             <HomeMainStatic />
 
             <section style={{ marginTop: "4rem" }}>

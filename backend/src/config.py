@@ -53,10 +53,11 @@ class Settings(BaseSettings):
     ALLOWED_CONTENT_TYPES: ClassVar[set[str]]  = {
         "image/jpeg",
         "image/png",
-        "image/webp"
+        "image/webp",
+        "image/gif"
     }
 
-    ALLOWED_EXTENSIONS: ClassVar[set[str]] = {"jpg", "jpeg", "png", "webp"}
+    ALLOWED_EXTENSIONS: ClassVar[set[str]] = {"jpg", "jpeg", "png", "webp", "gif"}
 
     MAX_SIZE_MB: int = 5
 

@@ -193,3 +193,28 @@ class WelcomeNotifications(Base):
     refer_to: Mapped[str] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow)
     pinned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+class Chats(Base):
+    __tablename__ = 'chats'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    uuid: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+
+class ChatParticipants(Base):
+    __tablename__ = 'chat_participants'
+    __table_args__ = (
+        UniqueConstraint("chat_id", "user_id"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    chat_id: Mapped[int] = mapped_column(ForeignKey('chats.id'), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    last_read_message_id: Mapped[int | None] = mapped_column(ForeignKey("messages.id"), nullable=True)
+
+class Messages(Base):
+    __tablename__ = 'messages'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    chat_id: Mapped[int] = mapped_column(ForeignKey('chats.id'), nullable=False)
+    message: Mapped[Text] = mapped_column(Text, nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow)
+
+

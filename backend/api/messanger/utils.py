@@ -1,12 +1,14 @@
 import uuid
-from sqlite3 import IntegrityError
+from sqlalchemy.exc import IntegrityError
 
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, func
+from sqlalchemy import select, func, and_
+from sqlalchemy.orm import selectinload
 
 from api.auth.schemas import UserOut
-from src.models.models import Chats, Users, ChatParticipants
+from api.messanger.dto import chats_list_dto, get_chat_by_uuid_dto
+from src.models.models import Chats, ChatParticipants, Messages
 
 
 async def create_new_chat(user_id: int, user: UserOut, session: AsyncSession):
@@ -35,7 +37,46 @@ async def create_new_chat(user_id: int, user: UserOut, session: AsyncSession):
     try:
         await session.commit()
     except IntegrityError:
+        await session.rollback()
         raise HTTPException(status_code=500, detail="Error creating chat")
     return {"success": True,
             "chat_id": new_chat.id,
             "chat_uuid": new_chat.uuid,}
+
+async def get_all_my_chats(user: UserOut, session: AsyncSession):
+    query = (
+        select(Chats)
+        .join(Chats.participants)
+        .where(ChatParticipants.user_id == user.id)
+        .options(
+            selectinload(Chats.last_message)
+            .selectinload(Messages.user)
+        )
+    )
+    res = await session.execute(query)
+    result = res.scalars().all()
+    chats_dto = chats_list_dto(result)
+    return chats_dto
+
+async def get_chat_by_uuid(chat_uuid: str, session: AsyncSession, user: UserOut):
+    query = (
+        select(Chats)
+        .join(Chats.participants)
+        .where(and_(ChatParticipants.user_id == user.id, Chats.uuid == chat_uuid))
+    )
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
+    if not result:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    query = (
+        select(Messages)
+        .where(Messages.chat_id == result.id)
+        .options(selectinload(Messages.user))
+        .order_by(Messages.created_at.desc())
+    )
+    res = await session.execute(query)
+    result = res.scalars().all()
+    chat_dto = get_chat_by_uuid_dto(result)
+    return chat_dto
+
+

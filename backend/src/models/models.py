@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey, text, func, DateTime, UniqueConstraint, Enum as SAEnum, Integer, Boolean
+from sqlalchemy import String, Text, ForeignKey, func, DateTime, UniqueConstraint, Enum as SAEnum, Integer, Boolean
 import datetime
 from enum import Enum
 
@@ -30,6 +30,7 @@ class Users(Base):
     comments: Mapped[list["Comments"]] = relationship("Comments", back_populates="user", cascade="all, delete-orphan")
     reactions: Mapped[list["Reactions"]] = relationship("Reactions", back_populates="user", cascade="all, delete-orphan")
     verify_codes: Mapped[list["VerifyCodes"]] = relationship("VerifyCodes", back_populates="user", cascade="all, delete-orphan")
+    messages: Mapped[list["Messages"]] = relationship("Messages", back_populates="user", cascade="all, delete-orphan")
 
 
 
@@ -198,6 +199,13 @@ class Chats(Base):
     __tablename__ = 'chats'
     id: Mapped[int] = mapped_column(primary_key=True)
     uuid: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    last_message_id: Mapped[int | None] = mapped_column(ForeignKey('messages.id', ondelete="SET NULL"), nullable=True)
+    last_message_text: Mapped[str| None] = mapped_column(Text, nullable=True)
+    last_message_created_at: Mapped[datetime.datetime | None] = mapped_column(nullable=True)
+
+    messages: Mapped[list["Messages"]] = relationship("Messages", back_populates="chat", foreign_keys="Messages.chat_id")
+    participants: Mapped[list["ChatParticipants"]] = relationship("ChatParticipants", back_populates="chat")
+    last_message: Mapped["Messages | None"] = relationship("Messages", foreign_keys=[last_message_id], post_update=True)
 
 class ChatParticipants(Base):
     __tablename__ = 'chat_participants'
@@ -207,7 +215,10 @@ class ChatParticipants(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_id: Mapped[int] = mapped_column(ForeignKey('chats.id'), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    username: Mapped[str] = mapped_column(String(64), nullable=False)
     last_read_message_id: Mapped[int | None] = mapped_column(ForeignKey("messages.id"), nullable=True)
+
+    chat: Mapped["Chats"] = relationship("Chats", back_populates="participants")
 
 class Messages(Base):
     __tablename__ = 'messages'
@@ -217,4 +228,6 @@ class Messages(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow)
 
+    chat: Mapped["Chats"] = relationship("Chats", back_populates="messages", foreign_keys=[chat_id])
+    user: Mapped["Users"] = relationship("Users", back_populates="messages")
 

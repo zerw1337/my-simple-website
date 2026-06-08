@@ -87,6 +87,7 @@ async def upload_new_message_to_database(message: str, chat_uuid: str,  session:
     result = res.scalars().first()
     if not result:
         raise HTTPException(status_code=404, detail="Chat not found")
+
     new_message = Messages(
         chat_id=result.id,
         message=message,
@@ -94,6 +95,9 @@ async def upload_new_message_to_database(message: str, chat_uuid: str,  session:
     )
     session.add(new_message)
     await session.flush()
+    result.last_message_id = new_message.id
+    result.last_message_text = new_message.message
+    result.last_message_created_at = new_message.created_at
     await session.commit()
     return new_message
 
@@ -115,10 +119,29 @@ async def delete_message(message_id: int, session: AsyncSession, user: UserOut):
     query = (
         delete(Messages)
         .where(and_(Messages.id == message_id, Messages.user_id == user.id))
+        .returning(Messages)
     )
-    await session.execute(query)
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
     try:
         await session.flush()
+        query = (
+            select(Chats)
+            .where(Chats.id == result.chat_id)
+        )
+        res = await session.execute(query)
+        chat_orm = res.scalar_one_or_none()
+        query = (
+            select(Messages)
+            .where(Messages.chat_id == chat_orm.id)
+            .order_by(Messages.created_at.desc())
+            .limit(1)
+        )
+        res = await session.execute(query)
+        last_message_orm = res.scalar_one_or_none()
+        chat_orm.last_message_id = last_message_orm.id
+        chat_orm.last_message_text = last_message_orm.message
+        chat_orm.last_message_created_at = last_message_orm.created_at
         await session.commit()
         return message_id
     except IntegrityError:

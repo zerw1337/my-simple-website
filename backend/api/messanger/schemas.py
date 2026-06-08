@@ -6,9 +6,9 @@ from pydantic import BaseModel, ConfigDict
 class ChatList(BaseModel):
     id: int
     uuid: str
-    last_message_id: int
-    last_message_text: str
-    last_message_created_at: datetime
+    last_message_id: int | None = None
+    last_message_text: str | None = None
+    last_message_created_at: datetime | None = None
     model_config = ConfigDict(from_attributes=True)
 
 class ChatListUser(BaseModel):
@@ -18,7 +18,7 @@ class ChatListUser(BaseModel):
 
 class ChatListOut(BaseModel):
     chat: ChatList
-    last_message_user: ChatListUser
+    last_message_user: ChatListUser | None
 
 class ChatOut(BaseModel):
     id: int

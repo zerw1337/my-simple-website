@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.websockets import WebSocket
 
 from api.auth.dependencies import get_auth_admin, get_auth
 from api.auth.schemas import UserOut
@@ -61,5 +62,16 @@ async def delete_notification(notification_id: int, user: UserOut = Depends(get_
     await delete_current_notification(notification_id=notification_id, session=session, user=user)
     return {"message": "success"}
 
+
+@notification_router.websocket("/ws/")
+async def notifications_websocket(websocket: WebSocket, session: AsyncSession = Depends(get_session)):
+    token = websocket.query_params.get("token")
+    if token:
+        user = await get_auth(session=session, token=token)
+    else:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+    pass
 
 

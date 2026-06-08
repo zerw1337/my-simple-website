@@ -13,17 +13,6 @@ class ConnectionManager:
         self.messanger_connections: dict[str, set[WebSocket]] = defaultdict(set)
         self.active_connections: dict[int, set[WebSocket]] = defaultdict(set)
 
-    async def connect(self, websocket: WebSocket, user: UserOut):
-        await websocket.accept()
-        self.active_connections[user.id].add(websocket)
-
-    async def disconnect(self, websocket: WebSocket, user: UserOut):
-        if user.id in self.active_connections:
-            self.active_connections[user.id].discard(websocket)
-
-            if not self.active_connections[user.id]:
-                del self.active_connections[user.id]
-
 class MessangerConnectionManager(ConnectionManager):
     async def connect(self, websocket: WebSocket, chat_uuid: str):
         await websocket.accept()
@@ -81,9 +70,6 @@ class MessangerConnectionManager(ConnectionManager):
 
             if not self.messanger_connections[chat_uuid]:
                 del self.messanger_connections[chat_uuid]
-
-
-
 
 
 

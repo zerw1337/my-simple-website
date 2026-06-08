@@ -107,13 +107,29 @@ async def edit_message(message_id: int, message: str, session: AsyncSession, use
         .where(and_(Messages.id == message_id, Messages.user_id == user.id))
     )
     res = await session.execute(query)
-    result = res.scalar_one_or_none()
-    if not result:
+    message_orm = res.scalar_one_or_none()
+    if not message_orm:
         raise WebSocketException(code=1008)
-    result.message = message
+    message_orm.message = message
+    await session.flush()
+    query = (
+        select(Messages)
+        .where(Messages.chat_id == message_orm.chat_id)
+        .order_by(Messages.created_at.desc())
+        .limit(1)
+    )
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
+    if result.id == message_orm.id:
+        query = (
+            update(Chats)
+            .where(Chats.id == result.chat_id)
+            .values(last_message_id=result.id, last_message_text=result.message, last_message_created_at=result.created_at)
+        )
+        await session.execute(query)
     await session.flush()
     await session.commit()
-    return result
+    return message_orm
 
 async def delete_message(message_id: int, session: AsyncSession, user: UserOut):
     query = (
@@ -158,3 +174,4 @@ async def check_if_current_user_belongs_to_this_chat(chat_uuid: str, user: UserO
     result = res.scalar_one_or_none()
     if not result:
         raise WebSocketException(code=1008)
+

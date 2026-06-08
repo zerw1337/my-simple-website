@@ -37,6 +37,7 @@ def get_chat_by_uuid_dto(messages: Sequence[Messages]) -> list[ChatOut]:
             last_read_message_id=None
         )
         res = ChatOut(
+            id=message.id,
             chat_id=message.chat_id,
             message=message.message,
             created_at=message.created_at,
@@ -44,3 +45,4 @@ def get_chat_by_uuid_dto(messages: Sequence[Messages]) -> list[ChatOut]:
         )
         result.append(res)
     return result
+

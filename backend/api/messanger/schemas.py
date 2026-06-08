@@ -21,6 +21,7 @@ class ChatListOut(BaseModel):
     last_message_user: ChatListUser
 
 class ChatOut(BaseModel):
+    id: int
     chat_id: int
     message: str
     created_at: datetime

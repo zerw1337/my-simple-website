@@ -12,6 +12,8 @@ def get_current_ip_address(request: Request) -> str:
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        if request.headers.get("upgrade", "").lower() == "websocket":
+            return await call_next(request)
         ip = get_current_ip_address(request)
         if await is_limited(ip):
             return JSONResponse(

@@ -19,6 +19,7 @@ import About from "./pages/About";
 import Contacts from "./pages/Contacts";
 import Banned from "./pages/Banned";
 import ResetPassword from "./pages/ResetPassword";
+import Messanger from "./pages/Messanger";
 
 function getIsBanned() {
     const token = localStorage.getItem("access_token");
@@ -61,6 +62,7 @@ function App() {
                                 <Route path="/contact" element={<Contacts />} />
                                 <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
                                 <Route path="/reset-password/:url" element={<ResetPassword />} />
+                                <Route path="/messages" element={<ProtectedRoute><Messanger /></ProtectedRoute>} />
                                 <Route path="*" element={<NotFound />} />
                             </Routes>
                         </BannedRoute>

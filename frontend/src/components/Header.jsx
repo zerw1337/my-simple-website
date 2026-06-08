@@ -58,6 +58,7 @@ function Header() {
                             <Link to="/admin" onClick={close} style={linkStyle}>Админ</Link>
                         )}
                         <NotificationBell onClose={close} />
+                        <Link to="/messages" style={linkStyle} onClick={close}>Сообщения</Link>
                         <a href={`/profile/${getMyId()}`} onClick={close} style={linkStyle}>
                             {user.username}
                         </a>

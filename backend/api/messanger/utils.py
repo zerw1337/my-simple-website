@@ -1,9 +1,8 @@
 import uuid
 from sqlalchemy.exc import IntegrityError
-
-from fastapi import HTTPException
+from fastapi import HTTPException, WebSocketException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, update, delete
 from sqlalchemy.orm import selectinload
 
 from api.auth.schemas import UserOut
@@ -79,4 +78,60 @@ async def get_chat_by_uuid(chat_uuid: str, session: AsyncSession, user: UserOut)
     chat_dto = get_chat_by_uuid_dto(result)
     return chat_dto
 
+async def upload_new_message_to_database(message: str, chat_uuid: str,  session: AsyncSession, user: UserOut):
+    query = (
+        select(Chats)
+        .where(Chats.uuid == chat_uuid)
+    )
+    res = await session.execute(query)
+    result = res.scalars().first()
+    if not result:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    new_message = Messages(
+        chat_id=result.id,
+        message=message,
+        user_id=user.id,
+    )
+    session.add(new_message)
+    await session.flush()
+    await session.commit()
+    return new_message
 
+async def edit_message(message_id: int, message: str, session: AsyncSession, user: UserOut):
+    query = (
+        select(Messages)
+        .where(and_(Messages.id == message_id, Messages.user_id == user.id))
+    )
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
+    if not result:
+        raise WebSocketException(code=1008)
+    result.message = message
+    await session.flush()
+    await session.commit()
+    return result
+
+async def delete_message(message_id: int, session: AsyncSession, user: UserOut):
+    query = (
+        delete(Messages)
+        .where(and_(Messages.id == message_id, Messages.user_id == user.id))
+    )
+    await session.execute(query)
+    try:
+        await session.flush()
+        await session.commit()
+        return message_id
+    except IntegrityError:
+        await session.rollback()
+        raise WebSocketException(code=1008)
+
+async def check_if_current_user_belongs_to_this_chat(chat_uuid: str, user: UserOut, session: AsyncSession):
+    query = (
+        select(Chats)
+        .join(Chats.participants)
+        .where(and_(ChatParticipants.user_id == user.id, Chats.uuid == chat_uuid))
+    )
+    res = await session.execute(query)
+    result = res.scalar_one_or_none()
+    if not result:
+        raise WebSocketException(code=1008)

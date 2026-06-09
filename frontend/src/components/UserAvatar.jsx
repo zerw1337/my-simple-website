@@ -1,24 +1,46 @@
 import React, { useState, useEffect } from "react";
-import { getAvatarUrl } from "../api/Posts";
+import { Link } from "react-router-dom";
+import { getCachedAvatarUrl, peekAvatarUrl } from "../api/avatarCache.js";
 
-// Универсальный компонент аватара
-// userId — id пользователя
-// username — для буквы-заглушки
-// size — размер в px (default 40)
-// style — доп. стили
-function UserAvatar({ userId, username, size = 40, style = {} }) {
-    const [avatarUrl, setAvatarUrl] = useState(null);
+/**
+ * Универсальный компонент аватара.
+ *
+ * Props:
+ *   userId    — id пользователя
+ *   username  — для буквы-заглушки
+ *   size      — размер в px (default 40)
+ *   style     — дополнительные inline-стили
+ *   profileId — если передан, весь аватар оборачивается в <Link to="/profile/{profileId}">
+ */
+function UserAvatar({ userId, username, size = 40, style = {}, profileId }) {
+    // Инициализируем state СИНХРОННО из кеша — устраняет моргание при ре-рендере списка.
+    // peekAvatarUrl возвращает undefined если ещё не загружено, null если аватарки нет,
+    // или строку-URL если уже есть.
+    const [avatarUrl, setAvatarUrl] = useState(() => {
+        const peeked = peekAvatarUrl(userId);
+        return peeked !== undefined ? peeked : null;
+    });
     const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
         if (!userId) return;
-        let objectUrl = null;
-        getAvatarUrl(userId).then(url => {
-            objectUrl = url;
-            setAvatarUrl(url);
+
+        // Синхронная проверка: если уже в кеше — обновляем без async-тика
+        const peeked = peekAvatarUrl(userId);
+        if (peeked !== undefined) {
+            setAvatarUrl(peeked);
+            return;
+        }
+
+        // Иначе — async-загрузка (первый раз для этого userId)
+        let cancelled = false;
+        getCachedAvatarUrl(userId).then(url => {
+            if (!cancelled) {
+                setAvatarUrl(url);
+                setLoaded(false);
+            }
         });
-        // Освобождаем blob URL при размонтировании
-        return () => { if (objectUrl) URL.revokeObjectURL(objectUrl); };
+        return () => { cancelled = true; };
     }, [userId]);
 
     const letter = username ? username[0].toUpperCase() : "?";
@@ -37,12 +59,13 @@ function UserAvatar({ userId, username, size = 40, style = {} }) {
         color: "var(--logo-color)",
         fontSize: size * 0.4,
         fontWeight: 700,
+        textDecoration: "none",
         ...style,
     };
 
-    return (
-        <div style={baseStyle}>
-            {avatarUrl ? (
+    const inner = (
+        <>
+            {avatarUrl && (
                 <img
                     src={avatarUrl}
                     alt={username || "avatar"}
@@ -55,11 +78,25 @@ function UserAvatar({ userId, username, size = 40, style = {} }) {
                         borderRadius: "50%",
                     }}
                 />
-            ) : null}
-            {/* Заглушка — буква. Скрывается когда картинка загружена */}
+            )}
             {(!avatarUrl || !loaded) && <span>{letter}</span>}
-        </div>
+        </>
     );
+
+    if (profileId) {
+        return (
+            <Link
+                to={`/profile/${profileId}`}
+                style={baseStyle}
+                title={username ? `Профиль: ${username}` : undefined}
+                onClick={e => e.stopPropagation()}
+            >
+                {inner}
+            </Link>
+        );
+    }
+
+    return <div style={baseStyle}>{inner}</div>;
 }
 
 export default UserAvatar;

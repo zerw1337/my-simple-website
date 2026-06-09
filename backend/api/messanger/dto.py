@@ -1,10 +1,10 @@
 from typing import Sequence
 
-from api.messanger.schemas import ChatList, ChatListUser, ChatListOut, ChatOut
+from api.messanger.schemas import ChatList, ChatListUser, ChatListOut, ChatOut, OtherParticipant
 from src.models.models import Chats, Messages
 
 
-def chats_list_dto(chats: Sequence[Chats]) -> list[ChatListOut]:
+def chats_list_dto(chats: Sequence[Chats], current_user_id: int) -> list[ChatListOut]:
     result = []
     for chat in chats:
         last_user = None
@@ -14,6 +14,13 @@ def chats_list_dto(chats: Sequence[Chats]) -> list[ChatListOut]:
                 username=chat.last_message.user.username,
                 last_read_message_id=None,
             )
+
+        other = None
+        for p in chat.participants:
+            if p.user_id != current_user_id:
+                other = OtherParticipant(id=p.user_id, username=p.username)
+                break
+
         result.append(
             ChatListOut(
                 chat=ChatList(
@@ -24,9 +31,11 @@ def chats_list_dto(chats: Sequence[Chats]) -> list[ChatListOut]:
                     last_message_text=chat.last_message_text,
                 ),
                 last_message_user=last_user,
+                other_participant=other,
             )
         )
     return result
+
 
 def get_chat_by_uuid_dto(messages: Sequence[Messages]) -> list[ChatOut]:
     result = []
@@ -34,7 +43,7 @@ def get_chat_by_uuid_dto(messages: Sequence[Messages]) -> list[ChatOut]:
         user = ChatListUser(
             id=message.user.id,
             username=message.user.username,
-            last_read_message_id=None
+            last_read_message_id=None,
         )
         res = ChatOut(
             id=message.id,
@@ -45,4 +54,3 @@ def get_chat_by_uuid_dto(messages: Sequence[Messages]) -> list[ChatOut]:
         )
         result.append(res)
     return result
-

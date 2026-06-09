@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from api.auth.schemas import UserOut
 from api.messanger.dto import chats_list_dto, get_chat_by_uuid_dto
-from src.models.models import Chats, ChatParticipants, Messages
+from src.models.models import Chats, ChatParticipants, Messages, Users
 
 
 async def create_new_chat(user_id: int, user: UserOut, session: AsyncSession):
@@ -24,23 +24,30 @@ async def create_new_chat(user_id: int, user: UserOut, session: AsyncSession):
     result = res.scalar_one_or_none()
     if result:
         raise HTTPException(status_code=403, detail="Chat already exists")
-    new_chat = Chats(
-        uuid=str(uuid.uuid4()),
+
+
+    other_user_res = await session.execute(
+        select(Users).
+        where(Users.id == user_id)
     )
+    other_user = other_user_res.scalar_one_or_none()
+    if not other_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    new_chat = Chats(uuid=str(uuid.uuid4()))
     session.add(new_chat)
     await session.flush()
-    session.add_all(
-        [ChatParticipants(chat_id=new_chat.id, user_id=user.id),
-        ChatParticipants(chat_id=new_chat.id, user_id=user_id)]
-    )
+    session.add_all([
+        ChatParticipants(chat_id=new_chat.id, user_id=user.id, username=user.username),
+        ChatParticipants(chat_id=new_chat.id, user_id=user_id, username=other_user.username),
+    ])
     try:
         await session.commit()
     except IntegrityError:
         await session.rollback()
         raise HTTPException(status_code=500, detail="Error creating chat")
-    return {"success": True,
-            "chat_id": new_chat.id,
-            "chat_uuid": new_chat.uuid,}
+    return {"success": True, "chat_id": new_chat.id, "chat_uuid": new_chat.uuid}
+
 
 async def get_all_my_chats(user: UserOut, session: AsyncSession):
     query = (
@@ -48,14 +55,14 @@ async def get_all_my_chats(user: UserOut, session: AsyncSession):
         .join(Chats.participants)
         .where(ChatParticipants.user_id == user.id)
         .options(
-            selectinload(Chats.last_message)
-            .selectinload(Messages.user)
+            selectinload(Chats.last_message).selectinload(Messages.user),
+            selectinload(Chats.participants),
         )
     )
     res = await session.execute(query)
     result = res.scalars().all()
-    chats_dto = chats_list_dto(result)
-    return chats_dto
+    return chats_list_dto(result, current_user_id=user.id)
+
 
 async def get_chat_by_uuid(chat_uuid: str, session: AsyncSession, user: UserOut):
     query = (
@@ -71,28 +78,20 @@ async def get_chat_by_uuid(chat_uuid: str, session: AsyncSession, user: UserOut)
         select(Messages)
         .where(Messages.chat_id == result.id)
         .options(selectinload(Messages.user))
-        .order_by(Messages.created_at.desc())
+        .order_by(Messages.created_at.asc())
     )
     res = await session.execute(query)
     result = res.scalars().all()
-    chat_dto = get_chat_by_uuid_dto(result)
-    return chat_dto
+    return get_chat_by_uuid_dto(result)
 
-async def upload_new_message_to_database(message: str, chat_uuid: str,  session: AsyncSession, user: UserOut):
-    query = (
-        select(Chats)
-        .where(Chats.uuid == chat_uuid)
-    )
+
+async def upload_new_message_to_database(message: str, chat_uuid: str, session: AsyncSession, user: UserOut):
+    query = select(Chats).where(Chats.uuid == chat_uuid)
     res = await session.execute(query)
     result = res.scalars().first()
     if not result:
         raise HTTPException(status_code=404, detail="Chat not found")
-
-    new_message = Messages(
-        chat_id=result.id,
-        message=message,
-        user_id=user.id,
-    )
+    new_message = Messages(chat_id=result.id, message=message, user_id=user.id)
     session.add(new_message)
     await session.flush()
     result.last_message_id = new_message.id
@@ -100,6 +99,7 @@ async def upload_new_message_to_database(message: str, chat_uuid: str,  session:
     result.last_message_created_at = new_message.created_at
     await session.commit()
     return new_message
+
 
 async def edit_message(message_id: int, message: str, session: AsyncSession, user: UserOut):
     query = (
@@ -131,6 +131,7 @@ async def edit_message(message_id: int, message: str, session: AsyncSession, use
     await session.commit()
     return message_orm
 
+
 async def delete_message(message_id: int, session: AsyncSession, user: UserOut):
     query = (
         delete(Messages)
@@ -142,8 +143,8 @@ async def delete_message(message_id: int, session: AsyncSession, user: UserOut):
     try:
         await session.flush()
         query = (
-            select(Chats)
-            .where(Chats.id == result.chat_id)
+            select(Chats).
+            where(Chats.id == result.chat_id)
         )
         res = await session.execute(query)
         chat_orm = res.scalar_one_or_none()
@@ -155,9 +156,9 @@ async def delete_message(message_id: int, session: AsyncSession, user: UserOut):
         )
         res = await session.execute(query)
         last_message_orm = res.scalar_one_or_none()
-        chat_orm.last_message_id = last_message_orm.id
-        chat_orm.last_message_text = last_message_orm.message
-        chat_orm.last_message_created_at = last_message_orm.created_at
+        chat_orm.last_message_id = last_message_orm.id if last_message_orm else None
+        chat_orm.last_message_text = last_message_orm.message if last_message_orm else None
+        chat_orm.last_message_created_at = last_message_orm.created_at if last_message_orm else None
         await session.commit()
         return message_id
     except IntegrityError:
@@ -174,4 +175,3 @@ async def check_if_current_user_belongs_to_this_chat(chat_uuid: str, user: UserO
     result = res.scalar_one_or_none()
     if not result:
         raise WebSocketException(code=1008)
-

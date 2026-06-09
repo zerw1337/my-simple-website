@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getProfile, getCommentsByUserId, getPostsByUserId } from "../api/Posts";
+import { createChat } from "../api/Messanger.js";
 import { AuthContext } from "../context/AuthContext";
 import UserAvatar from "../components/UserAvatar";
 import { stripTags } from "../components/PostContent";
@@ -32,6 +33,7 @@ function Profile() {
     const [comments, setComments] = useState([]);
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [chatLoading, setChatLoading] = useState(false);
     const [myUserId, setMyUserId] = useState(null);
     const [showAllPosts, setShowAllPosts] = useState(false);
     const [showAllComments, setShowAllComments] = useState(false);
@@ -99,6 +101,34 @@ function Profile() {
                                 </div>
                             </div>
                         </div>
+                        {!isOwn && user && (
+                            <button
+                                disabled={chatLoading}
+                                onClick={async () => {
+                                    setChatLoading(true);
+                                    try { await createChat(parseInt(id)); } catch {}
+                                    setChatLoading(false);
+                                    navigate("/messages");
+                                }}
+                                style={{
+                                    padding: "0.4rem 1.1rem",
+                                    background: "var(--logo-color)",
+                                    border: "none",
+                                    borderRadius: "8px",
+                                    color: "#0a0f18",
+                                    fontFamily: "inherit",
+                                    fontWeight: 700,
+                                    fontSize: "0.85rem",
+                                    cursor: chatLoading ? "not-allowed" : "pointer",
+                                    opacity: chatLoading ? 0.6 : 1,
+                                    transition: "all 0.2s",
+                                }}
+                                onMouseEnter={e => { if (!chatLoading) e.currentTarget.style.background = "rgb(3,220,255)"; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = "var(--logo-color)"; }}
+                            >
+                                {chatLoading ? "…" : "✉ Написать"}
+                            </button>
+                        )}
                         {isOwn && (
                             <button onClick={() => navigate("/settings")} style={{
                                 padding: "0.4rem 1.1rem",

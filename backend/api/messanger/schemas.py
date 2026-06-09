@@ -16,9 +16,14 @@ class ChatListUser(BaseModel):
     username: str
     last_read_message_id: int | None
 
+class OtherParticipant(BaseModel):
+    id: int
+    username: str
+
 class ChatListOut(BaseModel):
     chat: ChatList
     last_message_user: ChatListUser | None
+    other_participant: OtherParticipant | None = None
 
 class ChatOut(BaseModel):
     id: int

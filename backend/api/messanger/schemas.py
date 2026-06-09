@@ -24,6 +24,7 @@ class ChatListOut(BaseModel):
     chat: ChatList
     last_message_user: ChatListUser | None
     other_participant: OtherParticipant | None = None
+    unread_count: int | None = None
 
 class ChatOut(BaseModel):
     id: int

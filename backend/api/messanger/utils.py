@@ -60,8 +60,32 @@ async def get_all_my_chats(user: UserOut, session: AsyncSession):
         )
     )
     res = await session.execute(query)
-    result = res.scalars().all()
-    return chats_list_dto(result, current_user_id=user.id)
+    chats_list = res.scalars().all()
+    query = (
+        select(
+            ChatParticipants.chat_id,
+            func.count(Messages.id).label("unread_count")
+        )
+        .outerjoin(
+            Messages,
+            and_(
+                Messages.chat_id == ChatParticipants.chat_id,
+                Messages.id > func.coalesce(
+                    ChatParticipants.last_read_message_id,
+                    0
+                )
+            )
+        )
+        .where(ChatParticipants.user_id == user.id)
+        .group_by(ChatParticipants.chat_id)
+    )
+    res = await session.execute(query)
+    unread_counts = {
+        chat_id: unread_count
+        for chat_id, unread_count in res.all()
+    }
+
+    return chats_list_dto(chats=chats_list, current_user_id=user.id, unread_counts=unread_counts)
 
 
 async def get_chat_by_uuid(chat_uuid: str, session: AsyncSession, user: UserOut):
@@ -81,8 +105,17 @@ async def get_chat_by_uuid(chat_uuid: str, session: AsyncSession, user: UserOut)
         .order_by(Messages.created_at.asc())
     )
     res = await session.execute(query)
-    result = res.scalars().all()
-    return get_chat_by_uuid_dto(result)
+    chat_orm = res.scalars().all()
+    query = (
+        update(ChatParticipants)
+        .where(and_(ChatParticipants.user_id == user.id, ChatParticipants.chat_id == result.id))
+        .values(
+            last_read_message_id=chat_orm[-1].id if chat_orm else None
+        )
+    )
+    await session.execute(query)
+    await session.commit()
+    return get_chat_by_uuid_dto(chat_orm)
 
 
 async def upload_new_message_to_database(message: str, chat_uuid: str, session: AsyncSession, user: UserOut):
@@ -97,6 +130,12 @@ async def upload_new_message_to_database(message: str, chat_uuid: str, session: 
     result.last_message_id = new_message.id
     result.last_message_text = new_message.message
     result.last_message_created_at = new_message.created_at
+    query = (
+        update(ChatParticipants)
+        .where(and_(ChatParticipants.chat_id == new_message.chat_id, ChatParticipants.user_id == user.id))
+        .values(last_read_message_id=new_message.id)
+    )
+    await session.execute(query)
     await session.commit()
     return new_message
 
@@ -164,6 +203,16 @@ async def delete_message(message_id: int, session: AsyncSession, user: UserOut):
     except IntegrityError:
         await session.rollback()
         raise WebSocketException(code=1008)
+
+async def update_last_read_message_for_participant(message: Messages, session: AsyncSession, user: UserOut):
+    query = (
+        update(ChatParticipants)
+        .where(and_(ChatParticipants.chat_id == message.chat_id, ChatParticipants.user_id != user.id))
+        .values(last_read_message_id=message.id)
+    )
+    await session.execute(query)
+    await session.commit()
+    return
 
 async def check_if_current_user_belongs_to_this_chat(chat_uuid: str, user: UserOut, session: AsyncSession):
     query = (

@@ -5,7 +5,8 @@ from starlette.websockets import WebSocketDisconnect
 from api.auth.dependencies import get_auth
 from api.auth.schemas import UserOut
 from api.messanger.utils import create_new_chat, get_all_my_chats, get_chat_by_uuid, \
-    check_if_current_user_belongs_to_this_chat, upload_new_message_to_database, edit_message, delete_message
+    check_if_current_user_belongs_to_this_chat, upload_new_message_to_database, edit_message, delete_message, \
+    update_last_read_message_for_participant
 from api.ws.config import ws_messanger
 from src.models.database import get_session
 
@@ -43,6 +44,8 @@ async def chat_ws(chat_uuid: str, websocket: WebSocket, session: AsyncSession = 
             if received_type == "new_message":
                 received_data = received["message"]
                 message_orm = await upload_new_message_to_database(message=received_data, chat_uuid=chat_uuid, session=session, user=user)
+                if len(ws_messanger.messanger_connections[chat_uuid]) > 1 :
+                    await update_last_read_message_for_participant(message=message_orm, session=session, user=user)
                 await ws_messanger.broadcast(message=message_orm, chat_uuid=chat_uuid)
 
             elif received_type == "edit_message":
@@ -58,4 +61,7 @@ async def chat_ws(chat_uuid: str, websocket: WebSocket, session: AsyncSession = 
 
 
     except WebSocketDisconnect:
+        await ws_messanger.disconnect(chat_uuid=chat_uuid, websocket=websocket)
+
+    except Exception:
         await ws_messanger.disconnect(chat_uuid=chat_uuid, websocket=websocket)

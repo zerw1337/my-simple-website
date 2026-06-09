@@ -4,7 +4,7 @@ from api.messanger.schemas import ChatList, ChatListUser, ChatListOut, ChatOut, 
 from src.models.models import Chats, Messages
 
 
-def chats_list_dto(chats: Sequence[Chats], current_user_id: int) -> list[ChatListOut]:
+def chats_list_dto(chats: Sequence[Chats], unread_counts: dict, current_user_id: int) -> list[ChatListOut]:
     result = []
     for chat in chats:
         last_user = None
@@ -21,6 +21,8 @@ def chats_list_dto(chats: Sequence[Chats], current_user_id: int) -> list[ChatLis
                 other = OtherParticipant(id=p.user_id, username=p.username)
                 break
 
+        unread_count = unread_counts.get(chat.id, 0)
+
         result.append(
             ChatListOut(
                 chat=ChatList(
@@ -32,6 +34,7 @@ def chats_list_dto(chats: Sequence[Chats], current_user_id: int) -> list[ChatLis
                 ),
                 last_message_user=last_user,
                 other_participant=other,
+                unread_count=unread_count,
             )
         )
     return result

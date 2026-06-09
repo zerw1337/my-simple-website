@@ -23,6 +23,7 @@ class Users(Base):
     is_verified: Mapped[bool] = mapped_column(default=False, nullable=True)
     user_version: Mapped[int] = mapped_column(default=1, nullable=False)
     pending_email: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
+    last_seen: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
 
     refresh_tokens: Mapped[list["RefreshTokens"]] = relationship("RefreshTokens", back_populates="user", cascade="all, delete-orphan")
     profile: Mapped["Profiles"] = relationship("Profiles" ,back_populates="user", uselist=False, cascade="all, delete-orphan")

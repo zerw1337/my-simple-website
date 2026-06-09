@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { getMyChats, getChatMessages, getWsUrl } from "../api/Messanger.js";
 import { prefetchAvatars } from "../api/avatarCache.js";
@@ -25,24 +25,34 @@ function getCurrentUserId() {
     catch { return null; }
 }
 
-/** Обновляет запись чата в списке и пересортировывает по дате последнего сообщения. */
-function applyLastMessage(chatList, chatUuid, text, createdAt) {
-    const updated = chatList.map(c =>
-        c.chat.uuid === chatUuid
-            ? { ...c, chat: { ...c.chat, last_message_text: text, last_message_created_at: createdAt } }
-            : c
-    );
-    return [...updated].sort((a, b) => {
+/** Сортирует список чатов по дате последнего сообщения (новые вверху). */
+function sortChats(chatList) {
+    return [...chatList].sort((a, b) => {
         const ta = a.chat.last_message_created_at ? new Date(a.chat.last_message_created_at + "Z") : 0;
         const tb = b.chat.last_message_created_at ? new Date(b.chat.last_message_created_at + "Z") : 0;
         return tb - ta;
     });
 }
 
+/** Обновляет запись чата в списке и пересортировывает по дате последнего сообщения. */
+function applyLastMessage(chatList, chatUuid, text, createdAt, isActive) {
+    const updated = chatList.map(c => {
+        if (c.chat.uuid !== chatUuid) return c;
+        return {
+            ...c,
+            chat: { ...c.chat, last_message_text: text, last_message_created_at: createdAt },
+            // Увеличиваем счётчик непрочитанных только если чат не активен
+            unread_count: isActive ? 0 : (c.unread_count ?? 0) + 1,
+        };
+    });
+    return sortChats(updated);
+}
+
 /* ---------- component ---------- */
 export default function Messanger() {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [chats, setChats] = useState([]);
     const [activeChatUuid, setActiveChatUuid] = useState(null);
@@ -106,8 +116,9 @@ export default function Messanger() {
             const isActive = activeChatUuidRef.current === chatUuid;
 
             if (payload.response_type === "message_created") {
-                // Обновляем sidebar: порядок + превью последнего сообщения
-                setChats(prev => applyLastMessage(prev, chatUuid, payload.message, payload.created_at));
+                // Обновляем sidebar: порядок + превью + unread_count
+                const isActive = activeChatUuidRef.current === chatUuid;
+                setChats(prev => applyLastMessage(prev, chatUuid, payload.message, payload.created_at, isActive));
 
                 // Если это активный чат — добавляем сообщение в ленту
                 if (isActive) {
@@ -144,7 +155,7 @@ export default function Messanger() {
         (async () => {
             setLoadingChats(true);
             const data = await getMyChats();
-            setChats(data);
+            setChats(sortChats(data));
             setLoadingChats(false);
 
             if (!Array.isArray(data) || data.length === 0) return;
@@ -158,9 +169,12 @@ export default function Messanger() {
             // Открываем фоновые WS для всех чатов (для синхронизации sidebar)
             data.forEach(({ chat }) => ensureChatWs(chat.uuid));
 
-            // Авто-открываем последний чат (первый в списке — отсортирован по дате)
-            const firstUuid = data[0].chat.uuid;
-            openChatInternal(firstUuid, data[0]);
+            // Открываем чат из state (после createChat) → sessionStorage (после F5) → первый по умолчанию
+            const targetUuid = location.state?.openChatUuid
+                ?? sessionStorage.getItem("activeChatUuid")
+                ?? data[0].chat.uuid;
+            const targetEntry = data.find(c => c.chat.uuid === targetUuid) ?? data[0];
+            openChatInternal(targetEntry.chat.uuid, targetEntry);
         })();
 
         return () => {
@@ -177,9 +191,15 @@ export default function Messanger() {
 
         activeChatUuidRef.current = chatUuid;
         setActiveChatUuid(chatUuid);
+        sessionStorage.setItem("activeChatUuid", chatUuid);
         setMessages([]);
         setWsError(null);
         setLoadingMessages(true);
+
+        // Сбрасываем счётчик непрочитанных для открываемого чата
+        setChats(prev => prev.map(c =>
+            c.chat.uuid === chatUuid ? { ...c, unread_count: 0 } : c
+        ));
 
         // Устанавливаем статус WS для нового активного чата
         const existingWs = allWsRef.current[chatUuid];
@@ -264,7 +284,7 @@ export default function Messanger() {
                     ) : chats.length === 0 ? (
                         <div className="msg-empty">Нет чатов</div>
                     ) : (
-                        chats.map(({ chat, other_participant: op }) => (
+                        chats.map(({ chat, other_participant: op, unread_count }) => (
                             <button
                                 key={chat.uuid}
                                 className={`msg-chat-item${activeChatUuid === chat.uuid ? " active" : ""}`}
@@ -278,8 +298,13 @@ export default function Messanger() {
                                         profileId={op?.id}
                                     />
                                     <div className="msg-chat-text">
-                                        <div className="msg-chat-name">
-                                            {op?.username ?? "Неизвестный"}
+                                        <div className="msg-chat-name-row">
+                                            <span className="msg-chat-name">
+                                                {op?.username ?? "Неизвестный"}
+                                            </span>
+                                            {unread_count > 0 && (
+                                                <span className="msg-unread-badge">{unread_count > 99 ? "99+" : unread_count}</span>
+                                            )}
                                         </div>
                                         {chat.last_message_text && (
                                             <div className="msg-chat-preview">{chat.last_message_text}</div>
@@ -301,15 +326,6 @@ export default function Messanger() {
                     ) : (
                         <>
                             <div className="msg-window-header">
-                                <span
-                                    title={`WebSocket: ${wsStatus}`}
-                                    style={{
-                                        display: "inline-block", width: 9, height: 9,
-                                        borderRadius: "50%", background: wsColor, marginRight: 10,
-                                        boxShadow: wsStatus === "open" ? `0 0 6px ${wsColor}` : "none",
-                                        transition: "background 0.3s", flexShrink: 0,
-                                    }}
-                                />
                                 {otherParticipant ? (
                                     <>
                                         <UserAvatar userId={otherParticipant.id} username={otherParticipant.username} size={30} style={{ marginRight: 8 }} profileId={otherParticipant.id} />
@@ -323,6 +339,15 @@ export default function Messanger() {
                                         </Link>
                                     </>
                                 ) : (activeChatUuid.slice(0, 8))}
+                                <span
+                                    title={`WebSocket: ${wsStatus}`}
+                                    style={{
+                                        marginLeft: "auto", fontSize: "0.65rem", flexShrink: 0,
+                                        color: wsStatus === "open" ? "rgba(4,198,233,0.35)" : "transparent",
+                                        transition: "color 0.3s", letterSpacing: "0.05em",
+                                        userSelect: "none",
+                                    }}
+                                >connected</span>
                             </div>
 
                             {wsError && (
@@ -446,9 +471,19 @@ export default function Messanger() {
                 .msg-chat-item.active { background: rgba(4,198,233,0.12); }
                 .msg-chat-row { display: flex; align-items: center; gap: 10px; }
                 .msg-chat-text { flex: 1; min-width: 0; }
+                .msg-chat-name-row {
+                    display: flex; align-items: center; justify-content: space-between; gap: 6px;
+                }
                 .msg-chat-name {
                     font-weight: 600; font-size: 0.88rem; color: rgb(210,240,255);
-                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+                }
+                .msg-unread-badge {
+                    flex-shrink: 0;
+                    background: var(--logo-color, #04c6e9); color: #0a0f18;
+                    font-size: 0.68rem; font-weight: 700; line-height: 1;
+                    border-radius: 10px; padding: 2px 6px; min-width: 18px;
+                    text-align: center;
                 }
                 .msg-chat-preview {
                     font-size: 0.76rem; color: rgba(200,220,240,0.5);

@@ -106,9 +106,14 @@ function Profile() {
                                 disabled={chatLoading}
                                 onClick={async () => {
                                     setChatLoading(true);
-                                    try { await createChat(parseInt(id)); } catch {}
-                                    setChatLoading(false);
-                                    navigate("/messages");
+                                    try {
+                                        const newChat = await createChat(parseInt(id));
+                                        setChatLoading(false);
+                                        navigate("/messages", { state: { openChatUuid: newChat.chat_uuid } });
+                                    } catch {
+                                        setChatLoading(false);
+                                        navigate("/messages");
+                                    }
                                 }}
                                 style={{
                                     padding: "0.4rem 1.1rem",

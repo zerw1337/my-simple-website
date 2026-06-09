@@ -349,3 +349,22 @@ p{
     border-radius: 999px;
     text-transform: uppercase;
 }
+/* ===== Global scrollbar ===== */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(4, 198, 233, 0.2) transparent;
+}
+*::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+    background: rgba(4, 198, 233, 0.2);
+    border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+    background: rgba(4, 198, 233, 0.4);
+}

@@ -32,6 +32,7 @@ class UserOut(BaseModel):
     is_verified: bool
     user_version: int
     pending_email: str | None = None
+    last_seen: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

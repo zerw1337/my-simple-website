@@ -74,6 +74,7 @@ class Profiles(Base):
     birthday: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
     bio: Mapped[str] = mapped_column(Text, nullable=True)
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
+    last_seen: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
 
     user: Mapped["Users"] = relationship("Users", back_populates="profile")
     avatar: Mapped["Avatars | None"] = relationship("Avatars", back_populates="profile")

@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import WebSocket
 from collections import defaultdict
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -71,6 +73,33 @@ class MessangerConnectionManager(ConnectionManager):
             if not self.messanger_connections[chat_uuid]:
                 del self.messanger_connections[chat_uuid]
 
+class OnlineStatusConnectionManager(ConnectionManager):
+    async def connect(self, websocket: WebSocket, user_id: int):
+        await websocket.accept()
+        self.active_connections[user_id].add(websocket)
 
+    async def broadcast(self, user_id: int, message_type: str):
+        if message_type == "connected":
+            for connections in ws_online.active_connections.values():
+                for ws in connections:
+                    await ws.send_json({
+                        "type": "connected",
+                        "user_id": user_id,
+                    })
+        elif message_type == "disconnected":
+            for connections in ws_online.active_connections.values():
+                for ws in connections:
+                    await ws.send_json({
+                        "type": "disconnected",
+                        "user_id": user_id,
+                    })
 
+    async def disconnect(self, websocket: WebSocket, user_id: int):
+        if user_id in self.active_connections:
+            self.active_connections[user_id].discard(websocket)
+
+            if not self.active_connections[user_id]:
+                del self.active_connections[user_id]
+
+ws_online = OnlineStatusConnectionManager()
 ws_messanger = MessangerConnectionManager()

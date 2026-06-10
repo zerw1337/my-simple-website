@@ -15,10 +15,12 @@ class ChatListUser(BaseModel):
     id: int
     username: str
     last_read_message_id: int | None
+    last_seen: datetime | None = None
 
 class OtherParticipant(BaseModel):
     id: int
     username: str
+    last_seen : datetime | None = None
 
 class ChatListOut(BaseModel):
     chat: ChatList

@@ -28,6 +28,9 @@ async def user_status_websocket(
         while True:
             await websocket.receive_text()
 
+    except WebSocketDisconnect:
+        pass
+
     finally:
 
         await ws_online.disconnect(websocket=websocket, user_id=user.id)

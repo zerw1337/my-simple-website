@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getProfile, getCommentsByUserId, getPostsByUserId } from "../api/Posts";
 import { createChat } from "../api/Messanger.js";
 import { AuthContext } from "../context/AuthContext";
+import { useOnlineStatus, formatLastSeen } from "../context/OnlineStatusContext.jsx";
 import UserAvatar from "../components/UserAvatar";
 import { stripTags } from "../components/PostContent";
 
@@ -29,6 +30,7 @@ function Profile() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
+    const { seedLastSeen, isOnline } = useOnlineStatus();
     const [profile, setProfile] = useState(null);
     const [comments, setComments] = useState([]);
     const [posts, setPosts] = useState([]);
@@ -59,6 +61,8 @@ function Profile() {
                 setLoading(false); return;
             }
             setProfile(data); setLoading(false);
+            // Сидируем last_seen в глобальный контекст онлайн-статусов
+            if (data.last_seen) seedLastSeen(parseInt(id), data.last_seen);
         });
         getCommentsByUserId(id).then(setComments);
         getPostsByUserId(id).then(setPosts);
@@ -98,6 +102,17 @@ function Profile() {
                                     <p style={{ margin: 0, color: "rgb(80,110,140)", fontSize: "0.85rem" }}>
                                         {profile.first_name} {profile.last_name}
                                     </p>
+                                    {/* Онлайн-статус */}
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginTop: "0.35rem" }}>
+                                        <span style={{ fontSize: "0.78rem", color: isOnline(parseInt(id)) ? "#22c55e" : "rgb(80,110,140)" }}>
+                                            {isOnline(parseInt(id))
+                                                ? "В сети"
+                                                : profile.last_seen
+                                                    ? `Был(а) ${formatLastSeen(profile.last_seen)}`
+                                                    : "Не в сети"
+                                            }
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

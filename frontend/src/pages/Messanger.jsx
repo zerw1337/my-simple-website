@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { useOnlineStatus } from "../context/OnlineStatusContext.jsx";
 import { getMyChats, getChatMessages, getWsUrl } from "../api/Messanger.js";
 import { prefetchAvatars } from "../api/avatarCache.js";
 import UserAvatar from "../components/UserAvatar.jsx";
@@ -51,6 +52,7 @@ function applyLastMessage(chatList, chatUuid, text, createdAt, isActive) {
 /* ---------- component ---------- */
 export default function Messanger() {
     const { user } = useContext(AuthContext);
+    const { seedLastSeen, isOnline, getLastSeen } = useOnlineStatus();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -159,6 +161,11 @@ export default function Messanger() {
             setLoadingChats(false);
 
             if (!Array.isArray(data) || data.length === 0) return;
+
+            // Сидируем last_seen участников в глобальный контекст
+            data.forEach(({ other_participant: op }) => {
+                if (op?.id && op?.last_seen) seedLastSeen(op.id, op.last_seen);
+            });
 
             // Предзагружаем аватарки всех участников за один проход
             const avatarIds = data
@@ -299,7 +306,14 @@ export default function Messanger() {
                                     />
                                     <div className="msg-chat-text">
                                         <div className="msg-chat-name-row">
-                                            <span className="msg-chat-name">
+                                            <span className="msg-chat-name" style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                                                {op?.id && (
+                                                    <span style={{
+                                                        width: 7, height: 7, borderRadius: "50%", flexShrink: 0, display: "inline-block",
+                                                        background: isOnline(op.id) ? "#22c55e" : "transparent",
+                                                        border: isOnline(op.id) ? "none" : "none",
+                                                    }} />
+                                                )}
                                                 {op?.username ?? "Неизвестный"}
                                             </span>
                                             {unread_count > 0 && (
@@ -329,14 +343,28 @@ export default function Messanger() {
                                 {otherParticipant ? (
                                     <>
                                         <UserAvatar userId={otherParticipant.id} username={otherParticipant.username} size={30} style={{ marginRight: 8 }} profileId={otherParticipant.id} />
-                                        <Link
-                                            to={`/profile/${otherParticipant.id}`}
-                                            style={{ color: "rgb(180,220,255)", fontWeight: 600, textDecoration: "none" }}
-                                            onMouseEnter={e => e.currentTarget.style.color = "var(--logo-color)"}
-                                            onMouseLeave={e => e.currentTarget.style.color = "rgb(180,220,255)"}
-                                        >
-                                            {otherParticipant.username}
-                                        </Link>
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                                            <Link
+                                                to={`/profile/${otherParticipant.id}`}
+                                                style={{ color: "rgb(180,220,255)", fontWeight: 600, textDecoration: "none", lineHeight: 1.2 }}
+                                                onMouseEnter={e => e.currentTarget.style.color = "var(--logo-color)"}
+                                                onMouseLeave={e => e.currentTarget.style.color = "rgb(180,220,255)"}
+                                            >
+                                                {otherParticipant.username}
+                                            </Link>
+                                            <span style={{
+                                                fontSize: "0.7rem",
+                                                color: isOnline(otherParticipant.id) ? "#22c55e" : "rgb(80,110,140)",
+                                                lineHeight: 1,
+                                            }}>
+                                                {isOnline(otherParticipant.id)
+                                                    ? "● В сети"
+                                                    : getLastSeen(otherParticipant.id)
+                                                        ? `Был(а) ${getLastSeen(otherParticipant.id)}`
+                                                        : "Не в сети"
+                                                }
+                                            </span>
+                                        </div>
                                     </>
                                 ) : (activeChatUuid.slice(0, 8))}
                                 <span

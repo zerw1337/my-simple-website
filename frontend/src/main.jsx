@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { OnlineStatusProvider } from "./context/OnlineStatusContext.jsx";
 import "./index.css"
 
 // --- Глобальный 429 (блокирующий) ---
@@ -176,7 +177,9 @@ window.fetch = async (...args) => {
 ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
         <AuthProvider>
-            <App />
+            <OnlineStatusProvider>
+                <App />
+            </OnlineStatusProvider>
         </AuthProvider>
     </React.StrictMode>
 );

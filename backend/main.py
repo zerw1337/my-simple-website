@@ -13,6 +13,7 @@ from api.auth.schemas import UserOut
 from api.auth.dependencies import get_auth
 from src.redis import redis_config
 
+from api.user_online_status.views import user_status_router
 from api.messanger.views import messanger_router
 from api.reactions.views import reaction_router
 from api.users.views import users_router
@@ -47,6 +48,7 @@ app = FastAPI(lifespan=lifespan,
               root_path="/api"
               )
 
+app.include_router(user_status_router)
 app.include_router(messanger_router)
 app.include_router(reaction_router)
 app.include_router(comments_router)

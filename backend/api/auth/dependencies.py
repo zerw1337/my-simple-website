@@ -1,3 +1,5 @@
+from dis import RETURN_CONST
+
 from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.auth.auth_validation import get_current_user
@@ -31,3 +33,11 @@ async def get_auth_unauthorized(token: str | None = Depends(oauth2_scheme_unauth
         if user:
             raise HTTPException(status_code=403, detail="Forbidden")
     return True
+
+async def get_auth_no_exception(token: str | None, session: AsyncSession = Depends(get_session)) -> UserOut | None:
+    if token is None:
+        return None
+    user = await get_current_user(token=token, session=session)
+    if user.is_verified and user.is_active and not user.is_banned:
+        return user
+    return None

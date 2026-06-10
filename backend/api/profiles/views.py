@@ -18,13 +18,9 @@ from ..rate_limiter.limiter import is_limited_avatar_upload
 profiles_router = APIRouter(prefix="/profile", tags=["Profiles"])
 
 @profiles_router.get("/{user_id}", response_model=ProfileOut, summary="GET профиль по user_id")
-async def get_profile(user_id: int = Path(..., gt=0, lt=10000), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)) -> ProfileOut:
-    cached = await r.get(f"profile/{user_id}")
-    if cached:
-        return json.loads(cached)
+async def get_profile(user_id: int = Path(..., gt=0, lt=10000), session: AsyncSession = Depends(get_session)) -> ProfileOut:
     res = await get_current_profile(user_id=user_id, session=session)
     profile = profile_dto(res)
-    await r.set(f"profile/{user_id}", json.dumps(profile.model_dump(mode="json")), ex=settings.CACHE_EXPIRE)
     return profile
 
 @profiles_router.get("/avatar/{user_id}/", response_class=Response)

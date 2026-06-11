@@ -47,17 +47,32 @@ export function OnlineStatusProvider({ children }) {
         ws.onmessage = (e) => {
             try {
                 const data = JSON.parse(e.data);
+
+                if (data.type === "online_users") {
+                    setOnlineSet(new Set(data.users));
+                    return;
+                }
+
                 const uid = data.user_id;
                 if (!uid) return;
 
                 if (data.type === "connected") {
-                    setOnlineSet(prev => { const s = new Set(prev); s.add(uid); return s; });
+                    setOnlineSet(prev => {
+                        const s = new Set(prev);
+                        s.add(uid);
+                        return s;
+                    });
                     lastSeenMap.current.delete(uid);
+
                 } else if (data.type === "disconnected") {
-                    setOnlineSet(prev => { const s = new Set(prev); s.delete(uid); return s; });
+                    setOnlineSet(prev => {
+                        const s = new Set(prev);
+                        s.delete(uid);
+                        return s;
+                    });
                     lastSeenMap.current.set(uid, new Date());
                 }
-            } catch { /* ignore */ }
+            } catch {}
         };
 
         ws.onopen = () => {

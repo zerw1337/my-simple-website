@@ -128,6 +128,10 @@ class OnlineStatusUnauthorizedConnectionManager(ConnectionManager):
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections_unauthorized.add(websocket)
+        await websocket.send_json({
+            "type": "online_users",
+            "users": list(ws_online.active_connections.keys()),
+        })
 
 
     async def disconnect(self, websocket: WebSocket):

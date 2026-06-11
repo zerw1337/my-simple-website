@@ -1,4 +1,4 @@
-import { API_URL } from "./const.js";
+import { API_URL, WS_URL } from "./const.js";
 import { fetchWithAuth } from "./refreshToken.js";
 
 export async function createChat(userId) {
@@ -22,6 +22,5 @@ export async function getChatMessages(chatUuid) {
 
 export function getWsUrl(chatUuid) {
     const token = localStorage.getItem("access_token");
-    const wsBase = API_URL.replace(/^http/, "ws");
-    return `${wsBase}/chats/${chatUuid}/ws/?token=${encodeURIComponent(token)}`;
+    return `${WS_URL}/chats/${chatUuid}/ws/?token=${encodeURIComponent(token)}`;
 }

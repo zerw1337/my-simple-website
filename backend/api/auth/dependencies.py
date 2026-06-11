@@ -38,6 +38,6 @@ async def get_auth_no_exception(token: str | None, session: AsyncSession = Depen
     if token is None:
         return None
     user = await get_current_user(token=token, session=session)
-    if user.is_verified and user.is_active and not user.is_banned:
-        return user
-    return None
+    if not user:
+        return None
+    return user

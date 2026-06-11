@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 from fastapi import APIRouter, WebSocket, Depends, WebSocketDisconnect, WebSocketException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,7 +17,11 @@ async def user_status_websocket(
 ):
     token = websocket.query_params.get("token")
 
-    user = await get_auth_no_exception(session=session, token=token)
+    try:
+        user = await get_auth_no_exception(session=session, token=token)
+    except Exception:
+        user = None
+
     if user is not None:
         await ws_online.connect(websocket=websocket, user_id=user.id)
         await update_last_seen_user_status(user=user, session=session, new_value=None)
@@ -26,7 +31,7 @@ async def user_status_websocket(
             while True:
                 await websocket.receive_text()
 
-        except WebSocketDisconnect:
+        except (WebSocketDisconnect, RuntimeError, WebSocketException):
             pass
 
         finally:
@@ -41,8 +46,10 @@ async def user_status_websocket(
         try:
             while True:
                 await websocket.receive_text()
-        except WebSocketDisconnect:
+
+        except (WebSocketDisconnect, RuntimeError, WebSocketException):
             pass
+
         finally:
             await ws_online_unauthorized.disconnect(websocket=websocket)
 

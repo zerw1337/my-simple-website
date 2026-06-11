@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
-import { API_URL } from "../api/const.js";
+import { WS_URL } from "../api/const.js";
 import { AuthContext } from "./AuthContext.jsx";
 
 export const OnlineStatusContext = createContext({
@@ -10,11 +10,9 @@ export const OnlineStatusContext = createContext({
 
 function getWsStatusUrl() {
     const token = localStorage.getItem("access_token");
-    const wsBase = API_URL.replace(/^http/, "ws");
-    // Авторизованные — с токеном, гости — без (бэкенд примет и тех и других)
     return token
-        ? `${wsBase}/status/ws/?token=${encodeURIComponent(token)}`
-        : `${wsBase}/status/ws/`;
+        ? `${WS_URL}/status/ws/?token=${encodeURIComponent(token)}`
+        : `${WS_URL}/status/ws/`;
 }
 
 export function formatLastSeen(date) {

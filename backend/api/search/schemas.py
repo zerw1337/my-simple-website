@@ -10,7 +10,8 @@ class UserSearch(BaseModel):
 
 class CategorySearch(BaseModel):
     id: int
-    title: str
+    emoji: str
+    name: str
 
     model_config = ConfigDict(from_attributes=True)
 

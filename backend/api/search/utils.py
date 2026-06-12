@@ -32,6 +32,7 @@ async def get_search(q: str | None, session: AsyncSession):
     query = (
         select(Posts)
         .where(or_(Posts.title.ilike(f"%{q}%"), Posts.content.ilike(f"%{q}%")))
+        .limit(5)
         .limit(10)
     )
     res = await session.execute(query)

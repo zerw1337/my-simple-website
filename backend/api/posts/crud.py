@@ -1,7 +1,7 @@
 from fastapi import HTTPException, UploadFile, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.exc import IntegrityError
 from typing import Sequence
 import base64
@@ -79,6 +79,20 @@ async def get_all_posts(session: AsyncSession) -> Sequence[Posts]:
         .options(selectinload(Posts.user))
         .order_by(Posts.id.desc())
     )
+    res = await session.execute(query)
+    results = res.scalars().all()
+    return results
+
+async def get_posts_paginated(current_post:int | None, limit:int, session: AsyncSession) -> Sequence[Posts]:
+    query = (
+        select(Posts)
+        .options(selectinload(Posts.category))
+        .options(selectinload(Posts.user))
+        .order_by(Posts.id.desc())
+        .limit(limit)
+    )
+    if current_post:
+        query = query.where(Posts.id < current_post)
     res = await session.execute(query)
     results = res.scalars().all()
     return results

@@ -9,7 +9,7 @@ from api.auth.dependencies import get_auth_admin
 from api.auth.schemas import UserOut
 from api.posts.crud import create_new_post, get_all_posts, get_current_post_by_id, edit_current_post, delete_post_by_id, \
     get_five_latest_posts, get_next_post_after_this, get_previous_post_from_this, get_posts_by_user_id, \
-    get_all_posts_ordered_by_views, get_all_posts_ordered_by_rating, get_post_images_by_post_id
+    get_all_posts_ordered_by_views, get_all_posts_ordered_by_rating, get_post_images_by_post_id, get_posts_paginated
 from api.posts.dto import get_all_posts_dto, get_post_by_id_dto
 from api.posts.schemas import CreatePost, PostOut, UpdatePost
 from api.posts_rating.utils import update_posts_rating_by_post_model, update_posts_rating_by_post_id
@@ -57,6 +57,12 @@ async def get_posts(session: AsyncSession = Depends(get_session), r: Redis = Dep
     posts_orm = await get_all_posts(session=session)
     posts_dto = get_all_posts_dto(posts=posts_orm)
     await r.set("all_posts", json.dumps([p.model_dump(mode="json") for p in posts_dto]), ex=settings.CACHE_EXPIRE)
+    return posts_dto
+
+@posts_router.get("/paginated")
+async def get_posts_pag(current_post: int | None, limit: int, session: AsyncSession = Depends(get_session)):
+    posts_orm = await get_posts_paginated(current_post=current_post, limit=limit, session=session)
+    posts_dto = get_all_posts_dto(posts=posts_orm)
     return posts_dto
 
 @posts_router.get("/five_latest/", response_model=list[PostOut], summary="GET 5 последних постов")

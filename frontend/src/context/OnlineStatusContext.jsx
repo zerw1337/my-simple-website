@@ -96,7 +96,7 @@ export function OnlineStatusProvider({ children }) {
 
         ws.onerror = () => ws.close();
     }, []);
-    
+
     // При смене auth-статуса — переконнектиться с новым (или без) токена
     useEffect(() => {
         if (wsRef.current) {

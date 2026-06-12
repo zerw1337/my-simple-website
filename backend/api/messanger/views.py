@@ -59,6 +59,9 @@ async def chat_ws(chat_uuid: str, websocket: WebSocket, session: AsyncSession = 
                 deleted_message_id = await delete_message(message_id=received_message_id, session=session, user=user)
                 await ws_messanger.broadcast_delete(message_id=deleted_message_id, chat_uuid=chat_uuid)
 
+            elif received_type == "ping":
+                await websocket.send_json({"type": "pong"})
+
 
     except WebSocketDisconnect:
         await ws_messanger.disconnect(chat_uuid=chat_uuid, websocket=websocket)

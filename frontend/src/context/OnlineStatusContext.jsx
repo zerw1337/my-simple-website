@@ -97,18 +97,6 @@ export function OnlineStatusProvider({ children }) {
         ws.onerror = () => ws.close();
     }, []);
 
-    // Подключаемся сразу при монтировании — и для авторизованных и для гостей
-    useEffect(() => {
-        connect();
-        return () => {
-            clearTimeout(reconnectTimer.current);
-            if (wsRef.current) {
-                wsRef.current.onclose = null; // не реконнектиться при анмаунте
-                wsRef.current.close();
-            }
-        };
-    }, [connect]);
-
     // При смене auth-статуса — переконнектиться с новым (или без) токена
     useEffect(() => {
         if (wsRef.current) {
@@ -119,12 +107,20 @@ export function OnlineStatusProvider({ children }) {
         clearTimeout(reconnectTimer.current);
 
         if (!user) {
-            // Гость: чистим стейт авторизованного юзера, но WS оставляем
             setOnlineSet(new Set());
             lastSeenMap.current.clear();
         }
 
         connect();
+
+        // Добавить cleanup — иначе WS остаётся при размонтировании
+        return () => {
+            clearTimeout(reconnectTimer.current);
+            if (wsRef.current) {
+                wsRef.current.onclose = null;
+                wsRef.current.close();
+            }
+        };
     }, [user, connect]);
 
     const seedLastSeen = useCallback((userId, lastSeenValue) => {

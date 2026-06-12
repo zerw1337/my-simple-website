@@ -1,4 +1,5 @@
 import asyncio
+import json
 from datetime import datetime
 from fastapi import APIRouter, WebSocket, Depends, WebSocketDisconnect, WebSocketException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,7 +30,15 @@ async def user_status_websocket(
 
         try:
             while True:
-                await websocket.receive_text()
+
+                data = await websocket.receive_text()
+                try:
+                    msg = json.loads(data)
+                    if msg.get("type") == "ping":
+                        await websocket.send_json({"type": "pong"})
+                except (ValueError, KeyError):
+                    pass
+
 
         except (WebSocketDisconnect, RuntimeError, WebSocketException):
             pass
@@ -45,7 +54,13 @@ async def user_status_websocket(
 
         try:
             while True:
-                await websocket.receive_text()
+                data = await websocket.receive_text()
+                try:
+                    msg = json.loads(data)
+                    if msg.get("type") == "ping":
+                        await websocket.send_json({"type": "pong"})
+                except (ValueError, KeyError):
+                    pass
 
         except (WebSocketDisconnect, RuntimeError, WebSocketException):
             pass

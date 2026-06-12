@@ -19,7 +19,7 @@ async def user_status_websocket(
     token = websocket.query_params.get("token")
 
     try:
-        user = await get_auth_no_exception(session=session, token=token)
+        user = await get_auth(session=session, token=token)
     except Exception:
         user = None
 

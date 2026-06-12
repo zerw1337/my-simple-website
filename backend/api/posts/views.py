@@ -3,7 +3,7 @@ from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 import json
 from redis.asyncio import Redis
-from starlette.responses import Response
+
 
 from api.auth.dependencies import get_auth_admin
 from api.auth.schemas import UserOut

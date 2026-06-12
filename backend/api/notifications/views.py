@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, Depends, HTTPException
+from fastapi import APIRouter, Depends, Depends, HTTPException, WebSocketException
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.websockets import WebSocket
+from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from api.auth.dependencies import get_auth_admin, get_auth
 from api.auth.schemas import UserOut
@@ -8,6 +8,7 @@ from api.notifications.crud import create_custom_notification_process, get_my_no
     read_current_users_all_notifications, delete_current_notification, delete_current_users_all_notifications, \
     create_welcome_notification_process, get_welcome_notification_process, delete_current_welcome_notification
 from api.notifications.schemas import CreateNotification, CreateWelcomeNotification
+from api.ws.config import ws_notifications
 from src.models.database import get_session
 
 
@@ -65,13 +66,38 @@ async def delete_notification(notification_id: int, user: UserOut = Depends(get_
 
 @notification_router.websocket("/ws/")
 async def notifications_websocket(websocket: WebSocket, session: AsyncSession = Depends(get_session)):
+
     token = websocket.query_params.get("token")
-    if token:
-        user = await get_auth(session=session, token=token)
-    else:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    if not token:
+        await websocket.close(code=1008)
+        return
 
+    try:
+        user = await get_auth(token=token, session=session)
+    except HTTPException:
+        await websocket.close(code=1008)
+        return
 
-    pass
+    user_notifications = await get_my_notifications(user=user, session=session)
+    await ws_notifications.connect(user=user, websocket=websocket, user_notifications=user_notifications)
+
+    try:
+        while True:
+            message = await websocket.receive_json()
+
+            await ws_notifications.broadcast(
+                message=message,
+                websocket=websocket,
+                user_id=user.id,
+                user=user,
+                session=session,
+            )
+
+    except WebSocketDisconnect:
+        pass
+
+    finally:
+        await ws_notifications.disconnect(user=user, websocket=websocket)
+
 
 

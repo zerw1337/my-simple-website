@@ -49,6 +49,7 @@ class Settings(BaseSettings):
 
     NOTIFICATION_NEW_POST: str = "new_post"
     NOTIFICATION_NEW_COMMENT: str = "new_comment"
+    NOTIFICATION_NEW_MESSAGE: str = "new_message"
 
     ALLOWED_CONTENT_TYPES: ClassVar[set[str]]  = {
         "image/jpeg",

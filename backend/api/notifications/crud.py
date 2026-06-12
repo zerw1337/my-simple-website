@@ -98,8 +98,27 @@ async def create_new_comment_notification(new_notification: CreateNotification, 
         for user in result if user != current_user_id
     ]
     session.add_all(notifications)
+    users_ids_list = [user for user in result]
+    return users_ids_list
 
-def create_notification_body(notif_type: str, post_id: int) -> CreateNotification:
+async def create_new_message_notification(user_id: int , new_notification: CreateNotification, session: AsyncSession):
+    ntf = Notifications(
+        title = new_notification.title,
+        body = new_notification.body,
+        refer_to = new_notification.refer_to,
+    )
+    session.add(ntf)
+    await session.flush()
+    notification = NotificationsList(
+            user_id=user_id,
+            notification_id=ntf.id,
+        )
+    session.add(notification)
+    await session.flush()
+    await session.commit()
+
+
+def create_notification_body(notif_type: str, post_id: int | None, chat_uuid: str | None) -> CreateNotification:
     if notif_type == settings.NOTIFICATION_NEW_POST:
         title = f"Новый пост!"
         body = f"Ты пропустил новый пост, кликни на уведомление для того чтобы ознакомиться!"
@@ -108,6 +127,10 @@ def create_notification_body(notif_type: str, post_id: int) -> CreateNotificatio
         title = f"Новый комментарий!"
         body = f"Кто-то оставил комментарий в обсуждении с твойм участием, кликни на уведомление для того чтобы ознакомиться!"
         refer_to = f"https://zerw1337.ru/posts/{post_id}/"
+    elif notif_type == settings.NOTIFICATION_NEW_MESSAGE:
+        title = f"Новое сообщение!"
+        body = f"Пришло новое сообщение, кликни на уведомление для того чтобы ознакомиться!"
+        refer_to = f"https://zerw1337.ru/messages/{chat_uuid}/"
     else:
         raise HTTPException(status_code=403, detail="Forbidden")
     new_notification = CreateNotification(

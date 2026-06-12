@@ -75,6 +75,7 @@ async def create_new_post_notification(new_notification: CreateNotification, ses
         for user in result
     ]
     session.add_all(notifications)
+    await session.commit()
 
 async def create_new_comment_notification(new_notification: CreateNotification, post_id: int, current_user_id: int, session: AsyncSession):
     query = (

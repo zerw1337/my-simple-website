@@ -23,6 +23,19 @@ async def get_all_comments_by_post_id(post_id: int, session: AsyncSession) -> Se
     comments = res.scalars().all()
     return comments
 
+async def get_all_comments_by_post_id_paginated(post_id: int, offset: int | None, limit: int, session: AsyncSession) -> Sequence[Comments]:
+    query = (
+        select(Comments)
+        .where(Comments.post_id == post_id)
+        .options(selectinload(Comments.user))
+        .order_by(Comments.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    res = await session.execute(query)
+    comments = res.scalars().all()
+    return comments
+
 async def get_all_comments_by_user_id(user_id: int, session: AsyncSession) -> Sequence[Comments]:
     query = (
         select(Comments)
@@ -34,6 +47,19 @@ async def get_all_comments_by_user_id(user_id: int, session: AsyncSession) -> Se
     comments = res.scalars().all()
     if not comments:
         raise HTTPException(status_code=404,detail=f"No comments found for this user [id:{user_id}]")
+    return comments
+
+async def get_all_comments_by_user_id_paginated(user_id: int, offset: int | None, limit: int, session: AsyncSession) -> Sequence[Comments]:
+    query = (
+        select(Comments)
+        .where(Comments.user_id == user_id)
+        .options(selectinload(Comments.user))
+        .order_by(Comments.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    res = await session.execute(query)
+    comments = res.scalars().all()
     return comments
 
 async def create_new_comment(comment: CreateComment, post_id: int, user: UserOut, session: AsyncSession) -> Comments:

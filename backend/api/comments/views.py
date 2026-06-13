@@ -7,7 +7,7 @@ from redis.asyncio import Redis
 from api.auth.dependencies import get_auth
 from api.auth.schemas import UserOut
 from api.comments.crud import get_all_comments_by_post_id, get_all_comments_by_user_id, create_new_comment, \
-    delete_current_comment
+    delete_current_comment, get_all_comments_by_post_id_paginated, get_all_comments_by_user_id_paginated
 from api.comments.dto import get_all_comments_dto, get_comment_dto
 from api.comments.schemas import Comment, CreateComment
 from api.posts_rating.utils import update_posts_rating_by_post_id
@@ -28,6 +28,12 @@ async def get_comments_by_post_id(post_id: int, session: AsyncSession = Depends(
     await r.set(f"comments_by_post/{post_id}", json.dumps([c.model_dump(mode="json") for c in comments_dto]), ex=settings.CACHE_EXPIRE)
     return comments_dto
 
+@comments_router.get("/paginated/", response_model=list[Comment])
+async def get_comments_by_post_id_pag(post_id: int, offset: int | None = None, limit: int = 10, session: AsyncSession = Depends(get_session)):
+    comments_orm = await get_all_comments_by_post_id_paginated(post_id=post_id, session=session, offset=offset, limit=limit)
+    comments_dto = get_all_comments_dto(comments_orm)
+    return comments_dto
+
 @comments_router.get("/by_user/{user_id}/", response_model=list[Comment], summary="GET список всех комментов пользователя, по user_id")
 async def get_comments_by_user_id(user_id: int, session: AsyncSession = Depends(get_session), r:Redis = Depends(get_cache)):
     cached = await r.get(f"comments_by_user/{user_id}")
@@ -38,6 +44,11 @@ async def get_comments_by_user_id(user_id: int, session: AsyncSession = Depends(
     await r.set(f"comments_by_user/{user_id}", json.dumps([c.model_dump(mode="json") for c in comments_dto]), ex=settings.CACHE_EXPIRE)
     return comments_dto
 
+@comments_router.get("/by_user/{user_id}/paginated/", response_model=list[Comment])
+async def get_comments_by_user_id_pag(user_id: int, offset: int | None = None, limit: int = 10, session: AsyncSession = Depends(get_session)):
+    comments_orm = await get_all_comments_by_user_id_paginated(user_id=user_id, session=session, offset=offset, limit=limit)
+    comments_dto = get_all_comments_dto(comments_orm)
+    return comments_dto
 
 @comments_router.post("/", response_model=Comment, status_code=201, summary="Создать новый комментарий")
 async def create_comment(comment: CreateComment, user: UserOut = Depends(get_auth), session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):

@@ -119,7 +119,7 @@ async def create_new_message_notification(user_id: int , new_notification: Creat
     await session.commit()
 
 
-def create_notification_body(notif_type: str, post_id: int | None, chat_uuid: str | None) -> CreateNotification:
+def create_notification_body(notif_type: str, post_id: int | None, chat_uuid: str | None = None) -> CreateNotification:
     if notif_type == settings.NOTIFICATION_NEW_POST:
         title = f"Новый пост!"
         body = f"Ты пропустил новый пост, кликни на уведомление для того чтобы ознакомиться!"

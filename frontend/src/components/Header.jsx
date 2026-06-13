@@ -1,4 +1,5 @@
-import { FaUser, FaSignInAlt, FaBars, FaTimes, FaSearch } from "react-icons/fa";
+import { FaUser, FaSignInAlt, FaBars, FaTimes, FaSearch, FaEnvelope} from "react-icons/fa";
+import { HiOutlineCog6Tooth } from "react-icons/hi2";
 import { Link, useNavigate } from "react-router-dom";
 import React, { useContext, useState, useEffect, useRef, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext.jsx";
@@ -205,28 +206,6 @@ function Header() {
                 <Link to="/about" style={linkStyle} onClick={close}>О себе</Link>
                 <Link to="/contact" style={linkStyle} onClick={close}>Контакты</Link>
 
-                {user ? (
-                    <>
-                        {getIsSuperuser() && <Link to="/admin" onClick={close} style={linkStyle}>Админ</Link>}
-                        <NotificationBell onClose={close} />
-                        <Link to="/messages" style={linkStyle} onClick={close}>Сообщения</Link>
-                        <a href={`/profile/${getMyId()}`} onClick={close} style={linkStyle}>{user.username}</a>
-                        <button onClick={() => { logoutUser(); close(); }}
-                                style={{ ...linkStyle, background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                            Выйти
-                        </button>
-                    </>
-                ) : (
-                    <>
-                        <Link to="/login" style={linkStyle} onClick={close}>
-                            <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><FaSignInAlt /> Login</span>
-                        </Link>
-                        <Link to="/register" style={linkStyle} onClick={close}>
-                            <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><FaUser /> Register</span>
-                        </Link>
-                    </>
-                )}
-
                 {/* Кнопка поиска + выпадающий блок */}
                 <div style={{ position: "relative" }}>
                     <button
@@ -252,6 +231,33 @@ function Header() {
 
                     {searchOpen && <SearchBox onClose={closeSearch} />}
                 </div>
+
+                {user ? (
+                    <>
+
+                        <NotificationBell onClose={close} />
+                        <Link to="/messages" style={linkStyle} onClick={close}>
+                            <FaEnvelope />
+                        </Link>
+                        {getIsSuperuser() && <Link to="/admin" onClick={close} style={linkStyle}><HiOutlineCog6Tooth size={24} /></Link>}
+                        <a href={`/profile/${getMyId()}`} onClick={close} style={linkStyle}>{user.username}</a>
+                        <button onClick={() => { logoutUser(); close(); }}
+                                style={{ ...linkStyle, background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                            Выйти
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        <Link to="/login" style={linkStyle} onClick={close}>
+                            <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><FaSignInAlt /> Login</span>
+                        </Link>
+                        <Link to="/register" style={linkStyle} onClick={close}>
+                            <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><FaUser /> Register</span>
+                        </Link>
+                    </>
+                )}
+
+
             </nav>
 
             {menuOpen && (

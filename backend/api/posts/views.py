@@ -60,7 +60,7 @@ async def get_posts(session: AsyncSession = Depends(get_session), r: Redis = Dep
     return posts_dto
 
 @posts_router.get("/paginated")
-async def get_posts_pag(current_post: int | None, limit: int, session: AsyncSession = Depends(get_session)):
+async def get_posts_pag(limit: int = 10, session: AsyncSession = Depends(get_session), current_post: int | None = None):
     posts_orm = await get_posts_paginated(current_post=current_post, limit=limit, session=session)
     posts_dto = get_all_posts_dto(posts=posts_orm)
     return posts_dto

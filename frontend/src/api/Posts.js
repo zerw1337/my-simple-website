@@ -108,6 +108,15 @@ export async function getAllPosts() {
     return await res.json();
 }
 
+// Курсорная пагинация: currentPostId — id последнего загруженного поста (null для первой страницы)
+export async function getPostsPaginated(currentPostId, limit = 10) {
+    const params = new URLSearchParams({ limit });
+    if (currentPostId != null) params.append("current_post", currentPostId);
+    const res = await fetch(`${API_URL}/posts/paginated?${params}`);
+    if (!res.ok) return [];
+    return await res.json();
+}
+
 // images — массив File-объектов (максимум 10), необязательный
 export async function createPost(title, content, category_id, images = []) {
     const formData = new FormData();

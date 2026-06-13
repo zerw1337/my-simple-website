@@ -117,6 +117,56 @@ export async function getPostsPaginated(currentPostId, limit = 10) {
     return await res.json();
 }
 
+// Оффсетная пагинация по просмотрам
+export async function getPostsByViewsPaginated(offset = 0, limit = 10) {
+    const params = new URLSearchParams({ limit, offset });
+    const res = await fetch(`${API_URL}/posts/top_viewed/paginated/?${params}`);
+    if (!res.ok) return [];
+    return await res.json();
+}
+
+// Оффсетная пагинация по рейтингу
+export async function getPostsByRatingPaginated(offset = 0, limit = 10) {
+    const params = new URLSearchParams({ limit, offset });
+    const res = await fetch(`${API_URL}/posts/top_rated/paginated/?${params}`);
+    if (!res.ok) return [];
+    return await res.json();
+}
+
+// Оффсетная пагинация по категории
+export async function getPostsByCategoryPaginated(categoryId, offset = 0, limit = 10) {
+    const params = new URLSearchParams({ limit, offset });
+    const res = await fetch(`${API_URL}/posts/by_category/${categoryId}/paginated?${params}`);
+    if (!res.ok) return [];
+    return await res.json();
+}
+
+// Оффсетная пагинация комментариев к посту
+export async function getCommentsByPostIdPaginated(postId, offset = 0, limit = 10) {
+    const params = new URLSearchParams({ post_id: postId, limit, offset });
+    const res = await fetch(`${API_URL}/comments/paginated/?${params}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+}
+
+// Оффсетная пагинация постов пользователя
+export async function getPostsByUserPaginated(userId, offset = 0, limit = 10) {
+    const params = new URLSearchParams({ limit, offset });
+    const res = await fetch(`${API_URL}/posts/by_user/${userId}/paginated?${params}`);
+    if (!res.ok) return [];
+    return await res.json();
+}
+
+// Оффсетная пагинация комментариев пользователя
+export async function getCommentsByUserIdPaginated(userId, offset = 0, limit = 10) {
+    const params = new URLSearchParams({ limit, offset });
+    const res = await fetch(`${API_URL}/comments/by_user/${userId}/paginated/?${params}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+}
+
 // images — массив File-объектов (максимум 10), необязательный
 export async function createPost(title, content, category_id, images = []) {
     const formData = new FormData();

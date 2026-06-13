@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getCategories, getPostsPaginated, getTopViewedPosts, getTopRatedPosts } from "../api/Posts";
+import {
+    getCategories,
+    getPostsPaginated,
+    getPostsByViewsPaginated,
+    getPostsByRatingPaginated,
+    getPostsByCategoryPaginated,
+} from "../api/Posts";
 import BlogMainImg from "../assets/images/blog-main-img.gif";
 import { stripTags } from "../components/PostContent";
 
@@ -25,85 +31,119 @@ function Blog() {
     const [activeCategory, setActiveCategory] = useState(location.state?.categoryId ?? null);
     const [sort, setSort] = useState("default");
 
-    // default — курсорная пагинация
     const [posts, setPosts] = useState([]);
-    const [cursor, setCursor] = useState(null);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
-
-    // views / rating — грузятся целиком
-    const [viewsPosts, setViewsPosts] = useState([]);
-    const [ratingPosts, setRatingPosts] = useState([]);
-
     const [initLoading, setInitLoading] = useState(true);
 
-    // sentinel для IntersectionObserver
-    const sentinelRef = useRef(null);
+    const cursorRef   = useRef(null);
+    const offsetRef   = useRef(0);
+    const hasMoreRef  = useRef(true);
+    const loadingRef  = useRef(false);
+    const sortRef     = useRef(sort);
+    const catRef      = useRef(activeCategory);
     const observerRef = useRef(null);
 
-    // ---------- первичная загрузка ----------
+    // ── первичная загрузка категорий ─────────────────────────────
     useEffect(() => {
-        // сбрасываем state из navigate, чтобы при F5 фильтр не залипал
         if (location.state?.categoryId) window.history.replaceState({}, "");
-        setInitLoading(true);
-        Promise.all([
-            getCategories(),
-            getPostsPaginated(null, PAGE_SIZE),
-        ]).then(([cats, firstPage]) => {
-            setCategories(cats);
-            setPosts(firstPage);
-            setCursor(firstPage.length ? firstPage[firstPage.length - 1].id : null);
-            setHasMore(firstPage.length === PAGE_SIZE);
-            setInitLoading(false);
-        });
+        getCategories().then(setCategories);
     }, []);
 
-    // views / rating — лениво при первом переключении
+    // ── сброс и загрузка первой страницы при смене режима ────────
     useEffect(() => {
-        if (sort === "views"  && viewsPosts.length  === 0) getTopViewedPosts().then(setViewsPosts);
-        if (sort === "rating" && ratingPosts.length === 0) getTopRatedPosts().then(setRatingPosts);
-    }, [sort]);
+        sortRef.current  = sort;
+        catRef.current   = activeCategory;
+        cursorRef.current  = null;
+        offsetRef.current  = 0;
+        hasMoreRef.current = true;
+        loadingRef.current = false;
 
-    // ---------- подгрузка следующей страницы ----------
+        setPosts([]);
+        setHasMore(true);
+        setInitLoading(true);
+
+        (async () => {
+            let firstPage;
+            if (!activeCategory && sort === "default") {
+                firstPage = await getPostsPaginated(null, PAGE_SIZE);
+                cursorRef.current = firstPage.length ? firstPage[firstPage.length - 1].id : null;
+            } else if (activeCategory) {
+                firstPage = await getPostsByCategoryPaginated(activeCategory, 0, PAGE_SIZE);
+                offsetRef.current = firstPage.length;
+            } else if (sort === "views") {
+                firstPage = await getPostsByViewsPaginated(0, PAGE_SIZE);
+                offsetRef.current = firstPage.length;
+            } else {
+                firstPage = await getPostsByRatingPaginated(0, PAGE_SIZE);
+                offsetRef.current = firstPage.length;
+            }
+            const more = firstPage.length === PAGE_SIZE;
+            hasMoreRef.current = more;
+            setPosts(firstPage);
+            setHasMore(more);
+            setInitLoading(false);
+        })();
+    }, [sort, activeCategory]);
+
+    // ── подгрузка следующей страницы ─────────────────────────────
     const loadMore = useCallback(async () => {
-        if (loadingMore || !hasMore || sort !== "default" || activeCategory) return;
+        if (loadingRef.current || !hasMoreRef.current) return;
+        loadingRef.current = true;
         setLoadingMore(true);
-        const next = await getPostsPaginated(cursor, PAGE_SIZE);
+
+        let next;
+        const curSort = sortRef.current;
+        const curCat  = catRef.current;
+
+        if (!curCat && curSort === "default") {
+            next = await getPostsPaginated(cursorRef.current, PAGE_SIZE);
+            if (next.length) cursorRef.current = next[next.length - 1].id;
+        } else if (curCat) {
+            next = await getPostsByCategoryPaginated(curCat, offsetRef.current, PAGE_SIZE);
+            offsetRef.current += next.length;
+        } else if (curSort === "views") {
+            next = await getPostsByViewsPaginated(offsetRef.current, PAGE_SIZE);
+            offsetRef.current += next.length;
+        } else {
+            next = await getPostsByRatingPaginated(offsetRef.current, PAGE_SIZE);
+            offsetRef.current += next.length;
+        }
+
+        const more = next.length === PAGE_SIZE;
+        hasMoreRef.current = more;
         setPosts(prev => [...prev, ...next]);
-        setCursor(next.length ? next[next.length - 1].id : cursor);
-        setHasMore(next.length === PAGE_SIZE);
+        setHasMore(more);
+        loadingRef.current = false;
         setLoadingMore(false);
-    }, [cursor, hasMore, loadingMore, sort, activeCategory]);
+    }, []);
 
-    // ---------- IntersectionObserver ----------
-    useEffect(() => {
-        if (observerRef.current) observerRef.current.disconnect();
-
+    // ── callback ref для sentinel ─────────────────────────────────
+    // Вызывается каждый раз, когда sentinel монтируется/анмаунтируется в DOM
+    const sentinelRef = useCallback((node) => {
+        if (observerRef.current) {
+            observerRef.current.disconnect();
+            observerRef.current = null;
+        }
+        if (!node) return;
         observerRef.current = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) loadMore();
-            },
-            { rootMargin: "200px" }   // начинаем грузить за 200px до края
+            ([entry]) => { if (entry.isIntersecting) loadMore(); },
+            { rootMargin: "300px" }
         );
-
-        if (sentinelRef.current) observerRef.current.observe(sentinelRef.current);
-
-        return () => observerRef.current?.disconnect();
+        observerRef.current.observe(node);
     }, [loadMore]);
 
-    // ---------- смена сортировки / категории ----------
-    const handleSortChange = (key) => { setSort(key); setActiveCategory(null); };
+    // ── обработчики ───────────────────────────────────────────────
+    const handleSortChange = (key) => {
+        if (key === sort && !activeCategory) return;
+        setActiveCategory(null);
+        setSort(key);
+    };
 
-    const activePosts =
-        sort === "views"  ? viewsPosts  :
-            sort === "rating" ? ratingPosts :
-                posts;
-
-    const filteredPosts = activeCategory
-        ? activePosts.filter(p => p.category?.id === activeCategory)
-        : activePosts;
-
-    const showSentinel = sort === "default" && !activeCategory && hasMore;
+    const handleCategoryClick = (catId) => {
+        setActiveCategory(prev => (prev === catId ? null : catId));
+        setSort("default");
+    };
 
     if (initLoading) return (
         <main>
@@ -148,27 +188,29 @@ function Blog() {
                         { key: "default", label: "📅 Новые" },
                         { key: "views",   label: "👁 По просмотрам" },
                         { key: "rating",  label: "⭐ По рейтингу" },
-                    ].map(({ key, label }) => (
-                        <button key={key} onClick={() => handleSortChange(key)}
-                                style={{ padding: "0.3rem 0.9rem", borderRadius: "50px", border: "1px solid transparent", background: sort === key ? "linear-gradient(90deg, rgba(4,198,233,0.8), rgba(180,255,255,0.7))" : "rgba(255,255,255,0.05)", color: sort === key ? "#1f1f1f" : "#a0a0a0", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer", transition: "all 0.25s ease", boxShadow: sort === key ? "0 4px 12px rgba(4,198,233,0.3)" : "none" }}>
-                            {label}
-                        </button>
-                    ))}
+                    ].map(({ key, label }) => {
+                        const isActive = sort === key && !activeCategory;
+                        return (
+                            <button key={key} onClick={() => handleSortChange(key)}
+                                    style={{ padding: "0.3rem 0.9rem", borderRadius: "50px", border: "1px solid transparent", background: isActive ? "linear-gradient(90deg, rgba(4,198,233,0.8), rgba(180,255,255,0.7))" : "rgba(255,255,255,0.05)", color: isActive ? "#1f1f1f" : "#a0a0a0", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer", transition: "all 0.25s ease", boxShadow: isActive ? "0 4px 12px rgba(4,198,233,0.3)" : "none" }}>
+                                {label}
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {/* Категории */}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "2rem" }}>
                     <button onClick={() => setActiveCategory(null)}
                             style={{ padding: "0.3rem 0.9rem", borderRadius: "50px", border: "1px solid transparent", background: activeCategory === null ? "linear-gradient(90deg, rgba(4,198,233,0.8), rgba(180,255,255,0.7))" : "rgba(255,255,255,0.05)", color: activeCategory === null ? "#1f1f1f" : "#a0a0a0", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer" }}>
-                        {"Все (" + activePosts.length + (sort === "default" && hasMore ? "+" : "") + ")"}
+                        {"Все" + (posts.length > 0 ? " (" + posts.length + (hasMore ? "+" : "") + ")" : "")}
                     </button>
                     {categories.map(cat => {
                         const isActive = activeCategory === cat.id;
-                        const count = activePosts.filter(p => p.category?.id === cat.id).length;
                         return (
-                            <button key={cat.id} onClick={() => setActiveCategory(isActive ? null : cat.id)}
+                            <button key={cat.id} onClick={() => handleCategoryClick(cat.id)}
                                     style={{ padding: "0.3rem 0.9rem", borderRadius: "50px", border: "1px solid transparent", background: isActive ? "linear-gradient(90deg, rgba(4,198,233,0.8), rgba(180,255,255,0.7))" : "rgba(255,255,255,0.05)", color: isActive ? "#1f1f1f" : "#a0a0a0", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer" }}>
-                                {cat.emoji + " " + cat.name + " (" + count + ")"}
+                                {cat.emoji + " " + cat.name + (isActive && posts.length > 0 ? " (" + posts.length + (hasMore ? "+" : "") + ")" : "")}
                             </button>
                         );
                     })}
@@ -182,11 +224,11 @@ function Blog() {
                 </div>
 
                 {/* Список постов */}
-                {filteredPosts.length === 0 ? (
+                {posts.length === 0 && !loadingMore ? (
                     <p style={{ color: "rgb(100,130,160)", textAlign: "center", marginTop: "3rem" }}>Постов не найдено</p>
                 ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.9rem" }}>
-                        {filteredPosts.map(post => (
+                        {posts.map(post => (
                             <div key={post.id} className="post-card" style={S.card} onClick={() => navigate("/posts/" + post.id)}>
                                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
                                     <span style={{ fontWeight: 700, fontSize: "1.05rem", color: "rgb(200,240,255)" }}>{post.title}</span>
@@ -205,22 +247,13 @@ function Blog() {
                     </div>
                 )}
 
-                {/* Sentinel — триггер для подгрузки */}
-                {showSentinel && (
-                    <div ref={sentinelRef} style={{ height: 1 }} />
-                )}
+                {/* Sentinel — монтируется в DOM только когда есть что грузить.
+                    Callback ref подхватывает его и навешивает observer в этот момент. */}
+                {hasMore && <div ref={sentinelRef} style={{ height: "1px" }} />}
 
-                {/* Спиннер пока грузится следующая страница */}
                 {loadingMore && (
                     <div style={{ display: "flex", justifyContent: "center", padding: "1.5rem 0" }}>
                         <div style={{ width: 32, height: 32, border: "3px solid #333", borderTop: "3px solid var(--logo-color)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                    </div>
-                )}
-
-                {/* Спиннер для views/rating пока грузятся */}
-                {((sort === "views" && viewsPosts.length === 0) || (sort === "rating" && ratingPosts.length === 0)) && (
-                    <div style={{ display: "flex", justifyContent: "center", marginTop: "2rem" }}>
-                        <div style={{ width: 36, height: 36, border: "3px solid #333", borderTop: "3px solid var(--logo-color)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
                     </div>
                 )}
             </div>

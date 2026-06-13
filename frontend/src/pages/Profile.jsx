@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getProfile, getCommentsByUserId, getPostsPaginated } from "../api/Posts";
+import { getProfile, getPostsByUserPaginated, getCommentsByUserIdPaginated } from "../api/Posts";
 import { createChat } from "../api/Messanger.js";
 import { AuthContext } from "../context/AuthContext";
 import { useOnlineStatus, formatLastSeen } from "../context/OnlineStatusContext.jsx";
@@ -10,14 +10,7 @@ import { stripTags } from "../components/PostContent";
 const PAGE_SIZE = 10;
 
 const C = {
-    card: {
-        background: "#161b24",
-        border: "1px solid rgba(100,160,220,0.12)",
-        borderRadius: "14px",
-        padding: "1.75rem 2rem",
-        marginBottom: "1.25rem",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-    },
+    card: { background: "#161b24", border: "1px solid rgba(100,160,220,0.12)", borderRadius: "14px", padding: "1.75rem 2rem", marginBottom: "1.25rem", boxShadow: "0 4px 24px rgba(0,0,0,0.4)" },
     label: { fontSize: "0.75rem", color: "rgb(80,110,140)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.25rem" },
     value: { color: "rgb(200,230,255)", fontWeight: 600, fontSize: "0.95rem" },
 };
@@ -28,52 +21,94 @@ function Profile() {
     const { user } = useContext(AuthContext);
     const { seedLastSeen, isOnline } = useOnlineStatus();
 
-    const [profile, setProfile]       = useState(null);
-    const [comments, setComments]     = useState([]);
-    const [loading, setLoading]       = useState(true);
+    const [profile, setProfile]         = useState(null);
+    const [loading, setLoading]         = useState(true);
     const [chatLoading, setChatLoading] = useState(false);
-    const [myUserId, setMyUserId]     = useState(null);
-    const [showAllComments, setShowAllComments] = useState(false);
-    const [activeTab, setActiveTab]   = useState("posts");
+    const [myUserId, setMyUserId]       = useState(null);
+    const [activeTab, setActiveTab]     = useState("posts");
 
-    // Посты — курсорная пагинация
-    const [posts, setPosts]           = useState([]);
-    const [cursor, setCursor]         = useState(null);
-    const [hasMore, setHasMore]       = useState(true);
+    // --- Посты ---
+    const [posts, setPosts]               = useState([]);
+    const [postsHasMore, setPostsHasMore] = useState(true);
     const [postsLoading, setPostsLoading] = useState(false);
+    const postsOffsetRef   = useRef(0);
+    const postsHasMoreRef  = useRef(true);
+    const postsLoadingRef  = useRef(false);
+    const postsObserverRef = useRef(null);
 
-    const sentinelRef = useRef(null);
-    const observerRef = useRef(null);
-    const userId      = parseInt(id);
+    // --- Комментарии ---
+    const [comments, setComments]               = useState([]);
+    const [commentsHasMore, setCommentsHasMore] = useState(true);
+    const [commentsLoading, setCommentsLoading] = useState(false);
+    const commentsOffsetRef   = useRef(0);
+    const commentsHasMoreRef  = useRef(true);
+    const commentsLoadingRef  = useRef(false);
+    const commentsObserverRef = useRef(null);
 
-    // ---------- подгрузка постов ----------
-    const loadPosts = useCallback(async (currentCursor, isFirst) => {
-        if (postsLoading) return;
+    const userId = parseInt(id);
+
+    // ── подгрузка постов ─────────────────────────────────────────
+    const loadMorePosts = useCallback(async () => {
+        if (postsLoadingRef.current || !postsHasMoreRef.current) return;
+        postsLoadingRef.current = true;
         setPostsLoading(true);
 
-        // /posts/paginated не фильтрует по user_id — собираем батчами
-        let accumulated = [];
-        let cur = currentCursor;
-        let exhausted = false;
+        const next = await getPostsByUserPaginated(userId, postsOffsetRef.current, PAGE_SIZE);
+        postsOffsetRef.current += next.length;
+        const more = next.length === PAGE_SIZE;
+        postsHasMoreRef.current = more;
 
-        while (accumulated.length < PAGE_SIZE && !exhausted) {
-            const batch = await getPostsPaginated(cur, 30);
-            if (!batch.length) { exhausted = true; break; }
-            accumulated = [...accumulated, ...batch.filter(p => (p.user?.id ?? p.user_id) === userId)];
-            cur = batch[batch.length - 1].id;
-            if (batch.length < 30) { exhausted = true; }
-        }
-
-        const page = accumulated.slice(0, PAGE_SIZE);
-        setPosts(prev => isFirst ? page : [...prev, ...page]);
-        setCursor(cur);
-        setHasMore(!exhausted || accumulated.length > PAGE_SIZE);
+        setPosts(prev => [...prev, ...next]);
+        setPostsHasMore(more);
+        postsLoadingRef.current = false;
         setPostsLoading(false);
-    }, [userId, postsLoading]);
+    }, [userId]);
 
-    // ---------- первичная загрузка ----------
+    // ── подгрузка комментариев ───────────────────────────────────
+    const loadMoreComments = useCallback(async () => {
+        if (commentsLoadingRef.current || !commentsHasMoreRef.current) return;
+        commentsLoadingRef.current = true;
+        setCommentsLoading(true);
+
+        const next = await getCommentsByUserIdPaginated(userId, commentsOffsetRef.current, PAGE_SIZE);
+        commentsOffsetRef.current += next.length;
+        const more = next.length === PAGE_SIZE;
+        commentsHasMoreRef.current = more;
+
+        setComments(prev => [...prev, ...next]);
+        setCommentsHasMore(more);
+        commentsLoadingRef.current = false;
+        setCommentsLoading(false);
+    }, [userId]);
+
+    // ── callback ref для sentinel постов ─────────────────────────
+    const postsSentinelRef = useCallback((node) => {
+        if (postsObserverRef.current) { postsObserverRef.current.disconnect(); postsObserverRef.current = null; }
+        if (!node) return;
+        postsObserverRef.current = new IntersectionObserver(
+            ([entry]) => { if (entry.isIntersecting) loadMorePosts(); },
+            { rootMargin: "300px" }
+        );
+        postsObserverRef.current.observe(node);
+    }, [loadMorePosts]);
+
+    // ── callback ref для sentinel комментариев ───────────────────
+    const commentsSentinelRef = useCallback((node) => {
+        if (commentsObserverRef.current) { commentsObserverRef.current.disconnect(); commentsObserverRef.current = null; }
+        if (!node) return;
+        commentsObserverRef.current = new IntersectionObserver(
+            ([entry]) => { if (entry.isIntersecting) loadMoreComments(); },
+            { rootMargin: "300px" }
+        );
+        commentsObserverRef.current.observe(node);
+    }, [loadMoreComments]);
+
+    // ── первичная загрузка ───────────────────────────────────────
     useEffect(() => {
-        setPosts([]); setCursor(null); setHasMore(true);
+        setPosts([]); postsOffsetRef.current = 0; postsHasMoreRef.current = true; postsLoadingRef.current = false; setPostsHasMore(true);
+        setComments([]); commentsOffsetRef.current = 0; commentsHasMoreRef.current = true; commentsLoadingRef.current = false; setCommentsHasMore(true);
+        setActiveTab("posts");
+        setLoading(true);
 
         const token = localStorage.getItem("access_token");
         let tokenUserId = null;
@@ -97,23 +132,35 @@ function Profile() {
             if (data.last_seen) seedLastSeen(userId, data.last_seen);
         });
 
-        getCommentsByUserId(id).then(setComments);
-        loadPosts(null, true);
+        // первая страница постов
+        getPostsByUserPaginated(userId, 0, PAGE_SIZE).then(first => {
+            setPosts(first);
+            postsOffsetRef.current = first.length;
+            const more = first.length === PAGE_SIZE;
+            postsHasMoreRef.current = more;
+            setPostsHasMore(more);
+            postsLoadingRef.current = false;
+        });
     }, [id]);
 
-    // ---------- IntersectionObserver ----------
-    useEffect(() => {
-        if (activeTab !== "posts") return;
-        if (observerRef.current) observerRef.current.disconnect();
-
-        observerRef.current = new IntersectionObserver(
-            (entries) => { if (entries[0].isIntersecting && hasMore && !postsLoading) loadPosts(cursor, false); },
-            { rootMargin: "200px" }
-        );
-        if (sentinelRef.current) observerRef.current.observe(sentinelRef.current);
-
-        return () => observerRef.current?.disconnect();
-    }, [activeTab, hasMore, postsLoading, cursor, loadPosts]);
+    // ── переключение таба ────────────────────────────────────────
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
+        // при первом открытии таба комментариев — грузим первую страницу
+        if (tab === "comments" && comments.length === 0 && commentsHasMoreRef.current && !commentsLoadingRef.current) {
+            commentsLoadingRef.current = true;
+            setCommentsLoading(true);
+            getCommentsByUserIdPaginated(userId, 0, PAGE_SIZE).then(first => {
+                setComments(first);
+                commentsOffsetRef.current = first.length;
+                const more = first.length === PAGE_SIZE;
+                commentsHasMoreRef.current = more;
+                setCommentsHasMore(more);
+                commentsLoadingRef.current = false;
+                setCommentsLoading(false);
+            });
+        }
+    };
 
     if (loading) return (
         <main>
@@ -129,7 +176,6 @@ function Profile() {
     );
 
     const isOwn = myUserId === userId;
-    const visibleComments = showAllComments ? comments : comments.slice(0, 5);
 
     return (
         <main style={{ paddingTop: "5rem", paddingBottom: "4rem" }}>
@@ -184,11 +230,11 @@ function Profile() {
                         )}
                         <div>
                             <div style={C.label}>Постов</div>
-                            <div style={C.value}>{posts.length}{hasMore ? "+" : ""}</div>
+                            <div style={C.value}>{posts.length}{postsHasMore ? "+" : ""}</div>
                         </div>
                         <div>
                             <div style={C.label}>Комментариев</div>
-                            <div style={C.value}>{comments.length}</div>
+                            <div style={C.value}>{comments.length}{commentsHasMore ? "+" : ""}</div>
                         </div>
                     </div>
 
@@ -203,10 +249,10 @@ function Profile() {
                 {/* Табы */}
                 <div style={{ display: "flex", gap: "0.25rem", marginBottom: "1.25rem", borderBottom: "1px solid rgba(100,160,220,0.1)" }}>
                     {[
-                        { key: "posts",    label: `Посты (${posts.length}${hasMore ? "+" : ""})` },
-                        { key: "comments", label: `Комментарии (${comments.length})` },
+                        { key: "posts",    label: `Посты (${posts.length}${postsHasMore ? "+" : ""})` },
+                        { key: "comments", label: `Комментарии (${comments.length}${commentsHasMore ? "+" : ""})` },
                     ].map(tab => (
-                        <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
+                        <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
                             padding: "0.6rem 1.25rem", background: "transparent", border: "none",
                             borderBottom: activeTab === tab.key ? "2px solid var(--logo-color)" : "2px solid transparent",
                             color: activeTab === tab.key ? "rgb(180,255,255)" : "rgb(80,110,140)",
@@ -222,7 +268,7 @@ function Profile() {
                             <div style={{ display: "flex", justifyContent: "center", padding: "2rem 0" }}>
                                 <div style={{ width: 36, height: 36, border: "3px solid rgba(100,160,220,0.15)", borderTop: "3px solid var(--logo-color)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
                             </div>
-                        ) : posts.length === 0 && !hasMore ? (
+                        ) : posts.length === 0 ? (
                             <p style={{ color: "rgb(80,110,140)", textAlign: "center", padding: "2rem 0" }}>Постов пока нет</p>
                         ) : (
                             <>
@@ -244,10 +290,8 @@ function Profile() {
                                     ))}
                                 </div>
 
-                                {/* Sentinel */}
-                                {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
+                                {postsHasMore && <div ref={postsSentinelRef} style={{ height: "1px" }} />}
 
-                                {/* Спиннер подгрузки */}
                                 {postsLoading && (
                                     <div style={{ display: "flex", justifyContent: "center", padding: "1.25rem 0" }}>
                                         <div style={{ width: 28, height: 28, border: "3px solid rgba(100,160,220,0.15)", borderTop: "3px solid var(--logo-color)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
@@ -261,12 +305,16 @@ function Profile() {
                 {/* Комментарии */}
                 {activeTab === "comments" && (
                     <div>
-                        {comments.length === 0 ? (
+                        {commentsLoading && comments.length === 0 ? (
+                            <div style={{ display: "flex", justifyContent: "center", padding: "2rem 0" }}>
+                                <div style={{ width: 36, height: 36, border: "3px solid rgba(100,160,220,0.15)", borderTop: "3px solid var(--logo-color)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                            </div>
+                        ) : comments.length === 0 ? (
                             <p style={{ color: "rgb(80,110,140)", textAlign: "center", padding: "2rem 0" }}>Комментариев пока нет</p>
                         ) : (
                             <>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                                    {visibleComments.map(comment => (
+                                    {comments.map(comment => (
                                         <div key={comment.id} style={{ background: "#161b24", border: "1px solid rgba(100,160,220,0.1)", borderRadius: "10px", padding: "1rem 1.25rem" }}>
                                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                                                 <a href={"/posts/" + comment.post_id} style={{ color: "var(--logo-color)", fontWeight: 600, fontSize: "0.825rem", textDecoration: "none" }}
@@ -280,13 +328,13 @@ function Profile() {
                                         </div>
                                     ))}
                                 </div>
-                                {comments.length > 5 && (
-                                    <button onClick={() => setShowAllComments(!showAllComments)}
-                                            style={{ width: "100%", marginTop: "0.75rem", padding: "0.5rem", background: "transparent", border: "1px solid rgba(100,160,220,0.15)", borderRadius: "8px", color: "rgb(80,110,140)", fontFamily: "inherit", cursor: "pointer", fontSize: "0.85rem" }}
-                                            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(4,198,233,0.3)"; e.currentTarget.style.color = "var(--logo-color)"; }}
-                                            onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(100,160,220,0.15)"; e.currentTarget.style.color = "rgb(80,110,140)"; }}>
-                                        {showAllComments ? "Скрыть" : `Показать ещё ${comments.length - 5}`}
-                                    </button>
+
+                                {commentsHasMore && <div ref={commentsSentinelRef} style={{ height: "1px" }} />}
+
+                                {commentsLoading && (
+                                    <div style={{ display: "flex", justifyContent: "center", padding: "1.25rem 0" }}>
+                                        <div style={{ width: 28, height: 28, border: "3px solid rgba(100,160,220,0.15)", borderTop: "3px solid var(--logo-color)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                                    </div>
                                 )}
                             </>
                         )}

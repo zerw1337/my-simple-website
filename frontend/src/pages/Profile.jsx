@@ -230,11 +230,11 @@ function Profile() {
                         )}
                         <div>
                             <div style={C.label}>Постов</div>
-                            <div style={C.value}>{posts.length}{postsHasMore ? "+" : ""}</div>
+                            <div style={C.value}>{profile.posts_count ?? posts.length}</div>
                         </div>
                         <div>
                             <div style={C.label}>Комментариев</div>
-                            <div style={C.value}>{comments.length}{commentsHasMore ? "+" : ""}</div>
+                            <div style={C.value}>{profile.comments_count ?? comments.length}</div>
                         </div>
                     </div>
 
@@ -249,8 +249,8 @@ function Profile() {
                 {/* Табы */}
                 <div style={{ display: "flex", gap: "0.25rem", marginBottom: "1.25rem", borderBottom: "1px solid rgba(100,160,220,0.1)" }}>
                     {[
-                        { key: "posts",    label: `Посты (${posts.length}${postsHasMore ? "+" : ""})` },
-                        { key: "comments", label: `Комментарии (${comments.length}${commentsHasMore ? "+" : ""})` },
+                        { key: "posts",    label: `Посты (${profile.posts_count ?? posts.length})` },
+                        { key: "comments", label: `Комментарии (${profile.comments_count ?? comments.length})` },
                     ].map(tab => (
                         <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
                             padding: "0.6rem 1.25rem", background: "transparent", border: "none",

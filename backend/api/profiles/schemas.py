@@ -10,6 +10,8 @@ class ProfileOut(BaseModel):
     username : str | None = None
     user_id: int | None = None
     last_seen: datetime | None = None
+    posts_count: int
+    comments_count: int
 
     model_config = ConfigDict(from_attributes=True)
 

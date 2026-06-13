@@ -1,16 +1,17 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, UploadFile
 
+from api.profiles.dto import profile_dto
 from images.utils import validate_image
 from src.minio.utils import MinioService
 from api.auth.schemas import UserOut
 from src.config import settings
-from src.models.models import Profiles, Avatars
+from src.models.models import Profiles, Avatars, Comments, Posts
 
 
-async def get_current_profile(user_id: int, session: AsyncSession) -> Profiles:
+async def get_current_profile(user_id: int, session: AsyncSession):
     query = (
         select(Profiles)
         .where(Profiles.user_id == user_id)
@@ -20,6 +21,19 @@ async def get_current_profile(user_id: int, session: AsyncSession) -> Profiles:
     profile = res.scalar_one_or_none()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
+    query = (
+        select(func.count(Comments.id))
+        .where(Comments.user_id == user_id)
+    )
+    res = await session.execute(query)
+    comments_count = res.scalar_one()
+    query = (
+        select(func.count(Posts.id))
+        .where(Posts.user_id == user_id)
+    )
+    res = await session.execute(query)
+    posts_count = res.scalar_one()
+    profile = profile_dto(profile=profile, comments_count=comments_count, posts_count=posts_count)
     return profile
 
 async def get_current_profile_avatar(user_id: int, session: AsyncSession, minio):

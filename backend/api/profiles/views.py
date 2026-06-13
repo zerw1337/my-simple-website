@@ -20,8 +20,7 @@ profiles_router = APIRouter(prefix="/profile", tags=["Profiles"])
 @profiles_router.get("/{user_id}", response_model=ProfileOut, summary="GET профиль по user_id")
 async def get_profile(user_id: int = Path(..., gt=0, lt=10000), session: AsyncSession = Depends(get_session)) -> ProfileOut:
     res = await get_current_profile(user_id=user_id, session=session)
-    profile = profile_dto(res)
-    return profile
+    return res
 
 @profiles_router.get("/avatar/{user_id}/", response_class=Response)
 async def get_users_avatar(user_id: int, session: AsyncSession = Depends(get_session), minio = Depends(get_minio)):

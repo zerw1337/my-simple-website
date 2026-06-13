@@ -174,6 +174,20 @@ async def get_all_posts_ordered_by_views(session: AsyncSession) -> Sequence[Post
     results = res.scalars().all()
     return results
 
+async def get_posts_ordered_by_views_paginated(offset: int | None, limit: int, session: AsyncSession) -> Sequence[Posts]:
+    query = (
+        select(Posts)
+        .options(selectinload(Posts.category))
+        .options(selectinload(Posts.user))
+        .order_by(Posts.views.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    res = await session.execute(query)
+    results = res.scalars().all()
+    return results
+
+
 async def get_all_posts_ordered_by_rating(session: AsyncSession) -> Sequence[Posts]:
     query = (
         select(Posts)
@@ -181,6 +195,19 @@ async def get_all_posts_ordered_by_rating(session: AsyncSession) -> Sequence[Pos
         .options(selectinload(Posts.category))
         .options(selectinload(Posts.user))
         .order_by(Posts.rating.desc())
+    )
+    res = await session.execute(query)
+    results = res.scalars().all()
+    return results
+
+async def get_posts_ordered_by_rating_paginated(offset: int | None, limit: int, session: AsyncSession) -> Sequence[Posts]:
+    query = (
+        select(Posts)
+        .options(selectinload(Posts.category))
+        .options(selectinload(Posts.user))
+        .order_by(Posts.rating.desc())
+        .limit(limit)
+        .offset(offset)
     )
     res = await session.execute(query)
     results = res.scalars().all()
@@ -246,3 +273,31 @@ async def get_post_images_by_post_id(post_id: int, session: AsyncSession, minio)
             "position": r.position,
         })
     return output
+
+async def get_posts_by_category_pag(category_id: int, offset: int | None, limit: int, session: AsyncSession):
+    query = (
+        select(Posts)
+        .where(Posts.category_id == category_id)
+        .options(selectinload(Posts.category))
+        .options(selectinload(Posts.user))
+        .order_by(Posts.id.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    res = await session.execute(query)
+    results = res.scalars().all()
+    return results
+
+async def get_posts_by_user_paginated(user_id: int, offset: int | None, limit: int, session: AsyncSession):
+    query = (
+        select(Posts)
+        .where(Posts.user_id == user_id)
+        .options(selectinload(Posts.category))
+        .options(selectinload(Posts.user))
+        .order_by(Posts.id.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    res = await session.execute(query)
+    results = res.scalars().all()
+    return results

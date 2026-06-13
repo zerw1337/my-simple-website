@@ -9,7 +9,9 @@ from api.auth.dependencies import get_auth_admin
 from api.auth.schemas import UserOut
 from api.posts.crud import create_new_post, get_all_posts, get_current_post_by_id, edit_current_post, delete_post_by_id, \
     get_five_latest_posts, get_next_post_after_this, get_previous_post_from_this, get_posts_by_user_id, \
-    get_all_posts_ordered_by_views, get_all_posts_ordered_by_rating, get_post_images_by_post_id, get_posts_paginated
+    get_all_posts_ordered_by_views, get_all_posts_ordered_by_rating, get_post_images_by_post_id, get_posts_paginated, \
+    get_posts_ordered_by_views_paginated, get_posts_ordered_by_rating_paginated, get_posts_by_category_pag, \
+    get_posts_by_user_paginated
 from api.posts.dto import get_all_posts_dto, get_post_by_id_dto
 from api.posts.schemas import CreatePost, PostOut, UpdatePost
 from api.posts_rating.utils import update_posts_rating_by_post_model, update_posts_rating_by_post_id
@@ -102,6 +104,18 @@ async def get_posts_by_current_user(user_id: int, session: AsyncSession = Depend
     await r.set(f"posts_by_user/{user_id}", json.dumps([p.model_dump(mode="json") for p in posts_dto]), ex=settings.CACHE_EXPIRE)
     return posts_dto
 
+@posts_router.get("/by_user/{user_id}/paginated",)
+async def get_posts_by_user_pag(user_id: int, offset: int | None = None, limit: int = 10, session: AsyncSession = Depends(get_session)):
+    posts_orm = await get_posts_by_user_paginated(user_id=user_id, session=session, offset=offset, limit=limit)
+    posts_dto = get_all_posts_dto(posts=posts_orm)
+    return posts_dto
+
+@posts_router.get("/by_category/{category_id}/paginated")
+async def get_posts_by_cat_paginated(category_id: int, offset: int | None = None, limit: int = 10, session: AsyncSession = Depends(get_session)):
+    posts_orm = await get_posts_by_category_pag(category_id=category_id, offset=offset, limit=limit, session=session)
+    posts_dto = get_all_posts_dto(posts=posts_orm)
+    return posts_dto
+
 
 @posts_router.get("/top_viewed/", response_model=list[PostOut], summary="GET все посты отсортированные по просмотрам (Убывание)")
 async def get_top_viewed_posts(session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
@@ -113,6 +127,12 @@ async def get_top_viewed_posts(session: AsyncSession = Depends(get_session), r: 
     await r.set("top_viewed_posts", json.dumps([p.model_dump(mode="json") for p in posts_dto]), ex=settings.CACHE_EXPIRE)
     return posts_dto
 
+@posts_router.get("/top_viewed/paginated/")
+async def get_top_viewed_posts_pag(limit: int = 10, session: AsyncSession = Depends(get_session), offset: int | None = None):
+    posts_orm = await get_posts_ordered_by_views_paginated(session=session, limit=limit, offset=offset)
+    posts_dto = get_all_posts_dto(posts=posts_orm)
+    return posts_dto
+
 @posts_router.get("/top_rated/", response_model=list[PostOut], summary="GET все посты отсортированные по рейтингу (Убывание)")
 async def get_top_rated_posts(session: AsyncSession = Depends(get_session), r: Redis = Depends(get_cache)):
     cached = await r.get("top_rated_posts")
@@ -121,6 +141,12 @@ async def get_top_rated_posts(session: AsyncSession = Depends(get_session), r: R
     posts_orm = await get_all_posts_ordered_by_rating(session=session)
     posts_dto = get_all_posts_dto(posts=posts_orm)
     await r.set("top_rated_posts", json.dumps([p.model_dump(mode="json") for p in posts_dto]), ex=settings.CACHE_EXPIRE)
+    return posts_dto
+
+@posts_router.get("/top_rated/paginated/")
+async def get_top_rated_posts_pag(limit: int = 10, session: AsyncSession = Depends(get_session), offset: int | None = None):
+    posts_orm = await get_posts_ordered_by_rating_paginated(session=session, limit=limit, offset=offset)
+    posts_dto = get_all_posts_dto(posts=posts_orm)
     return posts_dto
 
 @posts_router.get("/{id}", response_model=PostOut, summary="ГЕТ пост по айди поста")

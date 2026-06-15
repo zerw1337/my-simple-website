@@ -1,4 +1,4 @@
-import { FaUser, FaSignInAlt, FaBars, FaTimes, FaSearch, FaEnvelope} from "react-icons/fa";
+import { FaSignInAlt, FaBars, FaTimes, FaSearch, FaEnvelope, FaUser } from "react-icons/fa";
 import { HiOutlineCog6Tooth } from "react-icons/hi2";
 import { Link, useNavigate } from "react-router-dom";
 import React, { useContext, useState, useEffect, useRef, useCallback } from "react";
@@ -21,9 +21,7 @@ async function searchAPI(q) {
         const res = await fetch(`${API_URL}/search/${encodeURIComponent(q)}`);
         if (!res.ok) return null;
         return await res.json();
-    } catch {
-        return null;
-    }
+    } catch { return null; }
 }
 
 function Section({ title, children }) {
@@ -83,7 +81,6 @@ function SearchBox({ onClose }) {
             borderRadius: "12px", boxShadow: "0 16px 48px rgba(0,0,0,0.6)",
             overflow: "hidden",
         }}>
-            {/* Поле ввода */}
             <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.75rem 1rem", borderBottom: "1px solid rgba(100,160,220,0.1)" }}>
                 <FaSearch style={{ color: "var(--logo-color)", flexShrink: 0, fontSize: "0.9rem" }} />
                 <input
@@ -93,28 +90,19 @@ function SearchBox({ onClose }) {
                     placeholder="Поиск по сайту…"
                     style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "rgb(200,230,255)", fontSize: "0.95rem", fontFamily: "inherit" }}
                 />
-                {loading && (
-                    <div style={{ width: 16, height: 16, border: "2px solid rgba(4,198,233,0.2)", borderTop: "2px solid var(--logo-color)", borderRadius: "50%", animation: "spin 0.7s linear infinite", flexShrink: 0 }} />
-                )}
+                {loading && <div style={{ width: 16, height: 16, border: "2px solid rgba(4,198,233,0.2)", borderTop: "2px solid var(--logo-color)", borderRadius: "50%", animation: "spin 0.7s linear infinite", flexShrink: 0 }} />}
                 {query && !loading && (
                     <button onClick={() => { setQuery(""); setResults(null); inputRef.current?.focus(); }}
-                            style={{ background: "none", border: "none", color: "rgb(80,110,140)", cursor: "pointer", padding: 0, fontSize: "0.85rem", lineHeight: 1 }}>
-                        ✕
-                    </button>
+                            style={{ background: "none", border: "none", color: "rgb(80,110,140)", cursor: "pointer", padding: 0, fontSize: "0.85rem", lineHeight: 1 }}>✕</button>
                 )}
             </div>
 
-            {/* Пусто */}
             {query && !loading && !hasResults && (
-                <div style={{ padding: "1.25rem 1rem", color: "rgb(80,110,140)", fontSize: "0.875rem", textAlign: "center" }}>
-                    Ничего не найдено
-                </div>
+                <div style={{ padding: "1.25rem 1rem", color: "rgb(80,110,140)", fontSize: "0.875rem", textAlign: "center" }}>Ничего не найдено</div>
             )}
 
-            {/* Результаты */}
             {hasResults && (
                 <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
-
                     {results.users?.length > 0 && (
                         <Section title="Пользователи">
                             {results.users.map(u => (
@@ -125,7 +113,6 @@ function SearchBox({ onClose }) {
                             ))}
                         </Section>
                     )}
-
                     {results.categories?.length > 0 && (
                         <Section title="Категории">
                             {results.categories.map(c => (
@@ -136,19 +123,14 @@ function SearchBox({ onClose }) {
                             ))}
                         </Section>
                     )}
-
                     {results.posts?.length > 0 && (
                         <Section title="Посты">
                             {results.posts.map(p => (
                                 <ResultRow key={p.id} onClick={() => go(`/posts/${p.id}`)}>
                                     <span style={{ fontSize: "1rem" }}>📝</span>
                                     <div style={{ minWidth: 0 }}>
-                                        <div style={{ color: "rgb(200,230,255)", fontWeight: 600, fontSize: "0.875rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                            {p.title}
-                                        </div>
-                                        <div style={{ color: "rgb(80,110,140)", fontSize: "0.775rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                            {p.content?.replace(/<[^>]+>/g, "").slice(0, 80)}
-                                        </div>
+                                        <div style={{ color: "rgb(200,230,255)", fontWeight: 600, fontSize: "0.875rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.title}</div>
+                                        <div style={{ color: "rgb(80,110,140)", fontSize: "0.775rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.content?.replace(/<[^>]+>/g, "").slice(0, 80)}</div>
                                     </div>
                                 </ResultRow>
                             ))}
@@ -160,10 +142,51 @@ function SearchBox({ onClose }) {
     );
 }
 
+// Единая кнопка-иконка для панели иконок
+function IconBtn({ onClick, active, label, children }) {
+    const [hov, setHov] = useState(false);
+    return (
+        <button
+            onClick={onClick}
+            aria-label={label}
+            onMouseEnter={() => setHov(true)}
+            onMouseLeave={() => setHov(false)}
+            style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 36, height: 36,
+                background: active || hov ? "rgba(4,198,233,0.1)" : "transparent",
+                border: "1px solid " + (active ? "rgba(4,198,233,0.45)" : hov ? "rgba(4,198,233,0.2)" : "transparent"),
+                borderRadius: "9px",
+                color: active || hov ? "var(--logo-color)" : "rgb(160,200,240)",
+                cursor: "pointer",
+                fontSize: "1rem",
+                transition: "all 0.18s",
+                flexShrink: 0,
+            }}
+        >
+            {children}
+        </button>
+    );
+}
+
 function Header() {
     const { user, logoutUser } = useContext(AuthContext);
     const [menuOpen, setMenuOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
+    const [visible, setVisible] = useState(true);
+    const lastScrollY = useRef(0);
+
+    useEffect(() => {
+        const onScroll = () => {
+            const current = window.scrollY;
+            if (current < 200) { setVisible(true); }
+            else if (current < lastScrollY.current) { setVisible(true); }
+            else if (current > lastScrollY.current + 4) { setVisible(false); }
+            lastScrollY.current = current;
+        };
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => window.removeEventListener("scroll", onScroll);
+    }, []);
 
     const getIsSuperuser = () => {
         const token = localStorage.getItem("access_token");
@@ -180,167 +203,305 @@ function Header() {
     const close = () => setMenuOpen(false);
     const closeSearch = useCallback(() => setSearchOpen(false), []);
 
-    const linkStyle = {
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-        fontWeight: 600,
-        textDecoration: "none",
-        padding: "0.4rem 0",
-        fontSize: "1rem",
-    };
-
     return (
-        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "1rem", position: "relative" }}>
-            <span className="logo">
-                <Link to="/" onClick={close} style={{ color: "rgb(180, 255, 255)", fontWeight: "bold", fontSize: "1.6rem" }}>
-                    zerw1337's website
-                </Link>
-            </span>
-
-            <button onClick={() => setMenuOpen(o => !o)} className="burger-btn" aria-label="Меню">
-                {menuOpen ? <FaTimes /> : <FaBars />}
-            </button>
-
-            <nav className={`main-nav${menuOpen ? " nav-open" : ""}`}>
-                <Link to="/" style={linkStyle} onClick={close}>Домой</Link>
-                <Link to="/blog" style={linkStyle} onClick={close}>Блог</Link>
-                <Link to="/about" style={linkStyle} onClick={close}>О себе</Link>
-                <Link to="/contact" style={linkStyle} onClick={close}>Контакты</Link>
-
-                {/* Кнопка поиска + выпадающий блок */}
-                <div style={{ position: "relative" }}>
-                    <button
-                        onClick={() => setSearchOpen(o => !o)}
-                        aria-label="Поиск"
-                        style={{
-                            background: searchOpen ? "rgba(4,198,233,0.12)" : "none",
-                            border: "1px solid " + (searchOpen ? "rgba(4,198,233,0.4)" : "transparent"),
-                            borderRadius: "8px",
-                            color: searchOpen ? "var(--logo-color)" : "rgb(180,220,255)",
-                            cursor: "pointer",
-                            padding: "0.35rem 0.5rem",
-                            display: "flex",
-                            alignItems: "center",
-                            fontSize: "1rem",
-                            transition: "all 0.2s",
-                        }}
-                        onMouseEnter={e => { if (!searchOpen) { e.currentTarget.style.color = "rgb(180,255,255)"; e.currentTarget.style.borderColor = "rgba(4,198,233,0.2)"; }}}
-                        onMouseLeave={e => { if (!searchOpen) { e.currentTarget.style.color = "rgb(180,220,255)"; e.currentTarget.style.borderColor = "transparent"; }}}
-                    >
-                        <FaSearch />
-                    </button>
-
-                    {searchOpen && <SearchBox onClose={closeSearch} />}
-                </div>
-
-                {user ? (
-                    <>
-
-                        <NotificationBell onClose={close} />
-                        <Link to="/messages" style={linkStyle} onClick={close}>
-                            <FaEnvelope />
-                        </Link>
-                        {getIsSuperuser() && <Link to="/admin" onClick={close} style={linkStyle}><HiOutlineCog6Tooth size={24} /></Link>}
-                        <a href={`/profile/${getMyId()}`} onClick={close} style={linkStyle}>{user.username}</a>
-                        <button onClick={() => { logoutUser(); close(); }}
-                                style={{ ...linkStyle, background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                            Выйти
-                        </button>
-                    </>
-                ) : (
-                    <>
-                        <Link to="/login" style={linkStyle} onClick={close}>
-                            <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><FaSignInAlt /> Login</span>
-                        </Link>
-                        <Link to="/register" style={linkStyle} onClick={close}>
-                            <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><FaUser /> Register</span>
-                        </Link>
-                    </>
-                )}
-
-
-            </nav>
-
-            {menuOpen && (
-                <div onClick={close} style={{ position: "fixed", inset: 0, zIndex: 98, background: "rgba(0,0,0,0.4)" }} />
-            )}
-
+        <>
             <style>{`
                 @keyframes spin { to { transform: rotate(360deg); } }
 
-                .burger-btn {
+                .hdr-root {
+                    position: sticky;
+                    top: 0;
+                    z-index: 100;
+                    height: 62px;
+                    background: rgba(13, 17, 26, 0.82);
+                    backdrop-filter: blur(14px);
+                    -webkit-backdrop-filter: blur(14px);
+                    border-bottom: 1px solid rgba(100, 160, 220, 0.1);
+                    box-shadow: 0 2px 20px rgba(0,0,0,0.35);
+                }
+
+                .hdr-inner {
+                    max-width: 1400px;
+                    margin: 0 auto;
+                    height: 100%;
+                    display: grid;
+                    grid-template-columns: 0.7fr 2fr 1.5fr;
+                    align-items: center;
+                    padding: 0 2rem;
+                    gap: 1rem;
+                }
+
+                /* Лого */
+                .hdr-logo {
+                    color: rgb(180, 255, 255);
+                    font-weight: 800;
+                    font-size: 1.25rem;
+                    text-decoration: none;
+                    letter-spacing: -0.01em;
+                    white-space: nowrap;
+                    flex-shrink: 0;
+                    text-shadow: 0 0 20px rgba(4,198,233,0.3);
+                    transition: text-shadow 0.2s;
+                }
+                .hdr-logo:hover { text-shadow: 0 0 28px rgba(4,198,233,0.6); }
+
+                /* Разделитель */
+                .hdr-divider {
+                    width: 1px;
+                    height: 20px;
+                    background: rgba(100,160,220,0.2);
+                    flex-shrink: 0;
+                }
+
+                /* Основная навигация */
+                .hdr-nav {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 2rem;
+                }
+
+                .hdr-nav .hdr-link {
+                    flex: none;
+                    text-align: center;
+                }
+
+                .hdr-link {
+                    font-weight: 600;
+                    font-size: 0.9rem;
+                    text-decoration: none;
+                    color: rgb(160, 200, 240);
+                    padding: 0.35rem 0.75rem;
+                    border-radius: 8px;
+                    border: 1px solid transparent;
+                    transition: all 0.18s;
+                    white-space: nowrap;
+                }
+                .hdr-link:hover {
+                    color: rgb(200, 240, 255);
+                    background: rgba(4,198,233,0.07);
+                    border-color: rgba(4,198,233,0.15);
+                }
+
+                /* Правая панель: иконки + юзер */
+                .hdr-right {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.35rem;
+                    justify-content: flex-end;
+                }
+
+                /* Имя пользователя */
+                .hdr-username {
+                    font-weight: 700;
+                    font-size: 0.875rem;
+                    color: rgb(180, 255, 255);
+                    text-decoration: none;
+                    padding: 0.35rem 0.65rem;
+                    border-radius: 8px;
+                    border: 1px solid rgba(4,198,233,0.2);
+                    background: rgba(4,198,233,0.06);
+                    white-space: nowrap;
+                    transition: all 0.18s;
+                }
+                .hdr-username:hover {
+                    background: rgba(4,198,233,0.14);
+                    border-color: rgba(4,198,233,0.4);
+                }
+
+                /* Кнопка «Выйти» */
+                .hdr-logout {
+                    font-weight: 600;
+                    font-size: 0.875rem;
+                    color: rgb(120,160,200);
+                    background: none;
+                    border: 1px solid transparent;
+                    border-radius: 8px;
+                    padding: 0.35rem 0.65rem;
+                    cursor: pointer;
+                    font-family: inherit;
+                    white-space: nowrap;
+                    transition: all 0.18s;
+                }
+                .hdr-logout:hover {
+                    color: rgb(255,100,100);
+                    border-color: rgba(255,80,80,0.25);
+                    background: rgba(255,60,60,0.07);
+                }
+
+                /* Обёртка для NotificationBell — тот же стиль что IconBtn */
+                .hdr-bell-wrap > * {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                }
+                .hdr-bell-wrap button {
+                    width: 36px !important;
+                    height: 36px !important;
+                    background: transparent !important;
+                    border: 1px solid transparent !important;
+                    border-radius: 9px !important;
+                    color: rgb(160,200,240) !important;
+                    transition: all 0.18s !important;
+                }
+                .hdr-bell-wrap button:hover {
+                    background: rgba(4,198,233,0.1) !important;
+                    border-color: rgba(4,198,233,0.2) !important;
+                    color: var(--logo-color) !important;
+                }
+
+                /* Бургер — скрыт на десктопе */
+                .hdr-burger {
                     display: none;
                     background: none;
-                    border: none;
-                    color: rgb(180, 220, 255);
-                    font-size: 1.5rem;
+                    border: 1px solid rgba(100,160,220,0.2);
+                    border-radius: 8px;
+                    color: rgb(160,200,240);
+                    font-size: 1.1rem;
                     cursor: pointer;
-                    padding: 0.25rem;
+                    padding: 0.4rem 0.5rem;
+                    line-height: 1;
                 }
 
-                .main-nav {
-                    display: flex;
-                    gap: 1rem;
-                    align-items: center;
-                }
+                /* Мобильное меню */
+                @media (max-width: 820px) {
+                    .hdr-inner { grid-template-columns: 1fr auto; }
+                    .hdr-burger { display: flex; align-items: center; }
+                    .hdr-nav, .hdr-right { display: none; }
 
-                .main-nav a,
-                .main-nav button {
-                    color: rgb(180, 220, 255);
-                    transition: all 0.2s ease;
-                }
-
-                .main-nav a:hover,
-                .main-nav button:hover {
-                    color: rgb(180, 255, 255);
-                    transform: translateY(-1px);
-                    text-shadow: 0 0 6px rgba(180,255,255,0.4);
-                }
-
-                @media (max-width: 1280px) {
-                    .logo { font-size: 1.4rem !important; }
-                    .main-nav { gap: 0.4rem; }
-                    .main-nav a, .main-nav button { font-size: 0.85rem; }
-                }
-
-                @media (max-width: 1100px) {
-                    .logo { font-size: 1.3rem !important; }
-                    .main-nav { gap: 0.3rem; }
-                    .main-nav a, .main-nav button { font-size: 0.8rem; }
-                }
-
-                @media (max-width: 768px) {
-                    .burger-btn { display: block; }
-
-                    .main-nav {
-                        display: none;
+                    .hdr-mobile-nav {
+                        display: flex;
                         flex-direction: column;
-                        align-items: flex-start;
                         gap: 0.25rem;
                         position: fixed;
                         top: 0; right: 0;
-                        width: 70vw;
-                        max-width: 280px;
+                        width: 72vw; max-width: 300px;
                         height: 100vh;
-                        background: rgba(0,0,0,0.9);
-                        border-left: 1px solid #333;
-                        padding: 4rem 2rem 2rem;
-                        z-index: 99;
-                        box-shadow: -4px 0 20px rgba(0,0,0,0.25);
+                        background: rgba(10,14,22,0.97);
+                        backdrop-filter: blur(16px);
+                        border-left: 1px solid rgba(100,160,220,0.12);
+                        padding: 4.5rem 1.5rem 2rem;
+                        z-index: 999;
+                        box-shadow: -8px 0 32px rgba(0,0,0,0.4);
                         overflow-y: auto;
                     }
 
-                    .main-nav.nav-open { display: flex; }
-
-                    .main-nav a,
-                    .main-nav button {
-                        font-size: 1.1rem;
-                        padding: 0.6rem 0;
-                        width: 100%;
-                        border-bottom: 1px solid rgba(180,220,255,0.2);
+                    .hdr-mobile-nav .hdr-link,
+                    .hdr-mobile-nav .hdr-logout {
+                        font-size: 1rem;
+                        padding: 0.65rem 0.75rem;
+                        border-bottom: 1px solid rgba(100,160,220,0.08);
+                        border-radius: 0;
+                        border-left: none;
+                        border-right: none;
+                        border-top: none;
                     }
                 }
             `}</style>
-        </header>
+
+            <header className="hdr-root" style={{ transform: visible ? "translateY(0)" : "translateY(-100%)", transition: "transform 0.3s ease" }}>
+                <div className="hdr-inner">
+
+                    {/* Лого — левая колонка */}
+                    <Link to="/" className="hdr-logo" onClick={close}>
+                        zerw1337's website
+                    </Link>
+
+                    {/* Навигационные ссылки — центральная колонка */}
+                    <nav className="hdr-nav">
+                        <Link to="/"        className="hdr-link" onClick={close}>Домой</Link>
+                        <Link to="/blog"    className="hdr-link" onClick={close}>Блог</Link>
+                        <Link to="/about"   className="hdr-link" onClick={close}>О себе</Link>
+                        <Link to="/contact" className="hdr-link" onClick={close}>Контакты</Link>
+                    </nav>
+
+                    {/* Правая панель — правая колонка */}
+                    <div className="hdr-right">
+
+                        {/* Поиск */}
+                        <div style={{ position: "relative" }}>
+                            <IconBtn onClick={() => setSearchOpen(o => !o)} active={searchOpen} label="Поиск">
+                                <FaSearch />
+                            </IconBtn>
+                            {searchOpen && <SearchBox onClose={closeSearch} />}
+                        </div>
+
+                        {user ? (
+                            <>
+                                {/* Уведомления */}
+                                <div className="hdr-bell-wrap">
+                                    <NotificationBell onClose={close} />
+                                </div>
+
+                                {/* Сообщения */}
+                                <Link to="/messages" onClick={close} style={{ textDecoration: "none" }}>
+                                    <IconBtn label="Сообщения"><FaEnvelope /></IconBtn>
+                                </Link>
+
+                                {/* Админка (только superuser) */}
+                                {getIsSuperuser() && (
+                                    <Link to="/admin" onClick={close} style={{ textDecoration: "none" }}>
+                                        <IconBtn label="Админ"><HiOutlineCog6Tooth size={18} /></IconBtn>
+                                    </Link>
+                                )}
+
+                                <div className="hdr-divider" />
+
+                                {/* Имя пользователя → профиль */}
+                                <a href={`/profile/${getMyId()}`} onClick={close} className="hdr-username">
+                                    {user.username}
+                                </a>
+
+                                {/* Выйти */}
+                                <button onClick={() => { logoutUser(); close(); }} className="hdr-logout">
+                                    Выйти
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link to="/login" className="hdr-link" onClick={close} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                    <FaSignInAlt size={13} /> Войти
+                                </Link>
+                                <Link to="/register" className="hdr-link" onClick={close} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                    <FaUser size={13} /> Регистрация
+                                </Link>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Бургер (мобилки) */}
+                    <button className="hdr-burger" onClick={() => setMenuOpen(o => !o)} aria-label="Меню">
+                        {menuOpen ? <FaTimes /> : <FaBars />}
+                    </button>
+                </div>
+            </header>
+
+            {/* Мобильное меню */}
+            {menuOpen && (
+                <>
+                    <div onClick={close} style={{ position: "fixed", inset: 0, zIndex: 998, background: "rgba(0,0,0,0.5)" }} />
+                    <nav className="hdr-mobile-nav">
+                        <Link to="/"        className="hdr-link" onClick={close}>Домой</Link>
+                        <Link to="/blog"    className="hdr-link" onClick={close}>Блог</Link>
+                        <Link to="/about"   className="hdr-link" onClick={close}>О себе</Link>
+                        <Link to="/contact" className="hdr-link" onClick={close}>Контакты</Link>
+                        {user ? (
+                            <>
+                                <Link to="/messages" className="hdr-link" onClick={close}>✉ Сообщения</Link>
+                                {getIsSuperuser() && <Link to="/admin" className="hdr-link" onClick={close}>⚙ Админ</Link>}
+                                <a href={`/profile/${getMyId()}`} className="hdr-link" onClick={close}>{user.username}</a>
+                                <button onClick={() => { logoutUser(); close(); }} className="hdr-logout" style={{ textAlign: "left" }}>Выйти</button>
+                            </>
+                        ) : (
+                            <>
+                                <Link to="/login"    className="hdr-link" onClick={close}>Войти</Link>
+                                <Link to="/register" className="hdr-link" onClick={close}>Регистрация</Link>
+                            </>
+                        )}
+                    </nav>
+                </>
+            )}
+        </>
     );
 }
 

@@ -8,7 +8,9 @@ import base64
 
 from api.auth.schemas import UserOut
 from api.notifications.crud import create_notification_body, create_new_post_notification
+from api.posts.dto import get_post_by_id_dto
 from api.posts.schemas import CreatePost, PostOut, UpdatePost
+from api.posts_rating.utils import update_posts_rating_by_post_model
 from images.utils import validate_image
 from src.config import settings
 from src.minio.utils import MinioService
@@ -109,32 +111,7 @@ async def get_five_latest_posts(session: AsyncSession) -> Sequence[Posts]:
     results = res.scalars().all()
     return results
 
-async def get_next_post_after_this(current_post_id: int, session: AsyncSession) -> Posts:
-    query = (
-        select(Posts)
-        .where(Posts.id > current_post_id)
-        .options(selectinload(Posts.category))
-        .options(selectinload(Posts.user))
-        .order_by(Posts.id.asc())
-    )
-    res = await session.execute(query)
-    results = res.scalars().first()
-    return results
-
-async def get_previous_post_from_this(current_post_id: int, session: AsyncSession) -> Posts:
-    query = (
-        select(Posts)
-        .where(Posts.id < current_post_id)
-        .options(selectinload(Posts.category))
-        .options(selectinload(Posts.user))
-        .order_by(Posts.id.desc())
-    )
-    res = await session.execute(query)
-    results = res.scalars().first()
-    return results
-
-
-async def get_current_post_by_id(post_id: int, session: AsyncSession) -> Posts:
+async def get_current_post_by_id(post_id: int, session: AsyncSession) -> PostOut:
     query = (
         select(Posts)
         .where(Posts.id == post_id)
@@ -144,11 +121,30 @@ async def get_current_post_by_id(post_id: int, session: AsyncSession) -> Posts:
         .options(selectinload(Posts.reactions))
     )
     res = await session.execute(query)
-    result = res.scalar_one_or_none()
-    if not result:
+    post_orm = res.scalar_one_or_none()
+    if not post_orm:
         raise HTTPException(status_code=404, detail="Post not found")
-    await update_current_post_views_counter(post=result, session=session)
-    return result
+    query = (
+        select(Posts.id)
+        .where(Posts.id < post_orm.id)
+        .order_by(Posts.id.desc())
+        .limit(1)
+    )
+    res = await session.execute(query)
+    previous_post_id = res.scalar_one_or_none()
+    query = (
+        select(Posts.id)
+        .where(Posts.id > post_orm.id )
+        .order_by(Posts.id.asc())
+        .limit(1)
+    )
+    res = await session.execute(query)
+    next_post_id = res.scalar_one_or_none()
+    await update_current_post_views_counter(post=post_orm, session=session)
+    await update_posts_rating_by_post_model(post=post_orm, session=session)
+    post_dto = get_post_by_id_dto(post=post_orm, next_post_id=next_post_id, previous_post_id=previous_post_id)
+
+    return post_dto
 
 async def get_posts_by_user_id(user_id: int, session: AsyncSession) -> Sequence[Posts]:
     query = (

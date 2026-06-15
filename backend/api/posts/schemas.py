@@ -26,6 +26,8 @@ class PostOut(BaseModel):
     updated_at: datetime
     views: int
     rating: int
+    next_post_id: int | None = None
+    previous_post_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

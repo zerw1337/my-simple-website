@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getPostById, getNextPost, getPreviousPost, getPostImages } from "../api/Posts";
+import { getPostById, getPostImages } from "../api/Posts";
 import "./styles/PostCardFull.css";
 import PostReactions from "./PostReactions";
 import PostComments from "./PostComments";
@@ -18,6 +18,7 @@ function PostCardFullWrapper() {
 
     useEffect(() => {
         setLoading(true);
+        setError(null);
         setImages([]);
         getPostById(id)
             .then(data => {
@@ -32,9 +33,12 @@ function PostCardFullWrapper() {
                     views: data.views ?? 0,
                     rating: data.rating ?? 0,
                 });
+
+                setNextId(data.next_post_id ?? null);
+                setPrevId(data.previous_post_id ?? null);
+
                 setLoading(false);
-                // Загружаем картинки отдельно, не блокируем рендер поста
-                // Сортируем по position чтобы [img:1] всегда был первым
+
                 getPostImages(data.id).then(imgs => {
                     const sorted = [...imgs].sort((a, b) => a.position - b.position);
                     setImages(sorted);
@@ -42,8 +46,7 @@ function PostCardFullWrapper() {
             })
             .catch(() => { setError("Не удалось загрузить пост"); setLoading(false); });
 
-        getNextPost(id).then(data => setNextId(data ? data.id : null)).catch(() => setNextId(null));
-        getPreviousPost(id).then(data => setPrevId(data ? data.id : null)).catch(() => setPrevId(null));
+
     }, [id]);
 
     if (loading) return (

@@ -99,17 +99,6 @@ async def get_posts_paginated(current_post:int | None, limit:int, session: Async
     results = res.scalars().all()
     return results
 
-async def get_five_latest_posts(session: AsyncSession) -> Sequence[Posts]:
-    query = (
-        select(Posts)
-        .options(selectinload(Posts.category))
-        .options(selectinload(Posts.user))
-        .order_by(Posts.id.desc())
-        .limit(5)
-    )
-    res = await session.execute(query)
-    results = res.scalars().all()
-    return results
 
 async def get_current_post_by_id(post_id: int, session: AsyncSession) -> PostOut:
     query = (

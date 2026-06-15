@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getLatestPosts } from "../api/Posts.js";
+import { getPostsPaginated } from "../api/Posts.js";
 import "./styles/PostIconMain_styles.css";
 import moment from "moment";
 import { Link } from "react-router-dom";
@@ -28,7 +28,7 @@ function MainPostsList() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getLatestPosts()
+        getPostsPaginated(null, 5)
             .then(data => { setPosts(data); setLoading(false); })
             .catch(err => { console.error("Ошибка при получении постов:", err); setLoading(false); });
     }, []);
@@ -42,8 +42,8 @@ function MainPostsList() {
                     key={post.id}
                     id={post.id}
                     title={post.title}
-                    category={post.category.name}
-                    author={post.user.username}
+                    category={post.category?.name ?? "—"}
+                    author={post.user?.username ?? "Аноним"}
                     date={moment(post.created_at).format("YYYY-MM-DD")}
                     content={post.content}
                 />

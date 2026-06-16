@@ -29,7 +29,7 @@ async def user_status_websocket(
         try:
             await ws_online.broadcast(message_type="connected", user_id=user.id)
         except (WebSocketDisconnect, WebSocketException):
-            await websocket.close(code=1008)
+            pass
 
         try:
             while True:

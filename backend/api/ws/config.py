@@ -138,8 +138,9 @@ class OnlineStatusUnauthorizedConnectionManager(ConnectionManager):
                 "type": "online_users",
                 "users": list(ws_online.active_connections.keys()),
             })
-        except (WebSocketDisconnect, WebSocketException):
-            await websocket.close(code=1008)
+        except Exception:
+            self.active_connections_unauthorized.discard(websocket)
+            return
 
 
     async def disconnect(self, websocket: WebSocket):
@@ -181,7 +182,7 @@ class NotificationsConnectionManager(ConnectionManager):
                             "type": message_type,
                             "notification": notif.model_dump(),
                         })
-                    except WebSocketException:
+                    except Exception:
                         connection.discard(ws)
 
         elif message_type == "new_comment":
@@ -202,7 +203,7 @@ class NotificationsConnectionManager(ConnectionManager):
                             "type": message_type,
                             "notification": notif.model_dump(),
                         })
-                    except WebSocketException:
+                    except Exception:
                         self.notify_connections[target_user_id].discard(ws)
 
 
@@ -221,7 +222,7 @@ class NotificationsConnectionManager(ConnectionManager):
                         "type": message_type,
                         "notification": notif.model_dump(),
                     })
-                except WebSocketException:
+                except Exception:
                     self.notify_connections[message.get("participant_id")].discard(ws)
 
         elif message_type == "read_current_notification":
@@ -235,7 +236,7 @@ class NotificationsConnectionManager(ConnectionManager):
                         "notification_id": message.get("notification_id"),
                         "status": "Success"
                     })
-                except WebSocketException:
+                except Exception:
                     self.notify_connections[user_id].discard(ws)
 
         elif message_type == "read_all_notifications":
@@ -248,7 +249,7 @@ class NotificationsConnectionManager(ConnectionManager):
                         "type": message_type,
                         "status": "Success"
                     })
-                except WebSocketException:
+                except Exception:
                     self.notify_connections[user_id].discard(ws)
 
         elif message_type == "delete_current_notification":
@@ -261,7 +262,7 @@ class NotificationsConnectionManager(ConnectionManager):
                         "notification_id": message.get("notification_id"),
                         "status": "Success"
                     })
-                except WebSocketException:
+                except Exception:
                     self.notify_connections[user_id].discard(ws)
 
         elif message_type == "delete_all_notifications":
@@ -274,7 +275,7 @@ class NotificationsConnectionManager(ConnectionManager):
                         "type": message_type,
                         "status": "Success"
                     })
-                except WebSocketException:
+                except Exception:
                     self.notify_connections[user_id].discard(ws)
 
         elif message_type == "create_custom_notification":
@@ -297,7 +298,7 @@ class NotificationsConnectionManager(ConnectionManager):
                             "type": message_type,
                             "notification": notif.model_dump(),
                         })
-                    except WebSocketException:
+                    except Exception:
                         connection.discard(ws)
 
 

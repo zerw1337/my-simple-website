@@ -1,8 +1,7 @@
-from fastapi import WebSocket
+from fastapi import WebSocket, WebSocketDisconnect, WebSocketException
 from collections import defaultdict
-
 from sqlalchemy.ext.asyncio import AsyncSession
-from websockets import WebSocketException
+
 
 from api.auth.schemas import UserOut
 from api.notifications.crud import create_new_post_notification, create_notification_body, \
@@ -134,10 +133,13 @@ class OnlineStatusUnauthorizedConnectionManager(ConnectionManager):
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections_unauthorized.add(websocket)
-        await websocket.send_json({
-            "type": "online_users",
-            "users": list(ws_online.active_connections.keys()),
-        })
+        try:
+            await websocket.send_json({
+                "type": "online_users",
+                "users": list(ws_online.active_connections.keys()),
+            })
+        except (WebSocketDisconnect, WebSocketException):
+            await websocket.close(code=1008)
 
 
     async def disconnect(self, websocket: WebSocket):

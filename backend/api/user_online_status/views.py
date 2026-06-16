@@ -26,7 +26,10 @@ async def user_status_websocket(
     if user is not None:
         await ws_online.connect(websocket=websocket, user_id=user.id)
         await update_last_seen_user_status(user=user, session=session, new_value=None)
-        await ws_online.broadcast(message_type="connected", user_id=user.id)
+        try:
+            await ws_online.broadcast(message_type="connected", user_id=user.id)
+        except (WebSocketDisconnect, WebSocketException):
+            await websocket.close(code=1008)
 
         try:
             while True:

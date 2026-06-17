@@ -1,39 +1,14 @@
-import { API_URL } from "./const.js";
+import { API_URL, WS_URL } from "./const.js";
 import { fetchWithAuth } from "./refreshToken.js";
 
-export async function getMyNotifications() {
-    const res = await fetchWithAuth(`${API_URL}/notifications/`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return Array.isArray(data) ? data : [];
-}
-
-export async function readNotification(notificationId) {
-    const res = await fetchWithAuth(`${API_URL}/notifications/read/${notificationId}/`, {
-        method: "PATCH",
-    });
-    return res.ok;
-}
-
-export async function readAllNotifications() {
-    const res = await fetchWithAuth(`${API_URL}/notifications/read/all/`, {
-        method: "PATCH",
-    });
-    return res.ok;
-}
-
-export async function deleteNotification(notificationId) {
-    const res = await fetchWithAuth(`${API_URL}/notifications/delete/${notificationId}/`, {
-        method: "DELETE",
-    });
-    return res.ok;
-}
-
-export async function deleteAllNotifications() {
-    const res = await fetchWithAuth(`${API_URL}/notifications/delete/all/`, {
-        method: "DELETE",
-    });
-    return res.ok;
+// Личные уведомления пользователя теперь приходят через WebSocket
+// (см. context/NotificationsContext.jsx), а не через polling REST-запросы.
+// Эта функция собирает URL для подключения, токен берётся из localStorage
+// так же, как и для остальных WS-соединений в приложении (status, chats).
+export function getNotificationsWsUrl() {
+    const token = localStorage.getItem("access_token");
+    if (!token) return null;
+    return `${WS_URL}/notifications/ws/?token=${encodeURIComponent(token)}`;
 }
 
 // Фикс: передаём refer_to явно (null если не указан)

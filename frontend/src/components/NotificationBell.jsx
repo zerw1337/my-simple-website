@@ -1,14 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-    getMyNotifications,
-    readNotification,
-    readAllNotifications,
-    deleteNotification,
-    deleteAllNotifications,
-} from "../api/Notifications.js";
-
-const POLL_INTERVAL = 30000;
+import { useNotifications } from "../context/NotificationsContext.jsx";
 
 function timeAgo(dateStr) {
     if (!dateStr) return "";
@@ -58,7 +50,7 @@ function getReferTo(notification) {
 }
 
 function NotificationBell({ onClose }) {
-    const [notifications, setNotifications] = useState([]);
+    const { notifications, markRead, markAllRead, deleteOne, deleteAll } = useNotifications();
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -68,23 +60,6 @@ function NotificationBell({ onClose }) {
     const unreadCount = notifications.filter(
         (n) => n.status === "unread"
     ).length;
-
-    const load = useCallback(async () => {
-        try {
-            const data = await getMyNotifications();
-            setNotifications(Array.isArray(data) ? data : []);
-        } catch (e) {
-            console.error("Failed to load notifications", e);
-        }
-    }, []);
-
-    useEffect(() => {
-        load();
-
-        const interval = setInterval(load, POLL_INTERVAL);
-
-        return () => clearInterval(interval);
-    }, [load]);
 
     useEffect(() => {
         if (!open) return;
@@ -112,77 +87,35 @@ function NotificationBell({ onClose }) {
         }
     };
 
-    const handleReadAll = async () => {
-        try {
-            setLoading(true);
+    const handleReadAll = () => {
+        setLoading(true);
+        markAllRead();
+        setLoading(false);
+    };
 
-            await readAllNotifications();
+    const handleDeleteAll = () => {
+        setLoading(true);
+        deleteAll();
+        setLoading(false);
+    };
 
-            setNotifications((prev) =>
-                prev.map((n) => ({
-                    ...n,
-                    status: "read",
-                }))
-            );
-        } catch (e) {
-            console.error("Failed to read all notifications", e);
-        } finally {
-            setLoading(false);
+    const handleNotifClick = (notif) => {
+        if (notif.status === "unread") {
+            markRead(notif.id);
+        }
+
+        const referTo = getReferTo(notif.notification);
+        const path = toLocalPath(referTo);
+
+        if (path) {
+            setOpen(false);
+            navigate(path);
         }
     };
 
-    const handleDeleteAll = async () => {
-        try {
-            setLoading(true);
-
-            await deleteAllNotifications();
-
-            setNotifications([]);
-        } catch (e) {
-            console.error("Failed to delete all notifications", e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleNotifClick = async (notif, idx) => {
-        try {
-            if (notif.status === "unread") {
-                setNotifications((prev) =>
-                    prev.map((n, i) =>
-                        i === idx
-                            ? { ...n, status: "read" }
-                            : n
-                    )
-                );
-
-                await readNotification(notif.id);
-            }
-
-            const referTo = getReferTo(notif.notification);
-            const path = toLocalPath(referTo);
-
-            if (path) {
-                setOpen(false);
-                navigate(path);
-            }
-        } catch (e) {
-            console.error("Failed to open notification", e);
-        }
-    };
-
-    const handleDelete = async (notif, idx, e) => {
+    const handleDelete = (notif, e) => {
         e.stopPropagation();
-
-        try {
-            setNotifications((prev) =>
-                prev.filter((_, i) => i !== idx)
-            );
-
-            await deleteNotification(notif.id);
-        } catch (e) {
-            console.error("Failed to delete notification", e);
-        }
+        deleteOne(notif.id);
     };
 
     return (
@@ -384,10 +317,7 @@ function NotificationBell({ onClose }) {
                                                 : `notif-idx-${idx}`
                                         }
                                         onClick={() =>
-                                            handleNotifClick(
-                                                n,
-                                                idx
-                                            )
+                                            handleNotifClick(n)
                                         }
                                         style={{
                                             padding:
@@ -549,7 +479,6 @@ function NotificationBell({ onClose }) {
                                             onClick={(e) =>
                                                 handleDelete(
                                                     n,
-                                                    idx,
                                                     e
                                                 )
                                             }

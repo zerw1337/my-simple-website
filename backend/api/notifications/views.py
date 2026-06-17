@@ -74,12 +74,12 @@ async def notifications_websocket(websocket: WebSocket, session: AsyncSession = 
 
     try:
         user = await get_auth(token=token, session=session)
-    except HTTPException:
+    except Exception:
         await websocket.close(code=1008)
         return
 
     user_notifications = await get_my_notifications(user=user, session=session)
-    await ws_notifications.connect(user=user, websocket=websocket, user_notifications=user_notifications)
+    await ws_notifications.connect(user_id=user.id, websocket=websocket, user_notifications=user_notifications)
 
     try:
         while True:
@@ -97,7 +97,7 @@ async def notifications_websocket(websocket: WebSocket, session: AsyncSession = 
         pass
 
     finally:
-        await ws_notifications.disconnect(user=user, websocket=websocket)
+        await ws_notifications.disconnect(user_id=user.id, websocket=websocket)
 
 
 

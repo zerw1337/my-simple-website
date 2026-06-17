@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { OnlineStatusProvider } from "./context/OnlineStatusContext.jsx";
+import { NotificationsProvider } from "./context/NotificationsContext.jsx";
 import "./index.css"
 
 // --- Глобальный 429 (блокирующий) ---
@@ -178,7 +179,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
         <AuthProvider>
             <OnlineStatusProvider>
-                <App />
+                <NotificationsProvider>
+                    <App />
+                </NotificationsProvider>
             </OnlineStatusProvider>
         </AuthProvider>
     </React.StrictMode>

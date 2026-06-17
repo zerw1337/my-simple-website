@@ -149,14 +149,16 @@ class OnlineStatusUnauthorizedConnectionManager(ConnectionManager):
 
 class NotificationsConnectionManager(ConnectionManager):
 
-
     async def connect(self, websocket: WebSocket, user_id: int, user_notifications: NotificationsListOut):
         await websocket.accept()
         self.notify_connections[user_id].add(websocket)
-        await websocket.send_json({
-            "type": "connected",
-            "notifications": user_notifications,
-        })
+        try:
+            await websocket.send_json({
+                "type": "connected",
+                "notifications": [n.model_dump(mode="json") for n in user_notifications],
+            })
+        except Exception:
+            self.notify_connections[user_id].discard(websocket)
 
 
 
@@ -172,8 +174,11 @@ class NotificationsConnectionManager(ConnectionManager):
                 chat_uuid=None,
             )
 
-
-            await create_new_post_notification(notif, session)
+            try:
+                await create_new_post_notification(notif, session)
+            except Exception:
+                self.notify_connections[user_id].discard(websocket)
+                return
 
             for connection in self.notify_connections.values():
                 for ws in connection.copy():
@@ -193,8 +198,11 @@ class NotificationsConnectionManager(ConnectionManager):
                 chat_uuid=None,
             )
 
-
-            ids = await create_new_comment_notification(new_notification=notif, session=session, current_user_id=user_id, post_id=message.get("post_id"))
+            try:
+                ids = await create_new_comment_notification(new_notification=notif, session=session, current_user_id=user_id, post_id=message.get("post_id"))
+            except Exception:
+                self.notify_connections[user_id].discard(websocket)
+                return
 
             for target_user_id in ids:
                 for ws in self.notify_connections.get(target_user_id, set()).copy():
@@ -213,8 +221,11 @@ class NotificationsConnectionManager(ConnectionManager):
                 post_id=None,
                 chat_uuid=message.get("chat_uuid"),
             )
-
-            await create_new_message_notification(new_notification=notif, user_id=message.get("participant_id"), session=session)
+            try:
+                await create_new_message_notification(new_notification=notif, user_id=message.get("participant_id"), session=session)
+            except Exception:
+                self.notify_connections[message["user_id"]].discard(websocket)
+                return
 
             for ws in self.notify_connections.get(message.get("participant_id"), set()).copy():
                 try:
@@ -226,8 +237,11 @@ class NotificationsConnectionManager(ConnectionManager):
                     self.notify_connections[message.get("participant_id")].discard(ws)
 
         elif message_type == "read_current_notification":
-
-            await read_current_notification(session=session, notification_id=message.get("notification_id"), user=user)
+            try:
+                await read_current_notification(session=session, notification_id=message.get("notification_id"), user=user)
+            except Exception:
+                self.notify_connections[user_id].discard(websocket)
+                return
 
             for ws in self.notify_connections.get(user_id, set()).copy():
                 try:
@@ -240,8 +254,11 @@ class NotificationsConnectionManager(ConnectionManager):
                     self.notify_connections[user_id].discard(ws)
 
         elif message_type == "read_all_notifications":
-
-            await read_current_users_all_notifications(session=session, user=user)
+            try:
+                await read_current_users_all_notifications(session=session, user=user)
+            except Exception:
+                self.notify_connections[user_id].discard(websocket)
+                return
 
             for ws in self.notify_connections.get(user_id, set()).copy():
                 try:
@@ -253,7 +270,11 @@ class NotificationsConnectionManager(ConnectionManager):
                     self.notify_connections[user_id].discard(ws)
 
         elif message_type == "delete_current_notification":
-            await delete_current_notification(session=session, notification_id=message.get("notification_id"), user=user)
+            try:
+                await delete_current_notification(session=session, notification_id=message.get("notification_id"), user=user)
+            except Exception:
+                self.notify_connections[user_id].discard(websocket)
+                return
 
             for ws in self.notify_connections.get(user_id, set()).copy():
                 try:
@@ -267,7 +288,11 @@ class NotificationsConnectionManager(ConnectionManager):
 
         elif message_type == "delete_all_notifications":
 
-            await delete_current_users_all_notifications(session=session, user=user)
+            try:
+                await delete_current_users_all_notifications(session=session, user=user)
+            except Exception:
+                self.notify_connections[user_id].discard(websocket)
+                return
 
             for ws in self.notify_connections.get(user_id, set()).copy():
                 try:
@@ -289,7 +314,11 @@ class NotificationsConnectionManager(ConnectionManager):
                 refer_to=message.get("refer_to"),
             )
 
-            await create_custom_notification_process(new_notification=notif, session=session)
+            try:
+                await create_custom_notification_process(new_notification=notif, session=session)
+            except Exception:
+                self.notify_connections[user_id].discard(websocket)
+                return
 
             for connection in self.notify_connections.values():
                 for ws in connection.copy():

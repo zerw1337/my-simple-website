@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useContext } from "react";
 import { getCommentsByPostIdPaginated, createComment, deleteComment } from "../api/Posts";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import UserAvatar from "./UserAvatar";
 
 const PAGE_SIZE = 10;
@@ -168,11 +168,11 @@ function PostComments({ postId }) {
                                         <UserAvatar userId={comment.user_id} username={comment.user?.username || comment.username} size={30} />
                                         <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
                                             {comment.user_id
-                                                ? <a href={"/profile/" + comment.user_id} style={{ color: "var(--logo-color)", textDecoration: "none" }}
-                                                     onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
-                                                     onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}>
+                                                ? <Link to={"/profile/" + comment.user_id} style={{ color: "var(--logo-color)", textDecoration: "none" }}
+                                                        onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+                                                        onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}>
                                                     {comment.user?.username || comment.username || "Аноним"}
-                                                </a>
+                                                </Link>
                                                 : (comment.user?.username || comment.username || "Аноним")}
                                         </span>
                                     </div>

@@ -6,8 +6,10 @@ from api.auth.dependencies import get_auth
 from api.auth.schemas import UserOut
 from api.messanger.utils import create_new_chat, get_all_my_chats, get_chat_by_uuid, \
     check_if_current_user_belongs_to_this_chat, upload_new_message_to_database, edit_message, delete_message, \
-    update_last_read_message_for_participant
-from api.ws.config import ws_messanger
+    update_last_read_message_for_participant, get_other_participant_ids
+from api.notifications.crud import create_notification_body, create_new_message_notification
+from api.ws.config import ws_messanger, ws_notifications
+from src.config import settings
 from src.models.database import get_session
 
 messanger_router = APIRouter(prefix="/chats", tags=["Chats"])
@@ -44,9 +46,28 @@ async def chat_ws(chat_uuid: str, websocket: WebSocket, session: AsyncSession = 
             if received_type == "new_message":
                 received_data = received["message"]
                 message_orm = await upload_new_message_to_database(message=received_data, chat_uuid=chat_uuid, session=session, user=user)
-                if len(ws_messanger.messanger_connections[chat_uuid]) > 1 :
+                both_in_chat = len(ws_messanger.messanger_connections[chat_uuid]) > 1
+                if both_in_chat:
                     await update_last_read_message_for_participant(message=message_orm, session=session, user=user)
                 await ws_messanger.broadcast(message=message_orm, chat_uuid=chat_uuid)
+
+                if not both_in_chat:
+                    notif = create_notification_body(
+                        notif_type=settings.NOTIFICATION_NEW_MESSAGE,
+                        post_id=None,
+                        chat_uuid=chat_uuid,
+                    )
+                    recipient_ids = await get_other_participant_ids(chat_uuid=chat_uuid, exclude_user_id=user.id, session=session)
+                    for recipient_id in recipient_ids:
+                        await create_new_message_notification(user_id=recipient_id, new_notification=notif, session=session)
+                        for ws in ws_notifications.notify_connections.get(recipient_id, set()).copy():
+                            try:
+                                await ws.send_json({
+                                    "type": "new_message",
+                                    "notification": notif.model_dump(),
+                                })
+                            except Exception:
+                                ws_notifications.notify_connections[recipient_id].discard(ws)
 
             elif received_type == "edit_message":
                 received_message_id = received["message_id"]

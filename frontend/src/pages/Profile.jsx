@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useContext } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { getProfile, getPostsByUserPaginated, getCommentsByUserIdPaginated } from "../api/Posts";
 import { createChat } from "../api/Messanger.js";
 import { AuthContext } from "../context/AuthContext";
@@ -274,7 +274,7 @@ function Profile() {
                             <>
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                                     {posts.map(post => (
-                                        <a key={post.id} href={"/posts/" + post.id} style={{ textDecoration: "none" }}>
+                                        <Link key={post.id} to={"/posts/" + post.id} style={{ textDecoration: "none" }}>
                                             <div style={{ background: "#161b24", border: "1px solid rgba(100,160,220,0.1)", borderRadius: "10px", padding: "1rem 1.25rem", transition: "all 0.2s" }}
                                                  onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(180,255,255,0.2)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
                                                  onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(100,160,220,0.1)"; e.currentTarget.style.transform = "translateY(0)"; }}>
@@ -286,7 +286,7 @@ function Profile() {
                                                     {stripTags(post.content)}
                                                 </p>
                                             </div>
-                                        </a>
+                                        </Link>
                                     ))}
                                 </div>
 
@@ -317,11 +317,11 @@ function Profile() {
                                     {comments.map(comment => (
                                         <div key={comment.id} style={{ background: "#161b24", border: "1px solid rgba(100,160,220,0.1)", borderRadius: "10px", padding: "1rem 1.25rem" }}>
                                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                                                <a href={"/posts/" + comment.post_id} style={{ color: "var(--logo-color)", fontWeight: 600, fontSize: "0.825rem", textDecoration: "none" }}
-                                                   onMouseEnter={e => e.currentTarget.style.color = "rgb(180,255,255)"}
-                                                   onMouseLeave={e => e.currentTarget.style.color = "var(--logo-color)"}>
+                                                <Link to={"/posts/" + comment.post_id} style={{ color: "var(--logo-color)", fontWeight: 600, fontSize: "0.825rem", textDecoration: "none" }}
+                                                      onMouseEnter={e => e.currentTarget.style.color = "rgb(180,255,255)"}
+                                                      onMouseLeave={e => e.currentTarget.style.color = "var(--logo-color)"}>
                                                     К посту →
-                                                </a>
+                                                </Link>
                                                 <span style={{ fontSize: "0.75rem", color: "rgb(60,90,120)" }}>{new Date(comment.created_at).toLocaleString("ru-RU")}</span>
                                             </div>
                                             <p style={{ margin: 0, fontSize: "0.9rem", color: "rgb(160,195,230)", lineHeight: 1.6 }}>{comment.content}</p>

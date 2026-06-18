@@ -173,12 +173,12 @@ function Avatar({ userId, username, size = 28 }) {
 function MenuItem({ label, icon, href, onClick }) {
     const [h, setH] = useState(false);
     return (
-        <a href={href} onClick={onClick}
-           onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
-           style={{ display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.55rem 1rem", color: h ? "rgb(200,235,255)" : "rgba(160,200,240,0.8)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 600, background: h ? "rgba(4,198,233,0.06)" : "transparent", transition: "all 0.15s" }}>
+        <Link to={href} onClick={onClick}
+              onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+              style={{ display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.55rem 1rem", color: h ? "rgb(200,235,255)" : "rgba(160,200,240,0.8)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 600, background: h ? "rgba(4,198,233,0.06)" : "transparent", transition: "all 0.15s" }}>
             <span style={{ color: h ? "var(--logo-color)" : "rgba(4,198,233,0.45)", transition: "color 0.15s" }}>{icon}</span>
             {label}
-        </a>
+        </Link>
     );
 }
 
@@ -583,7 +583,7 @@ function Header() {
                                 <div style={{ height: 1, background: "rgba(100,160,220,0.08)", margin: "0.5rem 0" }} />
                                 <Link to="/messages" className="hdr-link" onClick={close}>✉ Сообщения</Link>
                                 {getIsSuperuser() && <Link to="/admin" className="hdr-link" onClick={close}>⚙ Админ</Link>}
-                                <a href={`/profile/${getMyId()}`} className="hdr-link" onClick={close}>👤 Мой профиль</a>
+                                <Link to={`/profile/${getMyId()}`} className="hdr-link" onClick={close}>👤 Мой профиль</Link>
                                 <button onClick={() => { logoutUser(); close(); }}
                                         style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "none", border: "none", color: "rgba(200,100,100,0.8)", fontFamily: "inherit", fontSize: "0.95rem", fontWeight: 600, cursor: "pointer", padding: "0.7rem 0.9rem", borderRadius: 10, width: "100%", textAlign: "left" }}>
                                     <FaSignOutAlt size={13} /> Выйти

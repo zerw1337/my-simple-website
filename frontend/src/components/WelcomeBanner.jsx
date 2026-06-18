@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { getWelcomeNotifications } from "../api/Notifications.js";
 
 function toLocalPath(referTo) {
@@ -89,7 +90,7 @@ function WelcomeBanner() {
                             </div>
 
                             {path && (
-                                <a href={path} style={{
+                                <Link to={path} style={{
                                     display: "inline-block",
                                     marginTop: "0.3rem",
                                     fontFamily: "'Poppins', sans-serif",
@@ -98,11 +99,11 @@ function WelcomeBanner() {
                                     textDecoration: "none",
                                     opacity: 0.85,
                                 }}
-                                   onMouseEnter={e => e.currentTarget.style.opacity = "1"}
-                                   onMouseLeave={e => e.currentTarget.style.opacity = "0.85"}
+                                      onMouseEnter={e => e.currentTarget.style.opacity = "1"}
+                                      onMouseLeave={e => e.currentTarget.style.opacity = "0.85"}
                                 >
                                     Подробнее →
-                                </a>
+                                </Link>
                             )}
 
                             <button

@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { changePassword, changeEmail, confirmEmailChange, resendEmailChangeCode, getMe } from "../api/Auth";
 import { uploadAvatar, getAvatarUrl } from "../api/Posts";
 import { AuthContext } from "../context/AuthContext";
@@ -143,9 +143,9 @@ function Settings() {
 
                 <div className="settings-header">
                     {myId && (
-                        <a href={"/profile/" + myId} className="back-link">
+                        <Link to={"/profile/" + myId} className="back-link">
                             ← Профиль
-                        </a>
+                        </Link>
                     )}
                     <h2>Настройки</h2>
                 </div>

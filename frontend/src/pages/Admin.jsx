@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
     getCategories, getAllPosts, createPost, createCategory,
     deleteCategory, deletePost, updatePost, getAllUsers, banUser, unbanUser
@@ -381,9 +381,9 @@ function Admin() {
                                 <div key={u.id} style={{ background: "#1f1f1f", border: "1px solid " + (u.is_banned ? "#ff5555" : "#333"), borderRadius: "8px", padding: "0.75rem 1rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", opacity: u.is_banned ? 0.6 : 1 }}>
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.2rem" }}>
-                                            <a href={"/profile/" + u.id} style={{ fontWeight: 600, color: "var(--main-text-color)", textDecoration: "none" }}
-                                               onMouseEnter={e => e.currentTarget.style.color = "var(--logo-color)"}
-                                               onMouseLeave={e => e.currentTarget.style.color = "var(--main-text-color)"}>{u.username}</a>
+                                            <Link to={"/profile/" + u.id} style={{ fontWeight: 600, color: "var(--main-text-color)", textDecoration: "none" }}
+                                                  onMouseEnter={e => e.currentTarget.style.color = "var(--logo-color)"}
+                                                  onMouseLeave={e => e.currentTarget.style.color = "var(--main-text-color)"}>{u.username}</Link>
                                             {u.is_superuser && <span style={{ fontSize: "0.7rem", background: "var(--logo-color)", color: "var(--bg-main)", padding: "0.1rem 0.4rem", borderRadius: "4px", fontWeight: 700 }}>ADMIN</span>}
                                             {u.is_banned && <span style={{ fontSize: "0.7rem", background: "#ff5555", color: "#fff", padding: "0.1rem 0.4rem", borderRadius: "4px", fontWeight: 700 }}>БАН</span>}
                                             {!u.is_verified && <span style={{ fontSize: "0.7rem", background: "#666", color: "#fff", padding: "0.1rem 0.4rem", borderRadius: "4px", fontWeight: 700 }}>НЕ ВЕРИФИЦИРОВАН</span>}

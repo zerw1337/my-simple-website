@@ -119,6 +119,7 @@ export function OnlineStatusProvider({ children }) {
             if (wsRef.current) {
                 wsRef.current.onclose = null;
                 wsRef.current.close();
+                wsRef.current = null;
             }
         };
     }, [user, connect]);

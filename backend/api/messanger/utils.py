@@ -224,3 +224,12 @@ async def check_if_current_user_belongs_to_this_chat(chat_uuid: str, user: UserO
     result = res.scalar_one_or_none()
     if not result:
         raise WebSocketException(code=1008)
+
+async def get_other_participant_ids(chat_uuid: str, exclude_user_id: int, session: AsyncSession):
+    query = (
+        select(ChatParticipants.user_id)
+        .join(Chats, Chats.id == ChatParticipants.chat_id)
+        .where(and_(Chats.uuid == chat_uuid, ChatParticipants.user_id != exclude_user_id))
+    )
+    res = await session.execute(query)
+    return res.scalars().all()

@@ -200,7 +200,14 @@ async def get_posts_ordered_by_rating_paginated(offset: int | None, limit: int, 
 
 
 async def edit_current_post(post_id: int, edited_post: UpdatePost, session: AsyncSession) -> Posts:
-    post = await get_current_post_by_id(post_id, session)
+    query = (
+        select(Posts)
+        .where(Posts.id == post_id)
+    )
+    res = await session.execute(query)
+    post = res.scalar_one_or_none()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
     for name, val in edited_post.model_dump(exclude_unset=True).items():
         setattr(post, name, val)
     session.add(post)

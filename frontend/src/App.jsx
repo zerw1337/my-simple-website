@@ -63,6 +63,7 @@ function App() {
                                 <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
                                 <Route path="/reset-password/:url" element={<ResetPassword />} />
                                 <Route path="/messages" element={<ProtectedRoute><Messanger /></ProtectedRoute>} />
+                                <Route path="/messages/:chatUuid" element={<ProtectedRoute><Messanger /></ProtectedRoute>} />
                                 <Route path="*" element={<NotFound />} />
                             </Routes>
                         </BannedRoute>

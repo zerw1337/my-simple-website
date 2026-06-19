@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useContext } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { useOnlineStatus } from "../context/OnlineStatusContext.jsx";
 import { getMyChats, getChatMessages, getWsUrl } from "../api/Messanger.js";
@@ -55,6 +55,7 @@ export default function Messanger() {
     const { seedLastSeen, isOnline, getLastSeen } = useOnlineStatus();
     const navigate = useNavigate();
     const location = useLocation();
+    const { chatUuid: urlChatUuid } = useParams();
 
     const [chats, setChats] = useState([]);
     const [activeChatUuid, setActiveChatUuid] = useState(null);
@@ -195,12 +196,15 @@ export default function Messanger() {
             // Открываем фоновые WS для всех чатов (для синхронизации sidebar)
             data.forEach(({ chat }) => ensureChatWs(chat.uuid));
 
-            // Открываем чат из state (после createChat) → sessionStorage (после F5) → первый по умолчанию
+            // Открываем чат из state (после createChat) → URL (прямая ссылка, например
+            // из уведомления о новом сообщении) → sessionStorage (после F5) → первый по умолчанию
             const targetUuid = location.state?.openChatUuid
+                ?? urlChatUuid
                 ?? sessionStorage.getItem("activeChatUuid")
                 ?? data[0].chat.uuid;
             const targetEntry = data.find(c => c.chat.uuid === targetUuid) ?? data[0];
             openChatInternal(targetEntry.chat.uuid, targetEntry);
+            navigate(`/messages/${targetEntry.chat.uuid}/`, { replace: true });
         })();
 
         return () => {
@@ -257,7 +261,8 @@ export default function Messanger() {
     /* ---- публичный обработчик клика по чату ---- */
     const openChat = useCallback((chatUuid) => {
         openChatInternal(chatUuid);
-    }, [openChatInternal]);
+        navigate(`/messages/${chatUuid}/`, { replace: true });
+    }, [openChatInternal, navigate]);
 
     /* ---- авто-скролл вниз ---- */
     useEffect(() => {

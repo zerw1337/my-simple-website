@@ -21,6 +21,7 @@ notification_router = APIRouter(prefix="/notifications", tags=["Notifications"])
 @notification_router.post("/custom/")
 async def create_notification(new_notification: CreateNotification, user: UserOut = Depends(get_auth_admin), session: AsyncSession = Depends(get_session)):
     await create_custom_notification_process(new_notification=new_notification, session=session)
+    await ws_notifications.broadcast_to_all("create_custom_notification", new_notification)
     return {"message": "success"}
 
 @notification_router.post("/custom/welcome/")
@@ -98,6 +99,3 @@ async def notifications_websocket(websocket: WebSocket, session: AsyncSession = 
 
     finally:
         await ws_notifications.disconnect(user_id=user.id, websocket=websocket)
-
-
-

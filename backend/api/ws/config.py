@@ -160,6 +160,16 @@ class NotificationsConnectionManager(ConnectionManager):
         except Exception:
             self.notify_connections[user_id].discard(websocket)
 
+    async def broadcast_to_all(self, message_type: str, notif: CreateNotification):
+        for connection in self.notify_connections.values():
+            for ws in connection.copy():
+                try:
+                    await ws.send_json({
+                        "type": message_type,
+                        "notification": notif.model_dump(),
+                    })
+                except Exception:
+                    connection.discard(ws)
 
 
     async def broadcast(self, user_id: int, message: dict, session: AsyncSession, user: UserOut, websocket: WebSocket):
@@ -320,15 +330,7 @@ class NotificationsConnectionManager(ConnectionManager):
                 self.notify_connections[user_id].discard(websocket)
                 return
 
-            for connection in self.notify_connections.values():
-                for ws in connection.copy():
-                    try:
-                        await ws.send_json({
-                            "type": message_type,
-                            "notification": notif.model_dump(),
-                        })
-                    except Exception:
-                        connection.discard(ws)
+            await self.broadcast_to_all(message_type, notif)
 
 
 

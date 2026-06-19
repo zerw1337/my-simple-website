@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { WS_URL } from "../api/const.js";
+import { getValidAccessToken } from "../api/refreshToken.js";
 import { AuthContext } from "./AuthContext.jsx";
 
 export const OnlineStatusContext = createContext({
@@ -8,8 +9,11 @@ export const OnlineStatusContext = createContext({
     seedLastSeen: () => {},
 });
 
-function getWsStatusUrl() {
-    const token = localStorage.getItem("access_token");
+// Токен сначала проверяется и, если он истёк (или истекает в ближайшие секунды),
+// обновляется через refresh — иначе сокет не пройдёт авторизацию на сервере
+// и придётся ждать следующего реконнекта через 5 секунд.
+async function getWsStatusUrl() {
+    const token = await getValidAccessToken();
     return token
         ? `${WS_URL}/status/ws/?token=${encodeURIComponent(token)}`
         : `${WS_URL}/status/ws/`;
@@ -35,13 +39,28 @@ export function OnlineStatusProvider({ children }) {
     const lastSeenMap = useRef(new Map());
     const wsRef = useRef(null);
     const reconnectTimer = useRef(null);
+    const connectingRef = useRef(false);
 
-    const connect = useCallback(() => {
+    const connect = useCallback(async () => {
+        if (connectingRef.current) return;
         if (wsRef.current &&
             (wsRef.current.readyState === WebSocket.OPEN ||
                 wsRef.current.readyState === WebSocket.CONNECTING)) return;
 
-        const ws = new WebSocket(getWsStatusUrl());
+        connectingRef.current = true;
+        let url;
+        try {
+            url = await getWsStatusUrl();
+        } finally {
+            connectingRef.current = false;
+        }
+
+        // Пока ждали токен, соединение могло уже открыться (или эффект размонтировался) — перепроверим
+        if (wsRef.current &&
+            (wsRef.current.readyState === WebSocket.OPEN ||
+                wsRef.current.readyState === WebSocket.CONNECTING)) return;
+
+        const ws = new WebSocket(url);
         wsRef.current = ws;
 
         ws.onmessage = (e) => {

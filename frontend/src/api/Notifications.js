@@ -1,12 +1,13 @@
 import { API_URL, WS_URL } from "./const.js";
-import { fetchWithAuth } from "./refreshToken.js";
+import { fetchWithAuth, getValidAccessToken } from "./refreshToken.js";
 
 // Личные уведомления пользователя теперь приходят через WebSocket
 // (см. context/NotificationsContext.jsx), а не через polling REST-запросы.
-// Эта функция собирает URL для подключения, токен берётся из localStorage
-// так же, как и для остальных WS-соединений в приложении (status, chats).
-export function getNotificationsWsUrl() {
-    const token = localStorage.getItem("access_token");
+// Эта функция собирает URL для подключения. Токен сначала проверяется и,
+// если он истёк или скоро истечёт, обновляется через refresh — иначе сокет
+// просто не подключится с протухшим токеном и придётся ждать реконнекта.
+export async function getNotificationsWsUrl() {
+    const token = await getValidAccessToken();
     if (!token) return null;
     return `${WS_URL}/notifications/ws/?token=${encodeURIComponent(token)}`;
 }

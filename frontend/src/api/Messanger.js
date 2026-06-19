@@ -1,5 +1,5 @@
 import { API_URL, WS_URL } from "./const.js";
-import { fetchWithAuth } from "./refreshToken.js";
+import { fetchWithAuth, getValidAccessToken } from "./refreshToken.js";
 
 export async function createChat(userId) {
     const res = await fetchWithAuth(`${API_URL}/chats/${userId}`, { method: "POST" });
@@ -20,7 +20,7 @@ export async function getChatMessages(chatUuid) {
     return await res.json();
 }
 
-export function getWsUrl(chatUuid) {
-    const token = localStorage.getItem("access_token");
-    return `${WS_URL}/chats/${chatUuid}/ws/?token=${encodeURIComponent(token)}`;
+export async function getWsUrl(chatUuid) {
+    const token = await getValidAccessToken();
+    return `${WS_URL}/chats/${chatUuid}/ws/?token=${encodeURIComponent(token || "")}`;
 }

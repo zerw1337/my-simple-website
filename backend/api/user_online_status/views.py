@@ -26,6 +26,15 @@ async def user_status_websocket(
     if user is not None:
         await ws_online.connect(websocket=websocket, user_id=user.id)
         await update_last_seen_user_status(user=user, session=session, new_value=None)
+
+        try:
+            await websocket.send_json({
+                "type": "online_users",
+                "users": list(ws_online.active_connections.keys()),
+            })
+        except (WebSocketDisconnect, WebSocketException, RuntimeError):
+            pass
+
         try:
             await ws_online.broadcast(message_type="connected", user_id=user.id)
         except (WebSocketDisconnect, WebSocketException):
@@ -70,4 +79,3 @@ async def user_status_websocket(
 
         finally:
             await ws_online_unauthorized.disconnect(websocket=websocket)
-

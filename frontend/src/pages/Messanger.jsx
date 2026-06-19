@@ -82,13 +82,32 @@ export default function Messanger() {
     const usernameCache = useRef({});
 
     /* ---- создать/переиспользовать WS для конкретного чата ---- */
-    const ensureChatWs = useCallback((chatUuid) => {
+    // Защита от гонки: ensureChatWs может вызваться повторно для того же chatUuid
+    // пока первый вызов ещё ждёт токен (см. ниже) — тогда второй просто выходит.
+    const connectingChatsRef = useRef(new Set());
+
+    const ensureChatWs = useCallback(async (chatUuid) => {
         const existing = allWsRef.current[chatUuid];
         if (existing && (existing.readyState === WebSocket.OPEN || existing.readyState === WebSocket.CONNECTING)) {
             return existing;
         }
+        if (connectingChatsRef.current.has(chatUuid)) return null;
+        connectingChatsRef.current.add(chatUuid);
 
-        const ws = new WebSocket(getWsUrl(chatUuid));
+        let url;
+        try {
+            url = await getWsUrl(chatUuid);
+        } finally {
+            connectingChatsRef.current.delete(chatUuid);
+        }
+
+        // Пока ждали токен, соединение могло уже открыться кем-то другим — перепроверим
+        const existingAfter = allWsRef.current[chatUuid];
+        if (existingAfter && (existingAfter.readyState === WebSocket.OPEN || existingAfter.readyState === WebSocket.CONNECTING)) {
+            return existingAfter;
+        }
+
+        const ws = new WebSocket(url);
         allWsRef.current[chatUuid] = ws;
 
         ws.onopen = () => {

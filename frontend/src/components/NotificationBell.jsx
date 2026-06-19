@@ -50,7 +50,7 @@ function getReferTo(notification) {
 }
 
 function NotificationBell({ onClose }) {
-    const { notifications, markRead, markAllRead, deleteOne, deleteAll } = useNotifications();
+    const { notifications, markRead, markAllRead, deleteOne, deleteAll, soundEnabled, toggleSound } = useNotifications();
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -254,8 +254,23 @@ function NotificationBell({ onClose }) {
                             style={{
                                 display: "flex",
                                 gap: "0.5rem",
+                                alignItems: "center",
                             }}
                         >
+                            <button
+                                onClick={toggleSound}
+                                title={soundEnabled ? "Звук уведомлений включён" : "Звук уведомлений выключен"}
+                                aria-label={soundEnabled ? "Выключить звук уведомлений" : "Включить звук уведомлений"}
+                                style={{
+                                    ...actionBtn,
+                                    color: soundEnabled ? "rgb(4,198,233)" : "#555",
+                                    fontSize: "0.9rem",
+                                    lineHeight: 1,
+                                }}
+                            >
+                                {soundEnabled ? "🔔" : "🔕"}
+                            </button>
+
                             {unreadCount > 0 && (
                                 <button
                                     onClick={handleReadAll}

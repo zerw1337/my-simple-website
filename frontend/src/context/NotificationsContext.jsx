@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { AuthContext } from "./AuthContext.jsx";
 import { getNotificationsWsUrl } from "../api/Notifications.js";
+import { playNotificationSound } from "../utils/notificationSound.js";
 
 const RECONNECT_DELAY = 5000;
 const PING_INTERVAL = 30000;
+const SOUND_STORAGE_KEY = "notifications_sound_enabled";
 
 const NotificationsContext = createContext({
     notifications: [],
@@ -12,6 +14,8 @@ const NotificationsContext = createContext({
     markAllRead: () => {},
     deleteOne: () => {},
     deleteAll: () => {},
+    soundEnabled: true,
+    toggleSound: () => {},
 });
 
 // Уведомления пользователя приходят через персистентный WebSocket вместо
@@ -31,6 +35,26 @@ export function NotificationsProvider({ children }) {
     const pingIntervalRef = useRef(null);
     const tempIdRef = useRef(0);
 
+    const [soundEnabled, setSoundEnabled] = useState(() => {
+        const stored = localStorage.getItem(SOUND_STORAGE_KEY);
+        return stored === null ? true : stored === "true";
+    });
+    // ws.onmessage назначается один раз внутри connect() и не пересоздаётся
+    // при каждом рендере, поэтому без ref он "увидел" бы значение soundEnabled
+    // только на момент создания соединения (устаревшее замыкание).
+    const soundEnabledRef = useRef(soundEnabled);
+    useEffect(() => {
+        soundEnabledRef.current = soundEnabled;
+    }, [soundEnabled]);
+
+    const toggleSound = useCallback(() => {
+        setSoundEnabled((prev) => {
+            const next = !prev;
+            localStorage.setItem(SOUND_STORAGE_KEY, String(next));
+            return next;
+        });
+    }, []);
+
     const cleanupSocket = useCallback(() => {
         if (pingIntervalRef.current) {
             clearInterval(pingIntervalRef.current);
@@ -46,9 +70,27 @@ export function NotificationsProvider({ children }) {
         }
     }, []);
 
-    const connect = useCallback(() => {
-        const url = getNotificationsWsUrl();
-        if (!url) return; // не авторизован — нет токена, подключаться нет смысла
+    const connectingRef = useRef(false);
+
+    const connect = useCallback(async () => {
+        if (connectingRef.current) return;
+        if (wsRef.current &&
+            (wsRef.current.readyState === WebSocket.OPEN ||
+                wsRef.current.readyState === WebSocket.CONNECTING)) return;
+
+        connectingRef.current = true;
+        let url;
+        try {
+            url = await getNotificationsWsUrl();
+        } finally {
+            connectingRef.current = false;
+        }
+        if (!url) return; // не авторизован (или рефреш не удался) — подключаться нет смысла
+
+        // Пока ждали токен, соединение могло уже открыться (или эффект размонтировался) — перепроверим
+        if (wsRef.current &&
+            (wsRef.current.readyState === WebSocket.OPEN ||
+                wsRef.current.readyState === WebSocket.CONNECTING)) return;
 
         setWsStatus("connecting");
         const ws = new WebSocket(url);
@@ -82,6 +124,9 @@ export function NotificationsProvider({ children }) {
                 case "new_comment":
                 case "new_message":
                 case "create_custom_notification": {
+                    if (soundEnabledRef.current) {
+                        playNotificationSound();
+                    }
                     const payload = data.notification || {};
                     tempIdRef.current -= 1;
                     const tempEntry = {
@@ -221,7 +266,7 @@ export function NotificationsProvider({ children }) {
 
     return (
         <NotificationsContext.Provider
-            value={{ notifications, wsStatus, markRead, markAllRead, deleteOne, deleteAll }}
+            value={{ notifications, wsStatus, markRead, markAllRead, deleteOne, deleteAll, soundEnabled, toggleSound }}
         >
             {children}
         </NotificationsContext.Provider>

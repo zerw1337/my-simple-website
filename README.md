@@ -1,57 +1,49 @@
 # my-simple-website
 
-Минималистичный веб-сайт с полноценной backend-логикой: пользователи, блог, система реакций и защита API.
-Фронтенд реализован для демонстрации возможностей API. \
+Минималистичный веб-блог с базовым функционалом социальной сети.
+Фронтенд реализован преимущественно для демонстрации возможностей API.  
 [Задеплоенный проект](https://zerw1337.ru)
 
+## 🚀 Скриншоты  
+<details>
+  
+![Главная страница](screenshots/main.png)  
+    
+![Блог](screenshots/blog.png)  
+  
+![Посты](screenshots/post1.png)  
+![Посты](screenshots/post2.png)  
+  
+![Поиск](screenshots/search.png) 
+  
+![Уведомления](screenshots/notifications.png) 
+  
+![Чаты](screenshots/messanger.png) 
+  
+![Профиль](screenshots/profile.png) 
 
+</details>
 ---
 
 ## 🚀 Функционал
 
-- 🔐 Аутентификация по JWT (RS256)  
-- 👤 Система пользователей с профилями
-- ![Профиль](./screenshots/profile.png "Профиль")
-- ⚡ Система суперпользователя для управления
-- ![Admin](./screenshots/admin_panel_1.png "admin")
-- ![Admin](./screenshots/admin_panel_2.png "admin")
-
-### 📝 Блог
-- категории  
-- посты  
-- комментарии
-- ![Блог](./screenshots/blog.png "Блог")
-
-
-### ❤️ Реакции
-- лайки и другие типы реакций  
-
-### ⭐ Рейтинг
-- простая система рейтинга  
-
-- ![Пост](./screenshots/post.png "Пост")
-
-### ⛔ Rate limiting
-- комментарии  
-- реакции  
-- смена пароля  
-- email  
-- общее количество запросов
-- ![RateLimit](./screenshots/rate_limit.png "RateLimit")
-
-### ⚡ Redis
-- кеширование  
-- хранение rate limits  
-
-### 📧 Email
-- SMTP сервис для отправки писем
-- ![smtp1](./screenshots/smtp_1.png "smtp1")
-- ![smtp2](./screenshots/smtp_2.png "smtp2")
+- 🔐 Аутентификация и авторизация на основе JWT (RS256)
+- 👤 Личные профили пользователей
+- 🟢 Система отслеживания онлайн-статуса через WebSocket
+- 💬 Чаты 1×1 в реальном времени через WebSocket
+- 🔔 Система уведомлений в реальном времени через WebSocket (новые сообщения, комментарии, посты, пользовательские уведомления)
+- 📝 Блог-платформа: посты с медиафайлами, категории, комментарии, реакции, рейтинг, счетчик просмотров и пагинация
+- 🚦 Redis Rate Limiting для защиты API от спама, brute-force атак и чрезмерной нагрузки
+- 📧 SMTP-отправка писем для подтверждения действий и повышения безопасности учетных записей
+- 🗄️ Хранение медиафайлов и других объектов в MinIO (S3-compatible storage)
+- 🔍 Prefix Search для поиска пользователей, постов и категорий
 
 ## 🛠 Стек
 - Backend: Python (FastAPI)
+- WebSocket-соединения для обмена данными в реальном времени
 - Frontend: React, Vite
 - Database: PostgreSQL (asyncpg), Alembic
+- S3: MinIO
 - Validation: pydantic
 - Cache & Rate Limit: Redis
 - Auth: JWT (RS256)
@@ -60,6 +52,8 @@
 - Tests: Pytest
 
 ## ⛩️ Архитектура
+<details>  
+
 ### Монолитное REST API, разделенное по слоям
 Request → Route → DTO validation → Service → ORM → Response DTO → Response
 
@@ -68,31 +62,45 @@ Request → Route → DTO validation → Service → ORM → Response DTO → Re
 - Обработка ошибок
 - Транзакции
 
+</details>
+
 ## 📖 Docs
+<details>  
+
 Локально при запуске dev версии
 - http://127.0.0.1:8000/docs  
 
 Задеплоенная версия
 - https://zerw1337.ru/api/docs
 
+</details>
+
 ## ⚙️ Установка и запуск
+
+<details>
+
+
 ### Клонирование
-git clone https://github.com/zerw1337/my-simple-website.git  
+
+```bash
+git clone https://github.com/zerw1337/my-simple-website.git
 cd my-simple-website
+```
+
 ### Генерация сертификатов
-mkdir certs   
-cd my-simple-website/certs   
-openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048  
-openssl rsa -pubout -in private.pem -out public.pem 
-### .env
-cd ..  
-(необходимо так же одинаковые создать .env файлы в /my-simple-website и /my-simple-website/backend и заполнить их согласно .env-example)
+
+```bash
+mkdir certs
+cd certs
+
+openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
+openssl rsa -pubout -in private.pem -out public.pem
+```
+
 ### Запуск
-#### dev (local)
-docker compose -f docker-compose.dev.yml up --build --watch 
-#### test
-docker compose -f docker-compose.test.yml up --build  
-cd backend  
-pytest -v 
-#### deploy (нужен ssl сертификат)
-docker compose -f docker-compose.yml up -d
+
+```bash
+docker compose -f docker-compose.dev.yml up --build --watch
+```
+
+</details>  
